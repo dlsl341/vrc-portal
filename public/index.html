@@ -192,6 +192,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .bchip b{color:var(--red-d)}
 .claim,.act{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .sec.claims{border-left:4px solid var(--red);margin-bottom:18px}
+a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
 .fsub{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
 .mepage{max-width:760px}
 .melink{color:var(--ink);text-decoration:none;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border:1px solid var(--line);border-radius:20px;white-space:nowrap}
@@ -284,6 +285,7 @@ body.guest header nav,body.guest .mods .role{display:none}
       <a href="#members" data-v="members">Members</a>
       <a href="#issues" data-v="issues">Issues<span class="n" id="navIssues" hidden></span></a>
       <a href="#maintenance" data-v="maintenance">Maintenance</a>
+      <a href="#admin" data-v="admin" id="navAdmin" hidden>Admin<span class="n" id="navClaims" hidden></span></a>
     </nav>
     <div class="mods">
       <span class="role" id="role">Connecting…</span>
@@ -397,7 +399,7 @@ function logEvent(boatId,kind,text){return S.db.collection('events').add({boatId
 /* ---------- routing ---------- */
 function route(){const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
-  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import'].includes(h)?h:'programs'}
+  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin'].includes(h)?h:'programs'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
@@ -409,6 +411,7 @@ function render(){
   else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
   const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
   const ni=$('#navIssues');ni.hidden=!openIss;ni.textContent=openIss;
+  {const na=$('#navAdmin'),nc=$('#navClaims'),pc=pendingClaims().length;na.hidden=!S.isAdmin;nc.hidden=!pc;nc.textContent=pc}
   const m=$('#main');
   if(S.error==='nodb'){m.innerHTML=`<div class="banner"><h3>Club data isn't available</h3>Please sign in again to see the fleet and members.</div>`;return}
   if(S.error==='revoked'){m.innerHTML=`<div class="banner"><h3>Access has changed</h3>This page can no longer load fleet data.</div>`;return}
@@ -416,8 +419,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():viewFleet());
-  if(S.view==='members'||S.view==='me')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -722,7 +725,7 @@ const SEARCH_ICON='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" s
 /* ---------- directory ---------- */
 function viewMembers(){
   const all=Object.entries(S.members);const t=today();
-  const pend=Object.entries(S.claims).filter(([,c])=>c.status!=='rejected');
+  const pend=pendingClaims();
   const stats=[['current','Members',all.filter(([,m])=>m.status!=='inactive').length,'var(--navy)',1],
     ['linked','Accounts linked',all.filter(([,m])=>m.linkedUser).length,'var(--ok)',1],
     ...(canAdmin()?[['review','Needs details',all.filter(([,m])=>m.status==='review').length,'var(--warn)',1]]:[]),
@@ -737,7 +740,7 @@ function viewMembers(){
     if(S.mprog!=='all'&&!(m.programs||[]).includes(S.mprog))return false;
     if(q&&!(`${m.displayName} ${m.firstName||''} ${m.lastName||''} ${(m.programs||[]).join(' ')}`.toLowerCase().includes(q)))return false;
     return true}).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
-  const claimsHtml=canAdmin()&&pend.length?`<div class="sec claims"><h4>Profile requests · ${pend.length} waiting</h4>${pend.map(([uid,c])=>`<div class="item claim"><div><b>${esc((S.profiles[uid]&&S.profiles[uid].name)||'A member')}</b> <span class="muted">(sign-in account)</span> ${c.type==='existing'?`says they are <span class="lnk" data-member="${esc(c.memberId)}">${esc(mName(c.memberId))}</span>`:`is new: <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b> · ${esc((c.programs||[]).join(', ')||'no program')}`}${c.note?`<div class="muted" style="margin-top:3px">“${esc(c.note)}”</div>`:''}<div class="when">${fmtDate(c.at)}</div></div><div class="actions" style="margin:0;flex:none"><button class="btn sm pri" data-approve="${esc(uid)}">Approve</button><button class="btn sm" data-reject="${esc(uid)}">Decline</button></div></div>`).join('')}</div>`:'';
+  const claimsHtml=canAdmin()&&pend.length?`<a class="callout adm-go" href="#admin"><b>${pend.length} profile request${pend.length===1?'':'s'} waiting</b> – review them on the Admin page ›</a>`:'';
   const progs=progNames().filter(p=>all.some(([,m])=>(m.programs||[]).includes(p)));
   let body;
   if(!all.length)body=`<div class="banner"><h3>No members yet</h3>${canAdmin()?'Add the first member with the button above.':'An admin needs to add the member list.'}</div>`;
@@ -749,7 +752,6 @@ function viewMembers(){
   return `
   <div class="stats">${stats.map(([k,l,v,c,f])=>`<div class="stat ${f&&S.mstatus===k?'sel':''} ${f?'':'nf'}" ${f?`data-mstat="${k}"`:''}><div class="v">${v}</div><div class="l"><span class="dot" style="background:${c}"></span>${l}</div></div>`).join('')}</div>
   ${claimsHtml}
-  ${adminRoster()}
   <div class="toolbar">
     <div class="search">${SEARCH_ICON}<input id="mq" placeholder="Search members…" value="${esc(S.mq)}"></div>
     <div class="chips">${[['all','All'],...progs.map(p=>[p,p])].map(([k,l])=>`<button class="chip ${S.mprog===k?'on':''}" data-mprog="${esc(k)}">${esc(l)}</button>`).join('')}</div>
@@ -840,6 +842,8 @@ function bindMembers(){
   const m=$('#main');
   m.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
   m.querySelectorAll('[data-mstat]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.mstat;render()});
+  m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
+  m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
   m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
   m.querySelectorAll('[data-mlayout]').forEach(el=>el.onclick=()=>{S.mlayout=el.dataset.mlayout;try{localStorage.setItem('memberLayout',S.mlayout)}catch(e){};render()});
   m.querySelectorAll('[data-unadmin]').forEach(el=>el.onclick=()=>removeAdminForm(el.dataset.unadmin));
@@ -1537,6 +1541,37 @@ function syncMyAdmin(){
   if(S.isAdmin&&!m.siteAdmin)S.db.doc('members/'+mid).update({siteAdmin:true}).catch(()=>{});
 }
 function adminNotice(){return ''}
+
+/* =================== ADMIN PAGE (admins + owner only) =================== */
+function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
+function claimItem(uid,c){
+  const who=(S.profiles[uid]&&S.profiles[uid].name)||'A member';
+  const what=c.type==='existing'?`says they are <span class="lnk" data-member="${esc(c.memberId)}">${esc(mName(c.memberId))}</span>${c.lastName?` <span class="muted">(last name: ${esc(c.lastName)})</span>`:''}`
+    :`is new to the portal: <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b> · ${esc((c.programs||[]).join(', ')||'no program')}`;
+  const contact=[c.email,c.phone].filter(Boolean).map(esc).join(' · ');
+  return `<div class="item claim"><div><b>${esc(who)}</b> <span class="muted">(signed in)</span> ${what}
+    ${contact?`<div class="tag" style="margin-top:3px">${contact}</div>`:''}
+    ${c.note?`<div class="muted" style="margin-top:3px">“${esc(c.note)}”</div>`:''}<div class="when">Sent ${fmtDate(c.at)}</div></div>
+    <div class="actions" style="margin:0;flex:none"><button class="btn sm pri" data-approve="${esc(uid)}">Approve</button><button class="btn sm" data-reject="${esc(uid)}">Decline</button></div></div>`;
+}
+function viewAdmin(){
+  if(!canAdmin())return `<div class="banner"><h3>Admins only</h3>This page is for club admins.</div>`;
+  const pend=pendingClaims();const all=Object.values(S.members);
+  const review=all.filter(m=>m.status==='review').length,unlinked=all.filter(m=>m.status!=='inactive'&&!m.linkedUser).length;
+  const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
+  return `<div class="page-h"><div><h2>Admin</h2><p>Only admins and the owner see this page.</p></div>
+    <div class="actions" style="margin:0"><a class="btn" href="#manage">Manage programs & sessions</a><a class="btn" href="#import">Import data</a></div></div>
+  <div class="stats">
+    <div class="stat"><div class="v">${pend.length}</div><div class="l"><span class="dot" style="background:var(--red)"></span>Requests waiting</div></div>
+    <div class="stat" data-gomembers="review"><div class="v">${review}</div><div class="l"><span class="dot" style="background:var(--warn)"></span>Members needing details</div></div>
+    <div class="stat nf"><div class="v">${unlinked}</div><div class="l"><span class="dot" style="background:var(--navy)"></span>Not signed in yet</div></div>
+    <div class="stat" data-goissues="1"><div class="v">${openIss}</div><div class="l"><span class="dot" style="background:var(--warn)"></span>Open issues</div></div>
+  </div>
+  <div class="sec claims"><h4>Profile requests · ${pend.length} waiting</h4>
+    ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
+    <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details. Check the name, email and note match someone you know.</p></div>
+  ${adminRoster()}`;
+}
 
 /* =================== IMPORT (one-time move from the claude.ai portal) =================== */
 S.imp=null;

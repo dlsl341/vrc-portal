@@ -23,6 +23,9 @@ language, and keep the "propose → preview link → merge" workflow.
 - `.github/workflows/deploy.yml` – PRs: rule tests + preview channel link. `main`: tests → deploy
   hosting + Firestore rules + Storage rules. Secret: `FIREBASE_SERVICE_ACCOUNT`.
 
+- **Admin page** (`#admin`, nav item shown to admins only, red badge = pending profile requests): requests
+  to approve/decline, club admins roster, shortcuts. The Members page links there when requests wait.
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
