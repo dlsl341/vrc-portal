@@ -115,6 +115,10 @@ test('damage reports: reporters can add photos only; admins resolve', async () =
 test('admins and the owner manage club data and admin roles', async () => {
   await assertSucceeds(updateDoc(doc(as('carol'), 'boats/b1'), { status: 'dnr' }));
   await assertSucceeds(updateDoc(doc(as('owner'), 'boats/b1'), { status: 'available' }));
-  await assertSucceeds(setDoc(doc(as('carol'), 'admins/alice'), { memberId: 'm_alice' }));
+  // a member can't promote anyone (checked before alice is promoted below)
   await assertFails(setDoc(doc(as('alice'), 'admins/bob'), { memberId: 'm_bob' }));
+  await assertFails(setDoc(doc(as('alice'), 'admins/alice'), { memberId: 'm_alice' }));
+  await assertSucceeds(setDoc(doc(as('carol'), 'admins/alice'), { memberId: 'm_alice' }));
+  // ...and once promoted, she can
+  await assertSucceeds(setDoc(doc(as('alice'), 'admins/bob'), { memberId: 'm_bob' }));
 });
