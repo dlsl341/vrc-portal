@@ -22,12 +22,13 @@ size the cost should be very small, often nothing, but set a budget alert so the
 1. Left menu → **Build → Authentication** → **Get started**.
 2. **Sign-in method** tab:
    - **Google** → Enable → choose a support email → Save.
-   - **Email/Password** → Enable **Email link (passwordless sign-in)** → Save.
-     (Leave plain "Email/Password" off – members never set passwords.)
+   - **Add new provider → Email/Password** → switch on **Email/Password** (required first) and
+     **Email link (passwordless sign-in)** → Save. Nobody gets a password – the portal only offers
+     Google and the emailed link.
 
 ## 3. Create the database
 
-1. **Build → Firestore Database** → **Create database**.
+1. **Build → Firestore Database** → **Create database**. If asked for an edition, choose **Standard**.
 2. Location: **northamerica-northeast1 (Montréal)** keeps the club's data in Canada.
    ⚠️ The location can't be changed later.
 3. Choose **Start in production mode** → Create. (The portal's own rules replace the defaults on first deploy.)
@@ -35,7 +36,9 @@ size the cost should be very small, often nothing, but set a budget alert so the
 ## 4. Create photo storage
 
 1. **Build → Storage** → **Get started**.
-2. Production mode, same location as the database → Done.
+2. Location: **northamerica-northeast1 (Montréal)** keeps photos in Canada (small storage cost);
+   US regions such as us-west1 fall under Firebase's free allowance. Can't be changed later.
+3. Production mode → Create.
 
 ## 5. Let GitHub deploy the portal
 
