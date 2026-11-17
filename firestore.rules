@@ -1,0 +1,126 @@
+rules_version = '2';
+
+// VRC Rowing Portal – Firestore security rules
+//
+// Who's who
+//   signed in : anyone who has logged in (Google or email link). Can only see the member
+//               directory, manage their own profile request, and their own public profile name.
+//   member    : a signed-in person whose account an admin has linked to a member record
+//               (accounts/{uid} exists). Can book, report damage, log maintenance, edit own details.
+//   admin     : the owner (config/settings.ownerUid) or anyone listed in admins/{uid}.
+//               Can change boats, members, programs, sessions and see private details.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function uid() { return request.auth.uid; }
+    function settingsPath() { return /databases/$(database)/documents/config/settings; }
+    function isOwner() {
+      return signedIn() && exists(settingsPath()) && get(settingsPath()).data.ownerUid == uid();
+    }
+    function isAdmin() {
+      return signedIn() && (isOwner() || exists(/databases/$(database)/documents/admins/$(uid())));
+    }
+    function isMember() {
+      return signedIn() && exists(/databases/$(database)/documents/accounts/$(uid()));
+    }
+    function canUse() { return isMember() || isAdmin(); }
+    function myMemberId() {
+      return get(/databases/$(database)/documents/accounts/$(uid())).data.memberId;
+    }
+    function onlyChanges(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    // ---- setup: the first person to sign in after deployment claims ownership ----
+    match /config/settings {
+      allow read: if signedIn();
+      allow create: if signedIn() && !exists(settingsPath())
+                    && request.resource.data.ownerUid == uid();
+      allow update: if isOwner() && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if false;
+    }
+
+    // ---- people & access ----
+    match /profiles/{userId} {            // display name for each signed-in account
+      allow read: if signedIn();
+      allow write: if signedIn() && userId == uid();
+    }
+    match /accounts/{userId} {            // account -> member link, written by admins on approval
+      allow read: if signedIn() && (userId == uid() || isAdmin());
+      allow write: if isAdmin();
+    }
+    match /admins/{userId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /claims/{userId} {              // "this is me" profile requests
+      allow read: if signedIn() && (userId == uid() || isAdmin());
+      allow create, update: if signedIn() && ((userId == uid() && request.resource.data.status == 'pending') || isAdmin());
+      allow delete: if signedIn() && (userId == uid() || isAdmin());
+    }
+    match /members/{memberId} {           // names + programs: readable so new people can find themselves
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /memberPrefs/{key} {            // sides, experience, bio, photo – keyed by account id once linked
+      allow read: if canUse();
+      allow write: if isAdmin() || (isMember() && key == uid());
+    }
+    match /memberPrivate/{key} {          // email, phone, emergency contact, weight
+      allow read, write: if isAdmin() || (isMember() && key == uid());
+    }
+
+    // ---- club data that only admins change ----
+    match /boats/{id}       { allow read: if canUse(); allow write: if isAdmin(); }
+    match /programs/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
+    match /sessions/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
+    match /occurrences/{id} { allow read: if canUse(); allow write: if isAdmin(); }
+    match /activity/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
+    match /crews/{id}       { allow read: if canUse(); allow write: if isAdmin(); }
+
+    // ---- things members add ----
+    match /issues/{id} {
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
+                                      && request.resource.data.status == 'open');
+      // the reporter can add photos to their own open report; admins can do anything
+      allow update: if isAdmin() || (isMember() && resource.data.by == uid()
+                                      && onlyChanges(['photos', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+    match /maintenance/{id} {
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
+      allow update, delete: if isAdmin();
+    }
+    match /events/{id} {                  // boat activity log
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
+      allow update, delete: if isAdmin();
+    }
+
+    // ---- bookings: the booker/captain or an admin manages a booking; crew can leave; anyone eligible can join an open seat ----
+    match /bookings/{id} {
+      function inCrew(data) { return myMemberId() in data.crew || data.cox == myMemberId(); }
+      function isBooker() { return resource.data.createdBy == uid() || resource.data.captain == myMemberId(); }
+
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember()
+                       && request.resource.data.createdBy == uid()
+                       && inCrew(request.resource.data));
+      allow update: if isAdmin()
+                    || (isMember() && isBooker()
+                        && request.resource.data.createdBy == resource.data.createdBy
+                        && request.resource.data.captain == resource.data.captain)
+                    || (isMember() && onlyChanges(['crew', 'cox', 'open', 'updatedAt'])
+                        && (inCrew(resource.data)                                         // leaving / swapping out
+                            || (resource.data.open == true && inCrew(request.resource.data)))); // joining an open seat
+      allow delete: if isAdmin() || (isMember() && isBooker());
+    }
+
+    // everything else is closed
+    match /{document=**} { allow read, write: if false; }
+  }
+}
