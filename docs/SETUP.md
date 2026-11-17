@@ -52,7 +52,7 @@ GitHub needs a key so it can publish the portal and its security rules for you.
 **5b. Give the key permission to deploy**
 1. Open [Google Cloud IAM](https://console.cloud.google.com/iam-admin/iam?project=vrc-rower-s-portal).
 2. Find the account whose name starts with **firebase-adminsdk-** → click the ✏️ pencil.
-3. **Add another role** → **Firebase Admin**. **Add another role** → **Service Usage Consumer**. → **Save**.
+3. **Add another role** → **Firebase Admin**. **Add another role** → **Service Usage Consumer**. **Add another role** → **API Keys Viewer**. → **Save**.
 
 **5c. Store the key in GitHub**
 1. On GitHub open **dlsl341/vrc-portal** → **Settings** → **Secrets and variables** → **Actions**.
