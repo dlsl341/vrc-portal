@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRC Rowing Portal</title>
+<link rel="icon" href="img/vrc-logo.png">
+<script type="module" src="js/firebase-adapter.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#231f20; --ink2:#4a4647; --ink3:#86888b; --line:#dfe3e2; --paper:#f7f6f3; --card:#ffffff;
+  --navy:#231f20; --water:#231f20; --water-l:#ececed; --red:#ea3c42; --red-d:#c92c32; --red-l:#fdeaea; --grey:#a7a9ac;
+  --ok:#2c7a57; --ok-l:#e2f2ea; --bad:#b83a2e; --bad-l:#f8e5e2; --warn:#a86b12; --warn-l:#f8eedb; --off:#6b7680; --off-l:#eceeef;
+  --r:6px; --shadow:0 1px 2px rgba(16,34,47,.06),0 4px 14px rgba(16,34,47,.05);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:'Libre Baskerville',Georgia,serif;font-weight:700;margin:0;letter-spacing:-.01em}
+a{color:var(--water)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+
+/* header */
+header{background:#fff;color:var(--ink);position:sticky;top:0;z-index:20;border-bottom:4px solid var(--red);box-shadow:0 1px 0 rgba(0,0,0,.04)}
+header .wrap{display:flex;align-items:center;gap:20px;height:70px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:20px;color:var(--ink)}
+.brand h1 b{color:var(--red)}
+.brand small{color:var(--ink3);font-size:12px;display:block;font-family:Inter;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+nav{display:flex;gap:4px;margin-left:12px}
+nav a{color:var(--ink2);text-decoration:none;padding:8px 12px;font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;border-bottom:3px solid transparent}
+nav a:hover{color:var(--red-d)}
+nav a.on{color:var(--red-d);border-bottom-color:var(--red)}
+nav a .n{background:var(--red);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;margin-left:5px}
+.mods{margin-left:auto;display:flex;gap:6px;align-items:center}
+.mod-soon{font-size:11.5px;color:var(--ink3);border:1px dashed #c9ced6;text-transform:uppercase;letter-spacing:.06em;padding:4px 9px;border-radius:7px}
+.role{font-size:12px;background:var(--water-l);color:var(--ink2);padding:5px 10px;border-radius:20px;white-space:nowrap}
+.role b{color:var(--ink)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 18px}
+.stat{background:var(--card);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;border:2px solid transparent}
+.stat:hover{border-color:var(--line)}
+.stat.sel{border-color:var(--red)}
+.stat .v{font-family:'Libre Baskerville',Georgia,serif;font-size:28px;font-weight:650;line-height:1.1}
+.stat .l{color:var(--ink2);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* toolbar */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink3)}
+.chips{display:flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:3px}
+.chip{border:0;background:none;padding:5px 11px;border-radius:6px;cursor:pointer;color:var(--ink2);font-weight:500}
+.chip.on{background:var(--navy);color:#fff}
+select.f{padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.btn{border:1px solid var(--line);background:#fff;padding:8px 14px;border-radius:9px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:#c3cacb}
+.btn.pri{background:var(--red-d);border-color:var(--red-d);color:#fff;text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;font-weight:700}
+.btn.pri:hover{background:#a8232a}
+.btn.dan{color:var(--bad);border-color:#ecc6c1}
+.btn.dan.solid{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:default}
+label.tog{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:13px;cursor:pointer;user-select:none}
+
+/* grid */
+.group{margin-bottom:26px}
+.group h2{font-size:18px;margin-bottom:12px;display:flex;align-items:baseline;gap:8px;padding-left:12px;border-left:4px solid var(--red)}
+.group h2 span{font-family:Inter;font-size:12px;color:var(--ink3);font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.boat{background:var(--card);border-radius:var(--r);border-top:3px solid var(--navy)!important;box-shadow:var(--shadow);padding:14px 15px 12px;cursor:pointer;border:1px solid transparent;position:relative;transition:border-color .15s,transform .15s}
+.boat:hover{border-color:#cdd5d6;border-top-color:var(--red)!important;transform:translateY(-1px)}
+.boat .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.boat h3{font-size:16.5px;line-height:1.2}
+.boat .meta{color:var(--ink2);font-size:12.5px;margin-top:8px;display:flex;gap:12px;flex-wrap:wrap}
+.boat .foot{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.boat.retired{opacity:.62}
+.boat .flag{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;border-radius:10px;font-size:11px;font-weight:600;padding:1px 7px}
+.rig{font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:5px;background:var(--off-l);color:var(--ink2);letter-spacing:.02em}
+.rig.cur{background:var(--navy);color:#fff}
+.pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.s-available{background:var(--ok-l);color:var(--ok)}
+.s-dnr{background:var(--bad-l);color:var(--bad)}
+.s-repair{background:var(--warn-l);color:var(--warn)}
+.s-retired{background:var(--off-l);color:var(--off)}
+.tag{font-size:11.5px;color:var(--ink3)}
+.warnline{font-size:12px;color:var(--bad);font-weight:500}
+
+/* table */
+table.t{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.t th{text-align:left;font-size:11.5px;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;background:#fbfaf8}
+.t td{padding:9px 12px;border-bottom:1px solid #eef0ef;vertical-align:middle}
+.t tr.row{cursor:pointer}
+.t tr.row:hover td{background:#f9fbfb}
+.t td.name{font-weight:600}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,24,34,.35);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--paper);z-index:41;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.12)}
+.drawer.on{transform:none}
+.dh{padding:20px 22px 16px;background:#fff;border-bottom:4px solid var(--red)}
+.dh .x{float:right;border:0;background:none;font-size:22px;cursor:pointer;color:var(--ink3);line-height:1}
+.dh h2{font-size:24px}
+.db{padding:18px 22px 40px;overflow:auto;flex:1}
+.sec{background:#fff;border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sec h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 10px;font-size:13.5px}
+.kv dt{color:var(--ink2)}
+.kv dd{margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.item{border-top:1px solid #eef0ef;padding:10px 0;font-size:13.5px}
+.item:first-of-type{border-top:0;padding-top:2px}
+.item .when{font-size:12px;color:var(--ink3)}
+.sev{font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px}
+.sev-cosmetic{background:var(--off-l);color:var(--off)}
+.sev-attention{background:var(--warn-l);color:var(--warn)}
+.sev-unsafe{background:var(--bad-l);color:var(--bad)}
+.muted{color:var(--ink3)}
+.empty{color:var(--ink3);font-size:13px;padding:4px 0}
+.callout{background:var(--warn-l);color:#6e4a0f;border-radius:9px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+.callout.bad{background:var(--bad-l);color:#7c241b}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;background:rgba(10,24,34,.45);padding:20px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:14px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mbox h3{font-size:20px;margin-bottom:14px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px}
+.fg .full{grid-column:1/-1}
+.fld label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.fld textarea{min-height:72px;resize:vertical}
+.fld input[type=checkbox]{width:auto}
+.fld .hint{font-size:11.5px;color:var(--ink3);margin-top:3px}
+.rigpick{display:flex;flex-wrap:wrap;gap:6px}
+.rigpick label{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-weight:600;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.rigpick input{width:auto}
+.mfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.err{color:var(--bad);font-size:13px;margin-top:10px}
+
+/* list pages */
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;margin:26px 0 14px;gap:12px;flex-wrap:wrap}
+.page-h h2{font-size:24px}
+.page-h h2::after{content:'';display:block;width:44px;height:3px;background:var(--red);margin-top:8px}
+.page-h p{margin:4px 0 0;color:var(--ink2)}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);border-left:4px solid var(--red);color:#fff;padding:10px 18px;border-radius:10px;z-index:80;transition:transform .25s;font-weight:500}
+.toast.on{transform:translateX(-50%)}
+.banner{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:30px;text-align:center;color:var(--ink2);margin:30px 0}
+.banner h3{color:var(--ink);margin-bottom:6px}
+footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;background:var(--navy);border-top:4px solid var(--red);margin-top:30px}
+
+@media (max-width:860px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .mod-soon{display:none}
+  nav{margin-left:0}
+}
+@media (max-width:560px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .brand h1{display:none}
+  nav a{padding:6px 7px;font-size:11.5px;letter-spacing:.04em}
+  .brand img{width:44px;height:44px}
+  .brand small{display:none}
+  header .wrap{gap:8px;padding:0 12px}
+  nav a{padding:6px 8px}
+  .role{display:none}
+  .fg{grid-template-columns:1fr}
+  .t .hide-s{display:none}
+}
+
+/* members */
+.av{border-radius:50%;background:var(--navy);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:none;letter-spacing:.02em;font-family:Inter,sans-serif}
+.mcard .top{align-items:center;gap:12px}
+.mcard h3{font-size:15.5px}
+.lk{color:var(--ok);font-weight:700}
+.stat.nf{cursor:default}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.tile{background:#fff;border-radius:var(--r);padding:10px 12px;box-shadow:var(--shadow)}
+.tile .v{font-family:'Libre Baskerville',Georgia,serif;font-size:21px;font-weight:700;line-height:1.2}
+.tile .v.sm{font-size:13.5px;padding-top:5px}
+.tile .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:600;margin-top:2px}
+.lock{font-size:11px;text-transform:none;letter-spacing:0;color:var(--ink3);font-weight:500;margin-left:6px}
+.lnk{color:var(--red-d);cursor:pointer;font-weight:600}
+.lnk:hover{text-decoration:underline}
+.bchip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin:0 6px 6px 0;cursor:pointer;font-size:12.5px;background:#fff;white-space:nowrap}
+.bchip:hover{border-color:var(--red)}
+.bchip b{color:var(--red-d)}
+.claim,.act{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.sec.claims{border-left:4px solid var(--red);margin-bottom:18px}
+.fsub{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.mepage{max-width:760px}
+.melink{color:var(--ink);text-decoration:none;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border:1px solid var(--line);border-radius:20px;white-space:nowrap}
+.melink:hover,.melink.on{border-color:var(--red);color:var(--red-d)}
+@media (max-width:560px){
+  header nav{overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+  header nav::-webkit-scrollbar{display:none}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .melink{padding:5px 8px;font-size:10.5px}
+}
+
+/* programs */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 14px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start}
+.day h4{margin:0 0 8px;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-weight:700;border-bottom:2px solid var(--line);padding-bottom:6px}
+.day h4 span{font-family:'Libre Baskerville',Georgia,serif;font-size:15px;color:var(--ink);letter-spacing:0;margin-left:4px}
+.day.today h4{border-bottom-color:var(--red)}.day.today h4 span{color:var(--red-d)}
+.day .none{color:#c4c6c9;font-size:13px;padding:4px 2px}
+.sc{background:#fff;border-radius:6px;box-shadow:var(--shadow);padding:9px 10px;border-left:4px solid var(--pc);cursor:pointer;margin-bottom:8px;transition:transform .12s}
+.sc:hover{transform:translateY(-1px)}
+.sc-t{font-size:11.5px;font-weight:700;color:var(--ink2)}.sc-n{font-weight:600;font-size:13.5px;margin:2px 0;line-height:1.25}.sc-m{font-size:11.5px;color:var(--ink3)}
+.sc-f{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.sc.cx .sc-n{text-decoration:line-through}.sc.past{opacity:.55}
+.cap{flex:1;min-width:30px;height:5px;background:#ececed;border-radius:3px;overflow:hidden}.cap i{display:block;height:100%;background:var(--pc)}
+.pill.pv{background:#ece8f6;color:#5b4b96}
+.mybk{margin-bottom:16px}.mybk-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:2px}
+.mb{flex:none;min-width:170px;border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:6px;padding:8px 10px;cursor:pointer;font-size:13px}
+.mb:hover{border-color:var(--pc)}
+.shead{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:16px 20px;margin:22px 0 14px;border-top:5px solid var(--pc)}
+.sh-row{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-top:8px}
+.shead h2{font-size:24px;margin:2px 0 4px}.shead p{margin:0;color:var(--ink2)}
+.sh-cap{text-align:center;min-width:70px}.sh-cap b{font-family:'Libre Baskerville',Georgia,serif;font-size:28px}.sh-cap span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700}
+.sgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:16px;align-items:start}
+.t.sheet td{vertical-align:top}.t.sheet td.num{color:var(--ink3);font-weight:700;width:30px}.t.sheet tr.me td{background:#fdf6f6}
+.t td.ra{text-align:right;white-space:nowrap}.t td.ra .btn{margin-left:4px}
+.oseat{color:#5b4b96;font-style:italic}
+.rerig{display:inline-block;background:var(--warn-l);color:var(--warn);font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;margin-left:4px;white-space:nowrap}
+.avail{position:sticky;top:90px;max-height:calc(100vh - 110px);overflow:auto}
+.av-g{margin-bottom:10px}.av-g>.tag{text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-size:10.5px;margin-bottom:3px}
+.avb{display:flex;justify-content:space-between;gap:8px;padding:5px 6px;border-radius:5px;font-size:13px}
+a.btn{text-decoration:none;color:inherit}
+a.btn.pri{color:#fff}
+.avb[data-bookboat]{cursor:pointer}.avb[data-bookboat]:hover{background:var(--red-l)}
+.seatgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+label.fl{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+tr.inact td{opacity:.55}
+@media (max-width:1000px){.week{grid-template-columns:repeat(2,minmax(0,1fr))}.sgrid{grid-template-columns:1fr}.avail{position:static;max-height:none}}
+@media (max-width:560px){.week{grid-template-columns:1fr}.seatgrid{grid-template-columns:1fr}.sh-row{flex-direction:column}}
+.calbtns{display:flex;gap:8px;flex-wrap:wrap}
+.calcard{border:1px solid var(--line);border-left:4px solid var(--red);border-radius:6px;padding:10px 12px;display:grid;gap:3px}
+.mybk h4{display:flex;justify-content:space-between;align-items:center}
+.mb .calmini{float:right;border:0;background:none;cursor:pointer;font-size:14px;padding:0 0 0 6px;opacity:.7}
+.mb .calmini:hover{opacity:1}
+
+.phrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.phlist{display:flex;gap:8px;flex-wrap:wrap}
+.ph{position:relative;width:64px;height:64px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:18px;padding:0;font-size:14px}
+.phadd{cursor:pointer}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.thumbs img{width:58px;height:58px;object-fit:cover;border-radius:5px;border:1px solid var(--line);cursor:zoom-in;background:#eee}
+.thumbs img.broken{display:none}
+.photo-n{font-size:11.5px;color:var(--ink3);margin-left:6px;white-space:nowrap}
+#lb{position:fixed;inset:0;background:rgba(10,10,10,.85);z-index:90;display:none;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
+#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#lb button{position:absolute;top:14px;right:18px;font-size:30px;color:#fff;background:none;border:0;cursor:pointer}
+.av{position:relative;overflow:hidden}
+.avph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.avrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.rig.adm{background:var(--red-l);color:var(--red-d)}
+.sec.admins{margin-bottom:18px;border-left:4px solid var(--navy)}
+.sec.admins h4{display:flex;justify-content:space-between;align-items:center}
+ol.steps{margin:4px 0 0;padding-left:20px;font-size:13.5px;line-height:1.5}
+ol.steps li{margin-bottom:8px}
+body.guest header nav,body.guest .mods .role{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="56" height="56" style="display:block">
+      <div><h1><b>VRC</b> Rowing</h1><small>Club portal</small></div>
+    </div>
+    <nav>
+      <a href="#programs" data-v="programs">Programs</a>
+      <a href="#fleet" data-v="fleet">Fleet</a>
+      <a href="#members" data-v="members">Members</a>
+      <a href="#issues" data-v="issues">Issues<span class="n" id="navIssues" hidden></span></a>
+      <a href="#maintenance" data-v="maintenance">Maintenance</a>
+    </nav>
+    <div class="mods">
+      <span class="role" id="role">Connecting…</span>
+      <a href="#me" data-v="me" class="melink">My profile</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+<footer>Vancouver Rowing Club · Club portal</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ---------- constants ---------- */
+const RIGS=['1x','2x','2-','2+','4x','4x+','4-','4+','8+','8x+'];
+const STATUS={available:'Available',dnr:'Do Not Row',repair:'Long-Term Repair',retired:'Retired'};
+const STATUS_COLOR={available:'var(--ok)',dnr:'var(--bad)',repair:'var(--warn)',retired:'var(--off)'};
+const SEV={cosmetic:'Cosmetic',attention:'Needs attention',unsafe:'Unsafe – do not row'};
+const PROGRAMS=['Juniors','Novice','Rec','Sat Masters','Sun Masters','Intermediate','Para','Other'];
+const CLASSES=[{k:1,t:'Singles'},{k:2,t:'Doubles & Pairs'},{k:4,t:'Quads & Fours'},{k:8,t:'Eights'}];
+const MAINT_DUE_DAYS=180;
+
+/* ---------- state ---------- */
+const S={admins:{},settings:{},acct:{},boats:{},issues:{},maint:{},events:{},loaded:{boats:false,issues:false,maint:false,events:false},
+  view:'fleet',q:'',cls:'all',status:'active',prog:'all',layout:'grid',open:null,
+  db:null,user:null,me:null,isAdmin:false,canWrite:null,readOnly:false,profiles:{},error:null,slow:false};
+
+/* ---------- helpers ---------- */
+const blobUrl=x=>/^https?:/.test(x||'')?x:'/_blob/'+x;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const nowIso=()=>new Date().toISOString();
+function fmtDate(d){if(!d)return'—';const x=new Date(d.length===10?d+'T12:00:00':d);if(isNaN(x))return esc(d);return x.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}
+function daysSince(d){if(!d)return Infinity;return Math.floor((Date.now()-new Date(d+'T12:00:00'))/864e5)}
+function wtText(w){if(!w||(!w.lbsMax&&!w.kgMax))return'—';const lb=w.lbsMin?`${w.lbsMin}–${w.lbsMax}`:`≤ ${w.lbsMax}`;const kg=w.kgMin?`${w.kgMin}–${w.kgMax}`:`${w.kgMax}`;return `${lb} lb · ${kg} kg`}
+function reporter(i){return i.byMember?mName(i.byMember):name(i.by)}
+function name(id){if(!id)return'Someone';for(const m of Object.values(S.members||{}))if(m.linkedUser===id)return m.displayName;const p=S.profiles[id];return (p&&p.name)||'Member'}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),2600)}
+function boatOpenIssues(id){return Object.entries(S.issues).filter(([,i])=>i.boatId===id&&i.status!=='resolved')}
+function lastMaint(id){let best=null;for(const m of Object.values(S.maint)){if(m.boatId===id&&m.completed&&m.date&&(!best||m.date>best.date))best=m}return best}
+function rigChips(b){return (b.rigs||[]).map(r=>`<span class="rig ${r===b.currentRig?'cur':''}" title="${r===b.currentRig?'Current rig':'Can be rigged as'}">${esc(r)}</span>`).join('')}
+function pill(st){return `<span class="pill s-${esc(st)}">${esc(STATUS[st]||st)}</span>`}
+
+/* ---------- data ---------- */
+let profileReq=null;
+async function resolveProfiles(){
+  if(!S.user||!S.user.profiles)return;
+  const ids=new Set();
+  for(const c of [S.issues,S.maint,S.events])for(const v of Object.values(c)){for(const k of ['by','resolvedBy'])if(v[k])ids.add(v[k])}
+  Object.keys(S.claims||{}).forEach(i=>ids.add(i));Object.values(S.members||{}).forEach(m=>{if(m.linkedUser)ids.add(m.linkedUser)});
+  const need=[...ids].filter(i=>!(i in S.profiles));
+  if(!need.length)return;
+  try{const ps=await S.user.profiles(need);for(const id of need)S.profiles[id]=ps&&ps[id]||{};render()}catch(e){}
+}
+function subDoc(path,key,onData){S.db.doc(path).onSnapshot(snap=>{S[key]=snap.exists?{[snap.id]:snap.data()}:{};if(onData)onData(snap);render()},()=>{})}
+function sub(col,key,optional){
+  S.db.collection(col).onSnapshot(snap=>{
+    const o={};snap.docs.forEach(d=>o[d.id]=d.data());S[key]=o;
+    if(!snap.metadata.fromCache&&!optional)S.loaded[key]=true;
+    if(Object.values(S.loaded).every(Boolean)){clearTimeout(S._slowT);S.slow=false}
+    render();clearTimeout(profileReq);profileReq=setTimeout(resolveProfiles,300);
+  },err=>{if(!optional||err.code==='revoked')S.error=err.code;if(!optional)S.loaded[key]=true;render()});
+}
+async function init(){
+  render();
+  try{S.db=await claude.use('db')}catch(e){S.db=null}
+  try{S.user=await claude.use('user')}catch(e){S.user=null}
+  if(S.user){
+    try{S.isAdmin=!!(await S.user.canEdit())}catch(e){}
+    try{S.canWrite=await S.user.can('data.write')}catch(e){S.canWrite=null}
+    try{S.me=await S.user.id()}catch(e){}
+  }
+  if(!S.db){S.error='nodb';render();return}
+  S.guest=!S.isAdmin&&S.canWrite===false;
+  if(S.guest){ // signed in but not yet linked to a member: only the profile-request screen
+    document.body.classList.add('guest');
+    for(const k in S.loaded)S.loaded[k]=true;
+    sub('members','members');subDoc('claims/'+S.me,'claims');
+    subDoc('accounts/'+S.me,'acct',snap=>{if(snap.exists)location.reload()});
+    route();return}
+  assetsNs().then(()=>render());
+  S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
+  sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
+  sub('members','members');sub('activity','activity');sub('crews','crews');
+  sub('programs','programs');sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
+  if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
+  else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
+  render();
+}
+const canMember=()=>!!S.db&&!S.readOnly&&S.canWrite!==false;
+const canAdmin=()=>!!S.db&&S.isAdmin;
+
+async function guarded(fn,okMsg){
+  try{await fn();if(okMsg)toast(okMsg);return true}
+  catch(e){
+    if(e&&e.code==='invalid_argument'&&!S.isAdmin){S.readOnly=true;render();toast('You have view-only access')}
+    else if(e&&e.code==='photo')toast(e.message);
+    else if(e&&e.code==='quota_exceeded')toast('Storage is full – ask an admin to tidy old records');
+    else toast('Could not save – please try again');
+    return false;
+  }
+}
+function logEvent(boatId,kind,text){return S.db.collection('events').add({boatId,kind,text,by:S.me||null,at:nowIso()})}
+
+/* ---------- routing ---------- */
+function route(){const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
+  if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
+  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import'].includes(h)?h:'programs'}
+  if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
+window.addEventListener('hashchange',route);
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll('nav a,a.melink').forEach(a=>a.classList.toggle('on',a.dataset.v===(S.view==='manage'?'programs':S.view)));
+  const role=$('#role');
+  if(!S.db&&S.error!=='nodb')role.textContent='Connecting…';
+  else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
+  const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
+  const ni=$('#navIssues');ni.hidden=!openIss;ni.textContent=openIss;
+  const m=$('#main');
+  if(S.error==='nodb'){m.innerHTML=`<div class="banner"><h3>Club data isn't available</h3>Please sign in again to see the fleet and members.</div>`;return}
+  if(S.error==='revoked'){m.innerHTML=`<div class="banner"><h3>Access has changed</h3>This page can no longer load fleet data.</div>`;return}
+  const loading=!S.loaded.boats&&!Object.keys(S.boats).length;
+  if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
+  const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
+  syncMyAdmin();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():viewFleet());
+  if(S.view==='members'||S.view==='me')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else bindMain();
+  if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
+}
+
+function filteredBoats(){
+  const q=S.q.trim().toLowerCase();
+  return Object.entries(S.boats).filter(([id,b])=>{
+    if(S.status==='active'&&b.status==='retired')return false;
+    if(!['all','active'].includes(S.status)&&b.status!==S.status)return false;
+    if(S.status==='flagged'&&!boatOpenIssues(id).length)return false;
+    if(S.cls!=='all'&&String(b.seats)!==S.cls)return false;
+    if(S.prog!=='all'&&b.maintenanceProgram!==S.prog)return false;
+    if(q&&!(`${b.name} ${(b.rigs||[]).join(' ')} ${b.manufacturer||''} ${b.maintenanceProgram||''}`.toLowerCase().includes(q)))return false;
+    return true;
+  }).sort((a,b)=>(a[1].seats-b[1].seats)||((a[1].weight?.kgMax||0)-(b[1].weight?.kgMax||0))||a[1].name.localeCompare(b[1].name));
+}
+
+function viewFleet(){
+  const all=Object.entries(S.boats);
+  const cnt=s=>all.filter(([,b])=>b.status===s).length;
+  const flagged=all.filter(([id,b])=>b.status!=='retired'&&boatOpenIssues(id).length).length;
+  const active=all.length-cnt('retired');
+  const stats=[['active','In fleet',active,'var(--navy)'],['available','Available',cnt('available'),STATUS_COLOR.available],['dnr','Do Not Row',cnt('dnr'),STATUS_COLOR.dnr],['repair','Long-term repair',cnt('repair'),STATUS_COLOR.repair],['flagged','Open issues',flagged,'#8d3fa8']];
+  const progs=[...new Set(all.map(([,b])=>b.maintenanceProgram).filter(Boolean))].sort();
+  const list=filteredBoats();
+  let body='';
+  if(!all.length){body=`<div class="banner"><h3>No boats in the register yet</h3>${canAdmin()?'Add the first boat with the button above.':'An admin needs to add the fleet.'}</div>`}
+  else if(!list.length){body=`<div class="banner">No boats match these filters.</div>`}
+  else if(S.layout==='list'){
+    body=`<table class="t"><thead><tr><th>Boat</th><th>Rig</th><th class="hide-s">Max weight</th><th>Status</th><th class="hide-s">Maintained by</th><th class="hide-s">Last maintenance</th><th class="hide-s">Issues</th></tr></thead><tbody>`+
+    list.map(([id,b])=>{const lm=lastMaint(id);const oi=boatOpenIssues(id).length;return `<tr class="row" data-boat="${esc(id)}"><td class="name">${esc(b.name)}${b.ownership==='private'?' <span class="tag">private</span>':''}</td><td>${rigChips(b)}</td><td class="hide-s">${wtText(b.weight)}</td><td>${pill(b.status)}</td><td class="hide-s">${esc(b.maintenanceProgram||'—')}</td><td class="hide-s">${lm?fmtDate(lm.date):'<span class="muted">none logged</span>'}</td><td class="hide-s">${oi?`<span class="warnline">${oi} open</span>`:''}</td></tr>`}).join('')+`</tbody></table>`;
+  } else {
+    body=CLASSES.map(c=>{const g=list.filter(([,b])=>b.seats===c.k);if(!g.length)return'';
+      return `<section class="group"><h2>${c.t}<span>${g.length}</span></h2><div class="grid">${g.map(([id,b])=>card(id,b)).join('')}</div></section>`}).join('');
+  }
+  return `
+  <div class="stats">${stats.map(([k,l,v,c])=>`<div class="stat ${S.status===k?'sel':''}" data-stat="${k}"><div class="v">${v}</div><div class="l"><span class="dot" style="background:${c}"></span>${l}</div></div>`).join('')}</div>
+  <div class="toolbar">
+    <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" placeholder="Search boats, rigs, programs…" value="${esc(S.q)}"></div>
+    <div class="chips">${[['all','All'],['1','1x'],['2','2s'],['4','4s'],['8','8s']].map(([k,l])=>`<button class="chip ${S.cls===k?'on':''}" data-cls="${k}">${l}</button>`).join('')}</div>
+    <select class="f" id="fStatus">${[['active','All active boats'],['available','Available'],['dnr','Do Not Row'],['repair','Long-term repair'],['flagged','With open issues'],['retired','Retired'],['all','Everything incl. retired']].map(([k,l])=>`<option value="${k}" ${S.status===k?'selected':''}>${l}</option>`).join('')}</select>
+    <select class="f" id="fProg"><option value="all">Any program</option>${progs.map(p=>`<option ${S.prog===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
+    <div class="chips">${[['grid','Cards'],['list','List']].map(([k,l])=>`<button class="chip ${S.layout===k?'on':''}" data-layout="${k}">${l}</button>`).join('')}</div>
+    ${canAdmin()?`<button class="btn pri" id="addBoat">+ Add boat</button>`:''}
+  </div>
+  ${body}`;
+}
+function card(id,b){
+  const oi=boatOpenIssues(id);const unsafe=oi.some(([,i])=>i.severity==='unsafe');
+  const lm=lastMaint(id);
+  return `<div class="boat ${b.status==='retired'?'retired':''}" data-boat="${esc(id)}">
+    ${oi.length?`<span class="flag" title="Open issues">${oi.length}</span>`:''}
+    <div class="top"><h3>${esc(b.name)}</h3>${pill(b.status)}</div>
+    <div class="meta"><span>${b.weight&&b.weight.lbsMax?wtText(b.weight):'<span class="muted">No weight class set</span>'}</span>${b.ownership==='private'?'<span>Private</span>':''}</div>
+    ${unsafe&&b.status==='available'?`<div class="warnline" style="margin-top:6px">⚠ Reported unsafe – awaiting admin review</div>`:''}
+    <div class="foot">${rigChips(b)}<span class="tag" style="margin-left:auto">${lm?'Maint. '+fmtDate(lm.date):''}</span></div>
+  </div>`;
+}
+
+function viewIssues(){
+  const rows=Object.entries(S.issues).sort((a,b)=>{const o=x=>x[1].status==='resolved'?1:0;return o(a)-o(b)||String(b[1].at).localeCompare(String(a[1].at))});
+  const open=rows.filter(([,i])=>i.status!=='resolved');const done=rows.filter(([,i])=>i.status==='resolved').slice(0,40);
+  const tr=([id,i])=>{const b=S.boats[i.boatId];return `<tr class="row" data-boat="${esc(i.boatId)}"><td class="name">${esc(b?b.name:'(removed boat)')}</td><td><span class="sev sev-${esc(i.severity)}">${esc(SEV[i.severity]||i.severity)}</span></td><td>${esc(i.description)}${(i.photos||[]).length?`<span class="photo-n">📷 ${i.photos.length}</span>`:''}${photoStrip(i.photos)}${i.status==='resolved'&&i.resolution?`<div class="muted" style="font-size:12px">Fix: ${esc(i.resolution)}</div>`:''}</td><td class="hide-s">${esc(reporter(i))}<div class="muted" style="font-size:12px">${fmtDate(i.at)}</div></td><td>${i.status==='resolved'?`<span class="pill s-available">Resolved</span>`:'<span class="pill s-dnr">Open</span>'}</td></tr>`};
+  return `<div class="page-h"><div><h2>Damage & issues</h2><p>Reports from members. Admins review, set boat status, and resolve.</p></div>${canMember()?`<button class="btn pri" id="reportAny">Report damage</button>`:''}</div>
+  ${open.length?`<table class="t"><thead><tr><th>Boat</th><th>Severity</th><th>Issue</th><th class="hide-s">Reported</th><th>Status</th></tr></thead><tbody>${open.map(tr).join('')}</tbody></table>`:`<div class="banner">No open issues. Nice work, everyone.</div>`}
+  ${done.length?`<h3 style="margin:26px 0 10px;font-size:17px">Recently resolved</h3><table class="t"><tbody>${done.map(tr).join('')}</tbody></table>`:''}`;
+}
+
+function viewMaint(){
+  const active=Object.entries(S.boats).filter(([,b])=>b.status!=='retired'&&b.ownership!=='private');
+  const due=active.map(([id,b])=>({id,b,lm:lastMaint(id)})).filter(x=>daysSince(x.lm&&x.lm.date)>MAINT_DUE_DAYS).sort((a,b)=>(a.lm?.date||'').localeCompare(b.lm?.date||''));
+  const logs=Object.entries(S.maint).sort((a,b)=>String(b[1].date).localeCompare(String(a[1].date))).slice(0,80);
+  return `<div class="page-h"><div><h2>Maintenance</h2><p>Each club boat is assigned to a program for its maintenance cycle. Boats with nothing logged in the last ${MAINT_DUE_DAYS} days are shown as due.</p></div>${canMember()?`<button class="btn pri" id="logAny">Log maintenance</button>`:''}</div>
+  <h3 style="margin:0 0 10px;font-size:17px">Due for maintenance <span class="muted" style="font-family:Inter;font-size:12px">${due.length}</span></h3>
+  ${due.length?`<table class="t"><thead><tr><th>Boat</th><th>Rig</th><th>Assigned program</th><th>Last done</th></tr></thead><tbody>${due.map(x=>`<tr class="row" data-boat="${esc(x.id)}"><td class="name">${esc(x.b.name)}</td><td>${rigChips(x.b)}</td><td>${esc(x.b.maintenanceProgram||'Unassigned')}</td><td>${x.lm?fmtDate(x.lm.date):'<span class="muted">never logged</span>'}</td></tr>`).join('')}</tbody></table>`:'<div class="banner">Every club boat has been maintained recently.</div>'}
+  <h3 style="margin:26px 0 10px;font-size:17px">Maintenance log</h3>
+  ${logs.length?`<table class="t"><thead><tr><th>Date</th><th>Boat</th><th class="hide-s">Program</th><th class="hide-s">Crew</th><th>Notes</th></tr></thead><tbody>${logs.map(([,l])=>`<tr class="row" data-boat="${esc(l.boatId)}"><td style="white-space:nowrap">${fmtDate(l.date)}</td><td class="name">${esc(S.boats[l.boatId]?.name||'—')}</td><td class="hide-s">${esc(l.program||'')}</td><td class="hide-s">${esc(l.crew||'')}</td><td>${esc(l.notes||'')}</td></tr>`).join('')}</tbody></table>`:'<div class="banner">Nothing logged yet.</div>'}`;
+}
+
+function bindMain(){
+  document.querySelectorAll('[data-boat]').forEach(el=>el.onclick=()=>openBoat(el.dataset.boat));
+  document.querySelectorAll('[data-stat]').forEach(el=>el.onclick=()=>{S.status=el.dataset.stat;render()});
+  document.querySelectorAll('[data-cls]').forEach(el=>el.onclick=()=>{S.cls=el.dataset.cls;render()});
+  document.querySelectorAll('[data-layout]').forEach(el=>el.onclick=()=>{S.layout=el.dataset.layout;try{localStorage.setItem('fleetLayout',S.layout)}catch(e){};render()});
+  const q=$('#q');if(q){q.oninput=()=>{S.q=q.value;const pos=q.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(pos,pos)}}
+  const fs=$('#fStatus');if(fs)fs.onchange=()=>{S.status=fs.value;render()};
+  const fp=$('#fProg');if(fp)fp.onchange=()=>{S.prog=fp.value;render()};
+  const ab=$('#addBoat');if(ab)ab.onclick=()=>boatForm(null);
+  const ra=$('#reportAny');if(ra)ra.onclick=()=>issueForm(null);
+  const la=$('#logAny');if(la)la.onclick=()=>maintForm(null);
+}
+
+/* ---------- drawer ---------- */
+function openBoat(id){S.openM=null;S.open=id;renderDrawer();$('#drawer').classList.add('on');$('#scrim').classList.add('on');$('#drawer').setAttribute('aria-hidden','false')}
+function closeBoat(){S.open=null;S.openM=null;$('#drawer').classList.remove('on');$('#scrim').classList.remove('on');$('#drawer').setAttribute('aria-hidden','true')}
+$('#scrim').onclick=closeBoat;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#modal').classList.contains('on'))closeModal();else closeBoat()}});
+
+function renderDrawer(){
+  const id=S.open,b=S.boats[id],d=$('#drawer');
+  if(!b){d.innerHTML=`<div class="dh"><button class="x" id="dx">×</button><h2>Boat removed</h2></div>`;$('#dx').onclick=closeBoat;return}
+  const oi=boatOpenIssues(id);
+  const issues=Object.entries(S.issues).filter(([,i])=>i.boatId===id).sort((a,c)=>String(c[1].at).localeCompare(String(a[1].at)));
+  const logs=Object.values(S.maint).filter(m=>m.boatId===id).sort((a,c)=>String(c.date).localeCompare(String(a.date)));
+  const evs=Object.values(S.events).filter(e=>e.boatId===id).sort((a,c)=>String(c.at).localeCompare(String(a.at))).slice(0,30);
+  const unsafe=oi.some(([,i])=>i.severity==='unsafe');
+  d.innerHTML=`
+  <div class="dh"><button class="x" id="dx" aria-label="Close">×</button>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${pill(b.status)}${b.ownership==='private'?'<span class="tag">Privately owned</span>':''}</div>
+    <h2>${esc(b.name)}</h2>
+    <div style="margin-top:8px;display:flex;gap:5px">${rigChips(b)}</div>
+  </div>
+  <div class="db">
+    ${unsafe&&b.status==='available'?`<div class="callout bad">A member has reported this boat as <b>unsafe</b>. ${canAdmin()?'Review the issue below and set the status to Do Not Row if needed.':'Please choose another boat until an admin reviews it.'}</div>`:''}
+    ${b.status!=='available'&&b.statusNote?`<div class="callout">${esc(b.statusNote)}</div>`:''}
+    ${b.source&&/confirm/i.test(b.source)?`<div class="callout">${esc(b.source)}</div>`:''}
+    <div class="sec"><h4>Details</h4>
+      <dl class="kv">
+        <dt>Boat class</dt><dd>${b.seats===1?'Single':b.seats===2?'Double / pair':b.seats===4?'Quad / four':'Eight'} · ${b.seats} seat${b.seats>1?'s':''}</dd>
+        <dt>Current rig</dt><dd>${esc(b.currentRig||'—')}${(b.rigs||[]).length>1?` <span class="muted">(also ${esc(b.rigs.filter(r=>r!==b.currentRig).join(', '))})</span>`:''}</dd>
+        <dt>Crew weight</dt><dd>${wtText(b.weight)}<span class="muted">${b.weight?' avg per rower':''}</span></dd>
+        <dt>Maintained by</dt><dd>${esc(b.maintenanceProgram||'Unassigned')}</dd>
+        <dt>Manufacturer</dt><dd>${esc(b.manufacturer||'—')}</dd>
+        <dt>Year</dt><dd>${esc(b.year||'—')}</dd>
+        <dt>Serial / hull #</dt><dd>${esc(b.serial||'—')}</dd>
+        ${b.status==='retired'?`<dt>Retired</dt><dd>${fmtDate(b.retiredAt)}${b.retiredReason?' – '+esc(b.retiredReason):''}</dd>`:''}
+        ${b.notes?`<dt>Notes</dt><dd>${esc(b.notes)}</dd>`:''}
+      </dl>
+      <div class="actions">
+        ${canMember()&&b.status!=='retired'?`<button class="btn" id="dReport">Report damage</button><button class="btn" id="dLog">Log maintenance</button>`:''}
+        ${canAdmin()?`<button class="btn" id="dEdit">Edit</button>
+          ${b.status==='retired'?`<button class="btn" id="dRestore">Return to fleet</button>`:`<button class="btn" id="dStatus">Change status</button><button class="btn dan" id="dRetire">Retire</button>`}`:''}
+      </div>
+    </div>
+    <div class="sec"><h4>Issues ${oi.length?`· ${oi.length} open`:''}</h4>
+      ${issues.length?issues.map(([iid,i])=>`<div class="item"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="sev sev-${esc(i.severity)}">${esc(SEV[i.severity]||i.severity)}</span>${i.status==='resolved'?'<span class="pill s-available">Resolved</span>':''}${i.location?`<span class="tag">${esc(i.location)}</span>`:''}</div>
+        <div style="margin-top:4px">${esc(i.description)}</div>${photoStrip(i.photos)}
+        <div class="when">Reported by ${esc(reporter(i))} · ${fmtDate(i.at)}${i.status==='resolved'?` · resolved ${fmtDate(i.resolvedAt)}${i.resolution?': '+esc(i.resolution):''}`:''}</div>
+        ${i.status!=='resolved'&&(canAdmin()||(S.me&&i.by===S.me))?`<div class="actions" style="margin-top:8px">${canAdmin()?`<button class="btn sm" data-resolve="${esc(iid)}">Mark resolved</button>`:''}${(i.photos||[]).length<MAX_PHOTOS&&ASSETS?`<button class="btn sm" data-addphoto="${esc(iid)}">📷 Add photo</button>`:''}</div>`:''}</div>`).join(''):'<div class="empty">No issues reported.</div>'}
+    </div>
+    <div class="sec"><h4>Maintenance history</h4>
+      ${logs.length?logs.map(l=>`<div class="item"><b>${fmtDate(l.date)}</b> <span class="muted">· ${esc(l.program||'')}</span>${l.crew?`<div class="when">${esc(l.crew)}</div>`:''}${l.notes?`<div style="margin-top:3px">${esc(l.notes)}</div>`:''}</div>`).join(''):'<div class="empty">Nothing logged yet.</div>'}
+    </div>
+    ${boatBookingsHtml(id)}
+    ${boatCrewsHtml(id)}
+    <div class="sec"><h4>Activity</h4>
+      ${evs.length?evs.map(e=>`<div class="item">${esc(e.text)}<div class="when">${esc(name(e.by))} · ${fmtDate(e.at)}</div></div>`).join(''):`<div class="empty">${esc(b.source||'No activity yet.')}</div>`}
+    </div>
+  </div>`;
+  $('#dx').onclick=closeBoat;
+  const on=(s,f)=>{const e=$(s);if(e)e.onclick=f};
+  on('#dReport',()=>issueForm(id));on('#dLog',()=>maintForm(id));on('#dEdit',()=>boatForm(id));
+  on('#dStatus',()=>statusForm(id));on('#dRetire',()=>retireForm(id));
+  on('#dRestore',async()=>{await guarded(async()=>{await S.db.doc('boats/'+id).update({status:'available',retiredAt:null,retiredReason:'',updatedAt:nowIso()});await logEvent(id,'status','Returned to fleet (Available)')},'Returned to fleet')});
+  d.querySelectorAll('[data-resolve]').forEach(el=>el.onclick=()=>resolveForm(el.dataset.resolve));
+  d.querySelectorAll('[data-addphoto]').forEach(el=>el.onclick=()=>addPhotosToIssue(el.dataset.addphoto));
+  d.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
+  d.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=()=>{const [a,c]=el.dataset.gosess.split('|');goSession(a,c)});
+  d.querySelectorAll('[data-rerig]').forEach(el=>el.onclick=()=>{const r=el.dataset.rerig;guarded(async()=>{await S.db.doc('boats/'+id).update({currentRig:r,updatedAt:nowIso()});await logEvent(id,'edit',`Re-rigged ${b.currentRig} → ${r}`)},'Rig updated')});
+}
+
+/* ---------- modals ---------- */
+function openModal(html,bind){$('#mbox').innerHTML=html;$('#modal').classList.add('on');bind&&bind();const f=$('#mbox input,#mbox select,#mbox textarea');f&&f.focus()}
+function closeModal(){$('#modal').classList.remove('on')}
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+function fld(label,inner,cls='',hint=''){return `<div class="fld ${cls}"><label>${label}</label>${inner}${hint?`<div class="hint">${hint}</div>`:''}</div>`}
+function boatOptions(sel){return Object.entries(S.boats).filter(([,b])=>b.status!=='retired').sort((a,b)=>a[1].name.localeCompare(b[1].name)).map(([id,b])=>`<option value="${esc(id)}" ${id===sel?'selected':''}>${esc(b.name)} (${esc(b.currentRig)})</option>`).join('')}
+function formFoot(label,danger){return `<div class="err" id="ferr"></div><div class="mfoot"><button class="btn" type="button" id="mCancel">Cancel</button><button class="btn ${danger?'dan solid':'pri'}" type="submit" id="mSave">${label}</button></div>`}
+function wireForm(onSubmit){
+  $('#mCancel').onclick=closeModal;
+  $('#mform').onsubmit=async e=>{e.preventDefault();const btn=$('#mSave');const err=$('#ferr');err.textContent='';
+    const fd=Object.fromEntries(new FormData($('#mform')).entries());fd._c={};$('#mform').querySelectorAll('input[type=checkbox]').forEach(x=>{(fd._c[x.name]=fd._c[x.name]||[]);if(x.checked)fd._c[x.name].push(x.value)});fd._rigs=fd._c.rig||[];
+    const v=onSubmit.validate?onSubmit.validate(fd):null;if(v){err.textContent=v;return}
+    btn.disabled=true;const ok=await guarded(()=>onSubmit.save(fd),onSubmit.msg);btn.disabled=false;if(ok){closeModal();if(onSubmit.after)onSubmit.after()}}
+}
+
+function slugify(s){return (s.normalize('NFKD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'boat').slice(0,60)}
+
+function boatForm(id){
+  const b=id?S.boats[id]:{rigs:[],currentRig:'',ownership:'club',weight:{}};
+  const w=b.weight||{};
+  openModal(`<h3>${id?'Edit '+esc(b.name):'Add a boat'}</h3><form id="mform"><div class="fg">
+    ${fld('Boat name',`<input name="name" required value="${esc(b.name||'')}">`,'full')}
+    ${fld('Rigging options',`<div class="rigpick">${RIGS.map(r=>`<label><input type="checkbox" name="rig" value="${r}" ${(b.rigs||[]).includes(r)?'checked':''}>${r}</label>`).join('')}</div>`,'full','Tick every way this hull can be rigged (e.g. 2x and 2-). Seats must match.')}
+    ${fld('Current rig',`<select name="currentRig" id="curRig"></select>`)}
+    ${fld('Ownership',`<select name="ownership"><option value="club" ${b.ownership!=='private'?'selected':''}>Club</option><option value="private" ${b.ownership==='private'?'selected':''}>Private</option></select>`)}
+    ${fld('Min crew weight (lb)',`<input name="lbsMin" type="number" min="50" max="350" value="${esc(w.lbsMin||'')}">`,'','Optional – leave blank for a max only')}
+    ${fld('Max crew weight (lb)',`<input name="lbsMax" type="number" min="50" max="350" value="${esc(w.lbsMax||'')}">`,'','kg is calculated automatically')}
+    ${fld('Maintenance program',`<select name="maintenanceProgram"><option value="">Unassigned</option>${PROGRAMS.map(p=>`<option ${b.maintenanceProgram===p?'selected':''}>${p}</option>`).join('')}</select>`)}
+    ${fld('Manufacturer',`<input name="manufacturer" value="${esc(b.manufacturer||'')}" placeholder="e.g. Empacher, Hudson">`)}
+    ${fld('Year built',`<input name="year" type="number" min="1950" max="2100" value="${esc(b.year||'')}">`)}
+    ${fld('Serial / hull #',`<input name="serial" value="${esc(b.serial||'')}">`)}
+    ${fld('Notes',`<textarea name="notes">${esc(b.notes||'')}</textarea>`,'full')}
+  </div>${formFoot(id?'Save changes':'Add boat')}</form>`,()=>{
+    const sync=()=>{const sel=$('#curRig');const r=[...document.querySelectorAll('#mform input[name=rig]:checked')].map(x=>x.value);const cur=sel.value||b.currentRig;sel.innerHTML=r.length?r.map(x=>`<option ${x===cur?'selected':''}>${x}</option>`).join(''):'<option value="">Pick rigs first</option>'};
+    document.querySelectorAll('#mform input[name=rig]').forEach(x=>x.onchange=sync);sync();
+    wireForm({
+      validate:fd=>{if(!fd.name.trim())return'Give the boat a name.';if(!fd._rigs.length)return'Pick at least one rig.';
+        const seats=new Set(fd._rigs.map(r=>r[0]));if(seats.size>1)return'All rigging options must have the same number of seats.';
+        if(fd.lbsMin&&fd.lbsMax&&+fd.lbsMin>+fd.lbsMax)return'Min weight is above max.';
+        if(!id&&Object.values(S.boats).some(x=>x.name.trim().toLowerCase()===fd.name.trim().toLowerCase()))return'A boat with that name already exists.';return null},
+      msg:id?'Boat updated':'Boat added',
+      save:async fd=>{
+        const lmin=fd.lbsMin?+fd.lbsMin:null,lmax=fd.lbsMax?+fd.lbsMax:null;
+        const weight=lmax?{lbsMax:lmax,kgMax:Math.round(lmax/2.2046),...(lmin?{lbsMin:lmin,kgMin:Math.round(lmin/2.2046)}:{})}:null;
+        const data={name:fd.name.trim(),rigs:fd._rigs,currentRig:fd.currentRig||fd._rigs[0],seats:+fd._rigs[0][0],ownership:fd.ownership,weight,
+          maintenanceProgram:fd.maintenanceProgram,manufacturer:fd.manufacturer.trim(),year:fd.year?+fd.year:null,serial:fd.serial.trim(),notes:fd.notes.trim(),updatedAt:nowIso()};
+        if(id){
+          const changes=[];if(data.name!==b.name)changes.push(`renamed from “${b.name}”`);if(data.currentRig!==b.currentRig)changes.push(`re-rigged ${b.currentRig} → ${data.currentRig}`);
+          if(b.source&&/confirm/i.test(b.source))data.source='Confirmed by admin';
+          await S.db.doc('boats/'+id).update(data);await logEvent(id,'edit',changes.length?'Edited: '+changes.join('; '):'Details updated');
+        } else {
+          let nid=slugify(data.name);if(S.boats[nid])nid+='-'+Date.now().toString(36);
+          await S.db.doc('boats/'+nid).set({...data,status:'available',statusNote:'',createdAt:nowIso(),createdBy:S.me||null,source:'Added in VRC Fleet'});
+          await logEvent(nid,'created','Added to the fleet');
+        }
+      }});
+  });
+}
+
+function statusForm(id){
+  const b=S.boats[id];
+  openModal(`<h3>Change status · ${esc(b.name)}</h3><form id="mform"><div class="fg">
+    ${fld('Status',`<select name="status">${['available','dnr','repair'].map(s=>`<option value="${s}" ${b.status===s?'selected':''}>${STATUS[s]}</option>`).join('')}</select>`,'full','Do Not Row = temporarily off the water. Long-term repair = out for an extended period.')}
+    ${fld('Reason (shown to members)',`<textarea name="note" placeholder="e.g. Cracked deck behind stroke seat, at repairer until March">${esc(b.statusNote||'')}</textarea>`,'full')}
+  </div>${formFoot('Update status')}</form>`,()=>wireForm({msg:'Status updated',
+    save:async fd=>{await S.db.doc('boats/'+id).update({status:fd.status,statusNote:fd.status==='available'?'':fd.note.trim(),updatedAt:nowIso()});
+      await logEvent(id,'status',`Status set to ${STATUS[fd.status]}${fd.note.trim()?' – '+fd.note.trim():''}`)}}));
+}
+function retireForm(id){
+  const b=S.boats[id];
+  openModal(`<h3>Retire ${esc(b.name)}?</h3><p class="muted" style="margin-top:-6px">Retired boats leave the active fleet and can't be booked, but their history is kept. You can return a boat to the fleet later.</p><form id="mform"><div class="fg">
+    ${fld('Retirement date',`<input type="date" name="date" value="${today()}" required>`)}
+    ${fld('Reason',`<select name="why"><option>End of service life</option><option>Damaged beyond repair</option><option>Sold</option><option>Donated</option><option>Other</option></select>`)}
+    ${fld('Notes',`<textarea name="note"></textarea>`,'full')}
+  </div>${formFoot('Retire boat',true)}</form>`,()=>wireForm({msg:'Boat retired',
+    save:async fd=>{const reason=fd.why+(fd.note.trim()?' – '+fd.note.trim():'');await S.db.doc('boats/'+id).update({status:'retired',retiredAt:fd.date,retiredReason:reason,updatedAt:nowIso()});await logEvent(id,'retired','Retired: '+reason)}}));
+}
+function issueForm(id){
+  openModal(`<h3>Report damage or an issue</h3><form id="mform"><div class="fg">
+    ${fld('Boat',`<select name="boatId" required><option value="">Choose a boat…</option>${boatOptions(id)}</select>`,'full')}
+    ${fld('Severity',`<select name="severity"><option value="attention">Needs attention – still rowable</option><option value="cosmetic">Cosmetic</option><option value="unsafe">Unsafe – do not row</option></select>`)}
+    ${fld('Where on the boat',`<input name="location" placeholder="e.g. Bow seat rigger, stern deck">`)}
+    ${fld('What happened',`<textarea name="description" required placeholder="Describe the damage and how it happened"></textarea>`,'full')}
+    ${photoField()}
+  </div>${formFoot('Submit report')}</form>`,()=>{let getPhotos=()=>[];enablePhotoField().then(g=>{if(g)getPhotos=g});wireForm({msg:'Thanks – report submitted',
+    validate:fd=>!fd.boatId?'Choose a boat.':!fd.description.trim()?'Describe the issue.':null,
+    save:async fd=>{const fs=getPhotos();if(fs.length){$('#mSave').textContent='Uploading photos…'}const photos=fs.length?await uploadPhotos(fs):[];
+      await S.db.collection('issues').add({boatId:fd.boatId,severity:fd.severity,location:fd.location.trim(),description:fd.description.trim(),photos,status:'open',by:S.me||null,at:nowIso()});
+      await logEvent(fd.boatId,'issue',`Issue reported (${SEV[fd.severity]})${photos.length?` with ${photos.length} photo${photos.length>1?'s':''}`:''}`)}})});
+}
+function resolveForm(iid){
+  const i=S.issues[iid];
+  openModal(`<h3>Resolve issue</h3><p class="muted" style="margin-top:-6px">${esc(i.description)}</p><form id="mform"><div class="fg">
+    ${fld('What was done',`<textarea name="resolution" placeholder="e.g. Rigger re-welded and refitted"></textarea>`,'full')}
+  </div>${formFoot('Mark resolved')}</form>`,()=>wireForm({msg:'Issue resolved',
+    save:async fd=>{await S.db.doc('issues/'+iid).update({status:'resolved',resolution:fd.resolution.trim(),resolvedBy:S.me||null,resolvedAt:nowIso()});await logEvent(i.boatId,'issue','Issue resolved'+(fd.resolution.trim()?': '+fd.resolution.trim():''))}}));
+}
+function maintForm(id){
+  const b=id&&S.boats[id];
+  openModal(`<h3>Log maintenance</h3><form id="mform"><div class="fg">
+    ${fld('Boat',`<select name="boatId" required><option value="">Choose a boat…</option>${boatOptions(id)}</select>`,'full')}
+    ${fld('Date',`<input type="date" name="date" value="${today()}" required>`)}
+    ${fld('Program',`<select name="program">${PROGRAMS.map(p=>`<option ${b&&b.maintenanceProgram===p?'selected':''}>${p}</option>`).join('')}</select>`)}
+    ${fld('Crew',`<input name="crew" placeholder="Who did the work">`,'full')}
+    ${fld('Notes',`<textarea name="notes" placeholder="What was done, anything still needing attention"></textarea>`,'full')}
+  </div>${formFoot('Save log')}</form>`,()=>wireForm({msg:'Maintenance logged',
+    validate:fd=>!fd.boatId?'Choose a boat.':null,
+    save:async fd=>{await S.db.collection('maintenance').add({boatId:fd.boatId,date:fd.date,program:fd.program,crew:fd.crew.trim(),notes:fd.notes.trim(),completed:true,by:S.me||null,at:nowIso()});
+      await logEvent(fd.boatId,'maint','Maintenance logged')}}));
+}
+
+/* =================== MEMBERS MODULE =================== */
+const M_PROGRAMS=['Juniors','Novice','Intermediate','Rec','Masters','Para'];
+const SIDES=['Port','Starboard','Sculling','Cox'];
+const EXPERIENCE=['Learn to Row','Novice','Intermediate','Experienced','Competitive'];
+const ROLES={rower:'Rower',coach:'Coach',cox:'Cox'};
+const M_STATUS={active:'Active',review:'Needs details',inactive:'Inactive'};
+Object.assign(S,{members:{},activity:{},crews:{},claims:{},mpriv:{},mprefs:{},openM:null,mq:'',mprog:'all',mstatus:'current',mlayout:'grid',claimQ:''});
+Object.assign(S.loaded,{members:false,activity:false,crews:false});
+
+const mKey=id=>{const m=S.members[id];return (m&&m.linkedUser)||id};
+const myMemberId=()=>{if(!S.me)return null;for(const [id,m] of Object.entries(S.members))if(m.linkedUser===S.me)return id;return null};
+const canSeePrivate=id=>canAdmin()||(!!S.me&&!!S.members[id]&&S.members[id].linkedUser===S.me);
+function mName(id){const m=S.members[id];return m?(m.displayName||'Member'):'(removed member)'}
+function initials(n){return (n||'?').replace(/[^\p{L}\s-]/gu,'').split(/[\s-]+/).filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?'}
+function avatar(id,size=40){const ph=prefsOf(id).photo;return `<span class="av" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px">${esc(initials(mName(id)))}${ph?`<img class="avph" src="${esc(blobUrl(ph))}" alt="" loading="lazy">`:''}</span>`}
+function memberActs(id){return allActs().filter(a=>a.memberId===id).map(a=>[a.bookingId||'',a]).sort((a,b)=>String(b[1].date).localeCompare(String(a[1].date)))}
+function memberStats(id){
+  const acts=memberActs(id).map(x=>x[1]);const t=today();
+  const past=acts.filter(a=>a.date<=t),up=acts.filter(a=>a.date>t).reverse();
+  const boats={};past.forEach(a=>{if(a.boatId)boats[a.boatId]=(boats[a.boatId]||0)+1});
+  return {past,up,topBoats:Object.entries(boats).sort((a,b)=>b[1]-a[1]),last:past[0]||null,d30:past.filter(a=>daysSince(a.date)<=30).length};
+}
+function memberCrews(id){return Object.entries(S.crews).filter(([,c])=>(c.memberIds||[]).includes(id))}
+function prefsOf(id){return S.mprefs[mKey(id)]||{}}
+function privOf(id){return S.mpriv[mKey(id)]||null}
+function dispName(first,last){first=(first||'').trim();last=(last||'').trim();return first+(last?' '+last[0].toUpperCase():'')}
+function tile(v,l,small){return `<div class="tile"><div class="v ${small?'sm':''}">${v}</div><div class="l">${l}</div></div>`}
+function checks(name,opts,sel){sel=sel||[];return `<div class="rigpick">${opts.map(o=>{const [v,l]=Array.isArray(o)?o:[o,o];return `<label><input type="checkbox" name="${name}" value="${esc(v)}" ${sel.includes(v)?'checked':''}>${esc(l)}</label>`}).join('')}</div>`}
+const SEARCH_ICON='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+
+/* ---------- directory ---------- */
+function viewMembers(){
+  const all=Object.entries(S.members);const t=today();
+  const pend=Object.entries(S.claims).filter(([,c])=>c.status!=='rejected');
+  const stats=[['current','Members',all.filter(([,m])=>m.status!=='inactive').length,'var(--navy)',1],
+    ['linked','Accounts linked',all.filter(([,m])=>m.linkedUser).length,'var(--ok)',1],
+    ...(canAdmin()?[['review','Needs details',all.filter(([,m])=>m.status==='review').length,'var(--warn)',1]]:[]),
+    ['x1','Sessions logged',allActs().filter(a=>a.date<t).length,'var(--red)',0],
+    ['x2','Upcoming bookings',allActs().filter(a=>a.date>=t).length,'#6b5ca5',0]];
+  const q=S.mq.trim().toLowerCase();
+  const list=all.filter(([id,m])=>{
+    if(S.mstatus==='current'&&m.status==='inactive')return false;
+    if(S.mstatus==='linked'&&!m.linkedUser)return false;
+    if(S.mstatus==='admins'&&!m.siteAdmin)return false;
+    if(['review','active','inactive'].includes(S.mstatus)&&m.status!==S.mstatus)return false;
+    if(S.mprog!=='all'&&!(m.programs||[]).includes(S.mprog))return false;
+    if(q&&!(`${m.displayName} ${m.firstName||''} ${m.lastName||''} ${(m.programs||[]).join(' ')}`.toLowerCase().includes(q)))return false;
+    return true}).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  const claimsHtml=canAdmin()&&pend.length?`<div class="sec claims"><h4>Profile requests · ${pend.length} waiting</h4>${pend.map(([uid,c])=>`<div class="item claim"><div><b>${esc((S.profiles[uid]&&S.profiles[uid].name)||'A member')}</b> <span class="muted">(sign-in account)</span> ${c.type==='existing'?`says they are <span class="lnk" data-member="${esc(c.memberId)}">${esc(mName(c.memberId))}</span>`:`is new: <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b> · ${esc((c.programs||[]).join(', ')||'no program')}`}${c.note?`<div class="muted" style="margin-top:3px">“${esc(c.note)}”</div>`:''}<div class="when">${fmtDate(c.at)}</div></div><div class="actions" style="margin:0;flex:none"><button class="btn sm pri" data-approve="${esc(uid)}">Approve</button><button class="btn sm" data-reject="${esc(uid)}">Decline</button></div></div>`).join('')}</div>`:'';
+  const progs=progNames().filter(p=>all.some(([,m])=>(m.programs||[]).includes(p)));
+  let body;
+  if(!all.length)body=`<div class="banner"><h3>No members yet</h3>${canAdmin()?'Add the first member with the button above.':'An admin needs to add the member list.'}</div>`;
+  else if(!list.length)body=`<div class="banner">No members match these filters.</div>`;
+  else if(S.mlayout==='list'){
+    body=`<table class="t"><thead><tr><th>Member</th><th>Programs</th><th class="hide-s">Sides</th><th>Sessions</th><th class="hide-s">Last on water</th>${canAdmin()?'<th class="hide-s">Status</th>':''}<th class="hide-s">Account</th></tr></thead><tbody>`+
+    list.map(([id,m])=>{const st=memberStats(id);return `<tr class="row" data-member="${esc(id)}"><td class="name"><span style="display:inline-flex;gap:8px;align-items:center">${avatar(id,26)}${esc(m.displayName)}</span></td><td>${esc((m.programs||[]).join(', '))}</td><td class="hide-s">${esc((prefsOf(id).sides||[]).join(', '))}</td><td>${st.past.length}</td><td class="hide-s">${st.last?fmtDate(st.last.date):'—'}</td>${canAdmin()?`<td class="hide-s">${m.status==='review'?'<span class="pill s-repair">Needs details</span>':m.status==='inactive'?'<span class="pill s-retired">Inactive</span>':'<span class="pill s-available">Active</span>'}</td>`:''}<td class="hide-s">${m.linkedUser?'<span class="lk">✓ Linked</span>':'<span class="muted">—</span>'}</td></tr>`}).join('')+`</tbody></table>`;
+  } else body=`<div class="grid">${list.map(([id,m])=>mcard(id,m)).join('')}</div>`;
+  return `
+  <div class="stats">${stats.map(([k,l,v,c,f])=>`<div class="stat ${f&&S.mstatus===k?'sel':''} ${f?'':'nf'}" ${f?`data-mstat="${k}"`:''}><div class="v">${v}</div><div class="l"><span class="dot" style="background:${c}"></span>${l}</div></div>`).join('')}</div>
+  ${claimsHtml}
+  ${adminRoster()}
+  <div class="toolbar">
+    <div class="search">${SEARCH_ICON}<input id="mq" placeholder="Search members…" value="${esc(S.mq)}"></div>
+    <div class="chips">${[['all','All'],...progs.map(p=>[p,p])].map(([k,l])=>`<button class="chip ${S.mprog===k?'on':''}" data-mprog="${esc(k)}">${esc(l)}</button>`).join('')}</div>
+    <select class="f" id="mStatus">${[['current','Current members'],['linked','Accounts linked'],['admins','Club admins'],...(canAdmin()?[['review','Needs details'],['active','Active only']]:[]),['inactive','Inactive']].map(([k,l])=>`<option value="${k}" ${S.mstatus===k?'selected':''}>${l}</option>`).join('')}</select>
+    <div class="chips">${[['grid','Cards'],['list','List']].map(([k,l])=>`<button class="chip ${S.mlayout===k?'on':''}" data-mlayout="${k}">${l}</button>`).join('')}</div>
+    ${canAdmin()?`<button class="btn pri" id="addMember">+ Add member</button>`:''}
+  </div>
+  ${body}`;
+}
+function mcard(id,m){
+  const st=memberStats(id);const pr=prefsOf(id);
+  return `<div class="boat mcard ${m.status==='inactive'?'retired':''}" data-member="${esc(id)}">
+   <div class="top">${avatar(id)}<div style="flex:1;min-width:0"><h3>${esc(m.displayName)}</h3><div class="tag">${esc((m.programs||[]).join(' · ')||'No program')}</div></div>${m.linkedUser?'<span class="lk" title="Linked to a claude.ai account">✓</span>':''}</div>
+   <div class="foot">${(pr.sides||[]).map(s=>`<span class="rig">${esc(s)}</span>`).join('')}${m.siteAdmin?'<span class="rig adm">Admin</span>':''}${(m.roles||[]).filter(r=>r!=='rower').map(r=>`<span class="rig cur">${esc(ROLES[r]||r)}</span>`).join('')}${canAdmin()&&m.status==='review'?'<span class="pill s-repair">Needs details</span>':''}${m.status==='inactive'?'<span class="pill s-retired">Inactive</span>':''}
+   <span class="tag" style="margin-left:auto">${st.past.length} session${st.past.length===1?'':'s'}${st.up.length?` · ${st.up.length} booked`:''}</span></div></div>`;
+}
+
+/* ---------- profile detail (drawer + my profile) ---------- */
+function memberDetail(id,inPage){
+  const m=S.members[id];const st=memberStats(id),pr=prefsOf(id),pv=privOf(id),self=!!S.me&&m.linkedUser===S.me,priv=canSeePrivate(id);
+  const crews=memberCrews(id);const reported=m.linkedUser?Object.entries(S.issues).filter(([,i])=>i.by===m.linkedUser):[];
+  const acts=[...st.up.map(a=>[a,true]),...st.past.map(a=>[a,false])].slice(0,25);
+  return `
+   ${canAdmin()&&m.status==='review'?`<div class="callout">${m.source==='sheet'?'Imported from the boat sign-out sheet with first name + last initial only. Add a full name and contact details, then set the status to Active.':esc(m.source||'This profile needs details.')}</div>`:''}
+   ${self&&!inPage?'':''}
+   <div class="tiles">${tile(st.past.length,'Sessions')}${tile(st.d30,'Last 30 days')}${tile(st.up.length,'Booked')}${tile(st.last?fmtDate(st.last.date):'—','Last on water',true)}</div>
+   <div class="sec"><h4>Rowing profile</h4><dl class="kv">
+     <dt>Programs</dt><dd>${esc((m.programs||[]).join(', ')||'—')}</dd>
+     <dt>Roles</dt><dd>${esc((m.roles||['rower']).map(r=>ROLES[r]||r).join(', '))}</dd>
+     <dt>Sides / seats</dt><dd>${esc((pr.sides||[]).join(', ')||'—')}</dd>
+     <dt>Experience</dt><dd>${esc(pr.experience||'—')}</dd>
+     <dt>PCOC</dt><dd>${m.pcoc?`<span class="pill s-available">Registered</span>${m.pcocDate?' <span class="muted">'+fmtDate(m.pcocDate)+'</span>':''}`:'<span class="muted">Not registered</span>'}</dd>
+     <dt>Designated crews</dt><dd>${crews.length?crews.map(([,c])=>`<div>${esc(c.day||'')}: ${(c.memberIds||[]).filter(x=>x!==id).map(x=>`<span class="lnk" data-member="${esc(x)}">${esc(mName(x))}</span>`).join(', ')}</div>`).join(''):'—'}</dd>
+     ${pr.bio?`<dt>About</dt><dd>${esc(pr.bio)}</dd>`:''}
+   </dl></div>
+   ${priv?`<div class="sec"><h4>Contact & private details <span class="lock">🔒 ${self?'visible to you and admins only':'visible to admins and this member only'}</span></h4><dl class="kv">
+     <dt>Full name</dt><dd>${esc([m.firstName,m.lastName].filter(Boolean).join(' ')||'—')}</dd>
+     <dt>Email</dt><dd>${pv&&pv.email?esc(pv.email):'—'}</dd>
+     <dt>Phone</dt><dd>${pv&&pv.phone?esc(pv.phone):'—'}</dd>
+     <dt>Emergency contact</dt><dd>${pv&&pv.emergencyName?esc(pv.emergencyName)+(pv.emergencyPhone?' · '+esc(pv.emergencyPhone):''):'—'}</dd>
+     <dt>Weight</dt><dd>${pv&&pv.weightKg?`${pv.weightKg} kg · ${Math.round(pv.weightKg*2.2046)} lb`:'—'}</dd>
+     ${pv&&pv.medical?`<dt>Medical notes</dt><dd>${esc(pv.medical)}</dd>`:''}
+     ${canAdmin()&&m.linkedUser?`<dt>Sign-in account</dt><dd>${esc((S.profiles[m.linkedUser]&&S.profiles[m.linkedUser].name)||'Linked')}</dd>`:''}
+   </dl></div>`:''}
+   <div class="sec"><h4>Sessions</h4>${acts.length?acts.map(([a,up])=>`<div class="item act"><div><b>${fmtDate(a.date)}</b> ${up?'<span class="pill s-dnr" style="background:#ece8f6;color:#5b4b96">Booked</span>':''}<div class="when">${a.sessionId?`<span class="lnk" data-gosess="${esc(a.sessionId)}|${a.date}">${esc(a.session)}</span>`:esc(a.session||a.program||'')}</div></div><div>${a.boatId&&S.boats[a.boatId]?`<span class="bchip" data-boat="${esc(a.boatId)}">${esc(a.rig||S.boats[a.boatId].currentRig||'')} ${esc(S.boats[a.boatId].name)}</span>`:a.type==='erg'?'<span class="tag">Erg</span>':esc(a.boatText||'')}</div></div>`).join(''):'<div class="empty">No sessions recorded yet.</div>'}</div>
+   <div class="sec"><h4>Boats rowed</h4>${st.topBoats.length?st.topBoats.map(([b,n])=>`<span class="bchip" data-boat="${esc(b)}">${esc(S.boats[b]?S.boats[b].name:b)} <b>${n}</b></span>`).join(''):'<div class="empty">No boat history yet.</div>'}</div>
+   ${reported.length?`<div class="sec"><h4>Damage reports filed</h4>${reported.map(([,i])=>`<div class="item"><span class="bchip" data-boat="${esc(i.boatId)}">${esc(S.boats[i.boatId]?S.boats[i.boatId].name:'Boat')}</span> ${esc(i.description)}<div class="when">${fmtDate(i.at)} · ${i.status==='resolved'?'resolved':'open'}</div></div>`).join('')}</div>`:''}
+   <div class="actions">${self?`<button class="btn pri" data-act="editSelf">Edit my details</button>`:''}${canAdmin()?`<button class="btn" data-act="edit">Edit member</button>${m.status!=='inactive'?`<button class="btn" data-act="inactive">Mark inactive</button>`:`<button class="btn" data-act="active">Reactivate</button>`}${m.siteAdmin?(S.me&&m.linkedUser===S.me?'':`<button class="btn" data-act="unadmin">Remove admin</button>`):`<button class="btn" data-act="admin">Make admin</button>`}<button class="btn" data-act="merge">Merge duplicate…</button>${m.linkedUser?`<button class="btn dan" data-act="unlink">Unlink account</button>`:''}`:''}</div>`;
+}
+function bindMemberDetail(root,id){
+  root.querySelectorAll('[data-member]').forEach(el=>el.onclick=e=>{e.stopPropagation();openMember(el.dataset.member)});
+  root.querySelectorAll('[data-boat]').forEach(el=>el.onclick=e=>{e.stopPropagation();openBoat(el.dataset.boat)});
+  root.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
+  root.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{const a=el.dataset.act;
+    if(a==='admin')makeAdminForm(id);else if(a==='unadmin')removeAdminForm(id);else if(a==='editSelf')selfForm(id);else if(a==='edit')memberForm(id);else if(a==='merge')mergeForm(id);else if(a==='unlink')unlinkForm(id);
+    else if(a==='inactive'||a==='active')guarded(()=>S.db.doc('members/'+id).update({status:a==='active'?'active':'inactive',updatedAt:nowIso()}),a==='active'?'Member reactivated':'Marked inactive')});
+}
+function openMember(id){S.open=null;S.openM=id;renderMemberDrawer();$('#drawer').classList.add('on');$('#scrim').classList.add('on');$('#drawer').setAttribute('aria-hidden','false')}
+function renderMemberDrawer(){
+  const id=S.openM,m=S.members[id],d=$('#drawer');
+  if(!m){d.innerHTML=`<div class="dh"><button class="x" id="dx">×</button><h2>Member removed</h2></div>`;$('#dx').onclick=closeBoat;return}
+  d.innerHTML=`<div class="dh"><button class="x" id="dx" aria-label="Close">×</button>
+   <div style="display:flex;gap:14px;align-items:center">${avatar(id,56)}<div><h2>${esc(m.displayName)}</h2>
+   <div class="tag" style="margin-top:4px">${esc((m.programs||[]).join(' · ')||'No program')}${m.linkedUser?' · <span class="lk">✓ account linked</span>':''}${m.siteAdmin?' · <b style="color:var(--red-d)">Club admin</b>':''}${m.status==='inactive'?' · Inactive':''}</div></div></div></div>
+   <div class="db">${memberDetail(id,false)}</div>`;
+  $('#dx').onclick=closeBoat;bindMemberDetail(d,id);
+}
+
+/* ---------- my profile / claim ---------- */
+function viewMe(){
+  if(!S.me)return `<div class="banner"><h3>Sign in to see your profile</h3>Your member profile is linked to the account you sign in with.</div>`;
+  const mid=myMemberId();
+  if(mid){const m=S.members[mid];return `<div class="page-h"><div style="display:flex;gap:14px;align-items:center">${avatar(mid,60)}<div><h2>${esc(m.displayName)}</h2><p>${esc((m.programs||[]).join(' · ')||'No program yet')}</p></div></div></div><div class="mepage" id="mePage">${memberDetail(mid,true)}</div>`}
+  const c=S.claims[S.me];
+  if(c&&c.status!=='rejected')return `<div class="page-h"><div><h2>My profile</h2></div></div><div class="sec" style="max-width:640px"><h4>Request pending</h4><p style="margin:0 0 6px">You asked to be linked to ${c.type==='existing'?`<b>${esc(mName(c.memberId))}</b>`:`a new profile for <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b>`}.</p><p class="muted" style="margin:0">An admin will review it. Your profile will appear here once it's approved.</p><div class="actions"><button class="btn" id="withdraw">Withdraw request</button></div></div>`;
+
+  const q=S.claimQ.trim().toLowerCase();
+  const cands=q?Object.entries(S.members).filter(([,m])=>!m.linkedUser&&m.status!=='inactive'&&`${m.displayName} ${m.firstName||''} ${m.lastName||''}`.toLowerCase().includes(q)).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName)).slice(0,30):[];
+  return `<div class="page-h"><div><h2>Find your member profile</h2><p>Most members were brought over from the boat sign-out sheet as first name + last initial. Find yourself and an admin will confirm it's you.</p></div></div>
+  ${c&&c.status==='rejected'?`<div class="callout" style="max-width:720px">Your last request wasn't approved${c.reason?': '+esc(c.reason):'.'} You can try again below.</div>`:''}
+  <div class="sec" style="max-width:720px">
+   <div class="search" style="margin-bottom:12px">${SEARCH_ICON}<input id="claimQ" placeholder="Type your first name…" value="${esc(S.claimQ)}"></div>
+   ${q?(cands.length?cands.map(([id,m])=>`<div class="item claim"><div style="display:flex;gap:10px;align-items:center">${avatar(id,34)}<div><b>${esc(m.displayName)}</b><div class="tag">${esc((m.programs||[]).join(' · '))} · ${memberStats(id).past.length} sessions</div></div></div><button class="btn sm pri" data-claim="${esc(id)}">This is me</button></div>`).join(''):'<div class="empty">No unclaimed members match that name.</div>'):'<div class="empty">Start typing to search.</div>'}
+   <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">Not on the list? <button class="btn sm" id="claimNew">Create my profile</button></div>
+  </div>`;
+}
+function bindMembers(){
+  const m=$('#main');
+  m.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
+  m.querySelectorAll('[data-mstat]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.mstat;render()});
+  m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
+  m.querySelectorAll('[data-mlayout]').forEach(el=>el.onclick=()=>{S.mlayout=el.dataset.mlayout;try{localStorage.setItem('memberLayout',S.mlayout)}catch(e){};render()});
+  m.querySelectorAll('[data-unadmin]').forEach(el=>el.onclick=()=>removeAdminForm(el.dataset.unadmin));
+  m.querySelectorAll('[data-adminhow]').forEach(el=>el.onclick=()=>adminHow(el.dataset.adminhow));
+  {const a=$('#addAdmin');if(a)a.onclick=()=>makeAdminForm(null)}
+  m.querySelectorAll('[data-approve]').forEach(el=>el.onclick=()=>approveClaim(el.dataset.approve,el));
+  m.querySelectorAll('[data-reject]').forEach(el=>el.onclick=()=>rejectForm(el.dataset.reject));
+  m.querySelectorAll('[data-claim]').forEach(el=>el.onclick=()=>claimForm(el.dataset.claim));
+  const live=(sel,key)=>{const q=$(sel);if(q)q.oninput=()=>{S[key]=q.value;const p=q.selectionStart;render();const n=$(sel);n.focus();n.setSelectionRange(p,p)}};
+  live('#mq','mq');live('#claimQ','claimQ');
+  const ms=$('#mStatus');if(ms)ms.onchange=()=>{S.mstatus=ms.value;render()};
+  const am=$('#addMember');if(am)am.onclick=()=>memberForm(null);
+  const cn=$('#claimNew');if(cn)cn.onclick=()=>claimForm(null);
+  const wd=$('#withdraw');if(wd)wd.onclick=()=>guarded(()=>S.db.doc('claims/'+S.me).delete(),'Request withdrawn');
+  const mp=$('#mePage');if(mp)bindMemberDetail(mp,myMemberId());
+}
+
+/* ---------- forms ---------- */
+function weightFields(kg){return `${fld('Weight',`<div style="display:flex;gap:6px"><input name="weight" type="number" step="0.1" min="20" max="200" value="${kg?esc(kg):''}"><select name="wunit" style="width:80px"><option value="kg">kg</option><option value="lb">lb</option></select></div>`,'','Used to match crews to boat weight classes')}`}
+function toKg(fd){if(!fd.weight)return null;const v=+fd.weight;return Math.round((fd.wunit==='lb'?v/2.2046:v)*10)/10}
+function contactFields(pv){pv=pv||{};return `
+    ${fld('Email',`<input name="email" type="email" value="${esc(pv.email||'')}">`)}
+    ${fld('Phone',`<input name="phone" type="tel" value="${esc(pv.phone||'')}">`)}
+    ${fld('Emergency contact name',`<input name="emergencyName" value="${esc(pv.emergencyName||'')}">`)}
+    ${fld('Emergency contact phone',`<input name="emergencyPhone" type="tel" value="${esc(pv.emergencyPhone||'')}">`)}
+    ${weightFields(pv.weightKg)}
+    ${fld('Medical notes',`<input name="medical" value="${esc(pv.medical||'')}" placeholder="Anything coaches should know">`)}`}
+function privFrom(fd){return {email:fd.email.trim(),phone:fd.phone.trim(),emergencyName:fd.emergencyName.trim(),emergencyPhone:fd.emergencyPhone.trim(),weightKg:toKg(fd),medical:fd.medical.trim(),updatedAt:nowIso()}}
+
+function memberForm(id){
+  const m=id?S.members[id]:{programs:[],roles:['rower'],status:'active'};const pr=id?prefsOf(id):{};const pv=id?(privOf(id)||{}):{};
+  openModal(`<h3>${id?'Edit '+esc(m.displayName):'Add a member'}</h3><form id="mform"><div class="fg">
+    ${id?avatarField(id):''}
+    ${fld('First name',`<input name="firstName" required value="${esc(m.firstName||'')}">`)}
+    ${fld('Last name',`<input name="lastName" value="${esc(m.lastName||'')}">`)}
+    ${fld('Display name',`<input name="displayName" value="${esc(m.displayName||'')}" placeholder="e.g. Alice C">`,'full','Shown in the directory and on sign-ups. Leave blank to use first name + last initial.')}
+    ${fld('Programs',checks('programs',progNames(),m.programs),'full')}
+    ${fld('Roles',checks('roles',Object.entries(ROLES),m.roles||['rower']),'')}
+    ${fld('Status',`<select name="status">${Object.entries(M_STATUS).map(([k,l])=>`<option value="${k}" ${m.status===k?'selected':''}>${l}</option>`).join('')}</select>`)}
+    ${fld('Sides / seats',checks('sides',SIDES,pr.sides),'')}
+    ${fld('Experience',`<select name="experience"><option value="">—</option>${EXPERIENCE.map(x=>`<option ${pr.experience===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+    ${fld('PCOC registered',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="pcoc" value="1" ${m.pcoc?'checked':''}> Cleared for off-program rowing</label>`)}
+    ${fld('PCOC date',`<input type="date" name="pcocDate" value="${esc(m.pcocDate||'')}">`)}
+    <div class="full fsub">Private details · visible to admins and the member only</div>
+    ${contactFields(pv)}
+  </div>${formFoot(id?'Save changes':'Add member')}</form>`,()=>{let av={file:null,removed:false};if(id)wireAvatarField(id).then(x=>av=x);wireForm({
+    validate:fd=>!fd.firstName.trim()?'First name is required.':null,
+    msg:id?'Member updated':'Member added',
+    save:async fd=>{
+      const dn=fd.displayName.trim()||dispName(fd.firstName,fd.lastName);
+      const data={firstName:fd.firstName.trim(),lastName:fd.lastName.trim(),displayName:dn,programs:fd._c.programs||[],roles:(fd._c.roles||[]).length?fd._c.roles:['rower'],
+        status:fd.status,pcoc:!!(fd._c.pcoc||[]).length,pcocDate:fd.pcocDate||'',updatedAt:nowIso()};
+      let mid=id;
+      if(id){if(data.status==='review'&&data.lastName&&m.status==='review')data.status='active';await S.db.doc('members/'+id).update(data)}
+      else{mid='m_'+slugify(dn);if(S.members[mid])mid+='-'+Date.now().toString(36);await S.db.doc('members/'+mid).set({...data,linkedUser:null,createdAt:nowIso(),source:'Added by admin'})}
+      const key=id?mKey(id):mid;
+      const ph=id?await savePhoto(av,pr.photo):undefined;
+      await S.db.doc('memberPrefs/'+key).set({...(id?prefsOf(id):{}),sides:fd._c.sides||[],experience:fd.experience,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
+      const p=privFrom(fd);if(Object.values(p).some(v=>v&&v!==p.updatedAt)||privOf(mid))await S.db.doc('memberPrivate/'+key).set({...(privOf(mid)||{}),...p});
+    }})});
+}
+function selfForm(id){
+  const pr=prefsOf(id),pv=privOf(id)||{};let av={file:null,removed:false};
+  openModal(`<h3>My details</h3><form id="mform"><div class="fg">
+    ${avatarField(id)}
+    ${fld('Sides / seats I row',checks('sides',SIDES,pr.sides),'full')}
+    ${fld('Experience',`<select name="experience"><option value="">—</option>${EXPERIENCE.map(x=>`<option ${pr.experience===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+    ${fld('About me',`<input name="bio" value="${esc(pr.bio||'')}" placeholder="Optional, shown to members">`)}
+    ${fld('Calendar',`<label class="tog" style="padding-top:4px"><input type="checkbox" name="calPrompt" value="1" ${pr.calPrompt!==false?'checked':''}> Offer to add sessions to my calendar when I book</label>`,'full','Your email decides which calendar is suggested first.')}
+    <div class="full fsub">Private details · visible to you and admins only</div>
+    ${contactFields(pv)}
+  </div><p class="muted" style="font-size:12px;margin:10px 0 0">Your name, programs and PCOC status are managed by admins. Ask a coach if they need updating.</p>${formFoot('Save')}</form>`,()=>{wireAvatarField(id).then(x=>av=x);wireForm({msg:'Your details are saved',
+    save:async fd=>{
+      const ph=await savePhoto(av,pr.photo);
+      await S.db.doc('memberPrefs/'+S.me).set({...prefsOf(id),sides:fd._c.sides||[],experience:fd.experience,bio:fd.bio.trim(),calPrompt:!!(fd._c.calPrompt||[]).length,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
+      await S.db.doc('memberPrivate/'+S.me).set(privFrom(fd));
+    }})});
+}
+function claimForm(mid){
+  const m=mid&&S.members[mid];
+  openModal(`<h3>${m?'Is this you? '+esc(m.displayName):'Create my profile'}</h3><form id="mform"><div class="fg">
+    ${m?'':`${fld('First name',`<input name="firstName" required>`)}${fld('Last name',`<input name="lastName" required>`)}${fld('Programs',checks('programs',progNames(),[]),'full')}`}
+    ${m?`${fld('Your full last name',`<input name="lastName" placeholder="Helps the admin confirm it's you">`,'full')}`:''}
+    ${fld('Email',`<input name="email" type="email">`)}
+    ${fld('Phone',`<input name="phone" type="tel">`)}
+    ${fld('Note for the admin',`<input name="note" placeholder="e.g. I row Saturday Masters">`,'full')}
+  </div><p class="muted" style="font-size:12px;margin:10px 0 0">An admin confirms each request before your account is linked. Your email and phone are only visible to admins.</p>${formFoot('Send request')}</form>`,()=>wireForm({msg:'Request sent – an admin will confirm shortly',
+    validate:fd=>!m&&!fd.firstName.trim()?'First name is required.':null,
+    save:async fd=>{
+      const base={note:fd.note.trim(),email:fd.email.trim(),phone:fd.phone.trim(),lastName:(fd.lastName||'').trim(),status:'pending',at:nowIso()};
+      await S.db.doc('claims/'+S.me).set(m?{...base,type:'existing',memberId:mid}:{...base,type:'new',firstName:fd.firstName.trim(),programs:fd._c.programs||[]});
+    }}));
+}
+async function approveClaim(uid,btn){
+  const c=S.claims[uid];if(!c)return;if(btn)btn.disabled=true;
+  await guarded(async()=>{
+    let mid=c.memberId;
+    if(c.type==='existing'){
+      const m=S.members[mid];if(!m){toast('That member no longer exists – decline instead');return}
+      if(m.linkedUser&&m.linkedUser!==uid){toast('That member is already linked to another account');return}
+      const upd={linkedUser:uid,linkedAt:nowIso(),updatedAt:nowIso()};
+      if(c.lastName&&!m.lastName){upd.lastName=c.lastName}
+      if(m.status==='inactive')upd.status='active';
+      await S.db.doc('members/'+mid).update(upd);
+    } else {
+      const dn=dispName(c.firstName,c.lastName);mid='m_'+slugify(dn);if(S.members[mid])mid+='-'+Date.now().toString(36);
+      await S.db.doc('members/'+mid).set({displayName:dn,firstName:c.firstName||'',lastName:c.lastName||'',programs:c.programs||[],roles:['rower'],status:'active',pcoc:false,linkedUser:uid,linkedAt:nowIso(),createdAt:nowIso(),source:'Created from a member request'});
+    }
+    const oldP=S.mpriv[mid],oldPr=S.mprefs[mid];
+    const priv={...(oldP||{})};if(c.email)priv.email=c.email;if(c.phone)priv.phone=c.phone;
+    if(Object.keys(priv).length)await S.db.doc('memberPrivate/'+uid).set({...priv,updatedAt:nowIso()});
+    if(oldP)await S.db.doc('memberPrivate/'+mid).delete();
+    if(oldPr){await S.db.doc('memberPrefs/'+uid).set(oldPr);await S.db.doc('memberPrefs/'+mid).delete()}
+    await S.db.doc('accounts/'+uid).set({memberId:mid,linkedAt:nowIso()});
+    if(S.members[mid]&&S.members[mid].siteAdmin)await S.db.doc('admins/'+uid).set({memberId:mid,since:nowIso()});
+    await S.db.doc('claims/'+uid).delete();
+  },'Approved – account linked');
+  if(btn)btn.disabled=false;
+}
+function rejectForm(uid){
+  openModal(`<h3>Decline request</h3><form id="mform"><div class="fg">${fld('Reason (shown to the member)',`<input name="reason" placeholder="e.g. That profile belongs to someone else">`,'full')}</div>${formFoot('Decline',true)}</form>`,
+    ()=>wireForm({msg:'Request declined',save:fd=>S.db.doc('claims/'+uid).update({status:'rejected',reason:fd.reason.trim(),reviewedAt:nowIso()})}));
+}
+function unlinkForm(id){
+  const m=S.members[id];
+  openModal(`<h3>Unlink ${esc(m.displayName)}'s account?</h3><p class="muted" style="margin-top:-6px">The member record and history stay. The sign-in account loses access to this profile and would need to send a new request.</p><form id="mform">${formFoot('Unlink',true)}</form>`,()=>wireForm({msg:'Account unlinked',
+    save:async()=>{const uid=m.linkedUser;const p=S.mpriv[uid],pr=S.mprefs[uid];
+      if(p){await S.db.doc('memberPrivate/'+id).set(p);await S.db.doc('memberPrivate/'+uid).delete()}
+      if(pr){await S.db.doc('memberPrefs/'+id).set(pr);await S.db.doc('memberPrefs/'+uid).delete()}
+      await S.db.doc('accounts/'+uid).delete();if(S.admins[uid])await S.db.doc('admins/'+uid).delete();
+      await S.db.doc('members/'+id).update({linkedUser:null,updatedAt:nowIso()})}}));
+}
+function mergeForm(id){
+  const m=S.members[id];
+  const opts=Object.entries(S.members).filter(([x])=>x!==id).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  openModal(`<h3>Merge ${esc(m.displayName)} into…</h3><p class="muted" style="margin-top:-6px">Use this when the same person was imported twice (e.g. “Missy B” and “Melissa B”). Sessions, programs and crews move to the member you pick, and <b>${esc(m.displayName)}</b> is removed.</p><form id="mform"><div class="fg">
+    ${fld('Keep this member',`<select name="target" required><option value="">Choose…</option>${opts.map(([x,o])=>`<option value="${esc(x)}">${esc(o.displayName)}${o.programs&&o.programs.length?' · '+esc(o.programs.join(', ')):''}</option>`).join('')}</select>`,'full')}
+  </div>${formFoot('Merge',true)}</form>`,()=>wireForm({msg:'Members merged',
+    validate:fd=>{if(!fd.target)return'Pick a member to keep.';const t=S.members[fd.target];if(t&&t.linkedUser&&m.linkedUser)return'Both members are linked to accounts – unlink one first.';return null},
+    save:async fd=>{
+      const tid=fd.target,t=S.members[tid];
+      for(const [aid,a] of Object.entries(S.activity))if(a.memberId===id)await S.db.doc('activity/'+aid).update({memberId:tid});
+      for(const [cid,c] of Object.entries(S.crews))if((c.memberIds||[]).includes(id))await S.db.doc('crews/'+cid).update({memberIds:[...new Set(c.memberIds.map(x=>x===id?tid:x))]});
+      const upd={programs:[...new Set([...(t.programs||[]),...(m.programs||[])])],updatedAt:nowIso()};
+      if(!t.lastName&&m.lastName)upd.lastName=m.lastName;if(m.pcoc&&!t.pcoc){upd.pcoc=true;upd.pcocDate=m.pcocDate||''}
+      if(m.linkedUser&&!t.linkedUser)upd.linkedUser=m.linkedUser;
+      await S.db.doc('members/'+tid).update(upd);
+      if(!m.linkedUser){
+        const sk=id,tk=upd.linkedUser||mKey(tid);
+        if(S.mpriv[sk]){if(!S.mpriv[tk])await S.db.doc('memberPrivate/'+tk).set(S.mpriv[sk]);await S.db.doc('memberPrivate/'+sk).delete()}
+        if(S.mprefs[sk]){if(!S.mprefs[tk])await S.db.doc('memberPrefs/'+tk).set(S.mprefs[sk]);await S.db.doc('memberPrefs/'+sk).delete()}
+      } else if(!t.linkedUser){
+        if(S.mpriv[tid]){if(!S.mpriv[m.linkedUser])await S.db.doc('memberPrivate/'+m.linkedUser).set(S.mpriv[tid]);await S.db.doc('memberPrivate/'+tid).delete()}
+        if(S.mprefs[tid]){if(!S.mprefs[m.linkedUser])await S.db.doc('memberPrefs/'+m.linkedUser).set(S.mprefs[tid]);await S.db.doc('memberPrefs/'+tid).delete()}
+      }
+      if(m.linkedUser&&!t.linkedUser)await S.db.doc('accounts/'+m.linkedUser).set({memberId:tid,linkedAt:nowIso()});
+      await S.db.doc('members/'+id).delete();
+      S.openM=tid;
+    }}));
+}
+
+/* ---------- boat drawer: recent crews ---------- */
+function boatCrewsHtml(boatId){
+  const t=today();const groups={};
+  for(const a of allActs()){if(a.boatId!==boatId||a.date>=t)continue;const k=a.date+'|'+(a.session||'')+'|'+(a.bookingId||'');(groups[k]=groups[k]||{date:a.date,session:a.session,ids:[]}).ids.push(a.memberId)}
+  const list=Object.values(groups).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  return `<div class="sec"><h4>Past crews</h4>${list.length?list.map(g=>`<div class="item"><b>${fmtDate(g.date)}</b>${g.date>t?' <span class="pill" style="background:#ece8f6;color:#5b4b96">Booked</span>':''} <span class="muted">· ${esc(g.session||'')}</span><div style="margin-top:3px">${g.ids.map(x=>`<span class="lnk" data-member="${esc(x)}">${esc(mName(x))}</span>`).join(', ')}</div></div>`).join(''):'<div class="empty">No sign-ups recorded for this boat yet.</div>'}</div>`;
+}
+
+/* =================== PROGRAMS MODULE =================== */
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS_L=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const CREW_MIX=['100% Program Rowers','75% Program Rowers','50% Program Rowers','Designated Crew'];
+const PCOLORS=['#ea3c42','#2b6cb0','#2c7a57','#a86b12','#6b5ca5','#0f766e','#c2410c','#86888b'];
+Object.assign(S,{programs:{},sessions:{},bookings:{},occ:{},week:null,sess:null,pscope:null});
+Object.assign(S.loaded,{programs:false,sessions:false,bookings:false});
+
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const pd=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12)};
+const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)};
+const mondayOf=s=>{const d=pd(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return ds(d)};
+function fmtTime(t){if(!t)return'';const [h,m]=t.split(':').map(Number);return `${((h+11)%12)+1}${m?':'+pad(m):''} ${h>=12?'pm':'am'}`}
+function timeRange(s){return s.start?`${fmtTime(s.start)}${s.end?' – '+fmtTime(s.end):''}`:'Time TBC'}
+function dayLabel(d,long){return pd(d).toLocaleDateString(undefined,long?{weekday:'long',month:'long',day:'numeric'}:{weekday:'short',month:'short',day:'numeric'})}
+const progNames=()=>{const n=Object.values(S.programs).filter(p=>p.active!==false).sort((a,b)=>(a.order||0)-(b.order||0)).map(p=>p.name);return n.length?n:M_PROGRAMS};
+const occKey=(sid,d)=>sid+'_'+d.replace(/-/g,'');
+const occ=(sid,d)=>S.occ[occKey(sid,d)]||{};
+const progOf=sid=>{const s=S.sessions[sid];return (s&&S.programs[s.programId])||{}};
+const eligNames=sid=>{const s=S.sessions[sid];return s&&s.eligible&&s.eligible.length?s.eligible:[progOf(sid).name]};
+const eligible=(mid,sid)=>{const m=S.members[mid];return !!m&&(m.programs||[]).some(p=>eligNames(sid).includes(p))};
+const capacity=(sid,d)=>occ(sid,d).capacity||(S.sessions[sid]||{}).capacity||0;
+const coachOf=(sid,d)=>occ(sid,d).coach||(S.sessions[sid]||{}).coach||'';
+const safetyOf=(sid,d)=>occ(sid,d).safety||(S.sessions[sid]||{}).safety||'';
+function sessBookings(sid,d){return Object.entries(S.bookings).filter(([,b])=>b.sessionId===sid&&b.date===d&&bMembers(b).length).sort((a,b)=>(a[1].erg||0)-(b[1].erg||0)||String(a[1].at).localeCompare(String(b[1].at)))}
+function nextErg(sid,d){const used=new Set(sessBookings(sid,d).map(([,b])=>b.erg));for(let i=1;i<=(capacity(sid,d)||99);i++)if(!used.has(i))return i;return null}
+const bMembers=b=>[...(b.crew||[]),b.cox].filter(Boolean);
+function windowState(sid,d){
+  const s=S.sessions[sid],p=progOf(sid);const days=p.opensDays==null?6:+p.opensDays;
+  const now=new Date();const openAt=pd(addDays(d,-days));openAt.setHours(0,0,0,0);
+  const st=pd(d);if(s&&s.start){const [h,m]=s.start.split(':').map(Number);st.setHours(h,m,0,0)}else st.setHours(23,59,0,0);
+  if(now<openAt)return {state:'soon',at:ds(openAt)};if(now>st)return {state:'closed'};return {state:'open'};
+}
+function myBookingIn(sid,d){const me=myMemberId();if(!me)return null;return sessBookings(sid,d).find(([,b])=>bMembers(b).includes(me))||null}
+function goSession(sid,d){closeBoat();location.hash='s-'+sid+'-'+d.replace(/-/g,'')}
+function seatsFor(rig){const n=parseInt(rig,10)||1;return {rowers:n,cox:/\+/.test(rig)}}
+
+/* person-session records from imported history + bookings (used by member stats & boat crews) */
+function allActs(){
+  const out=[];for(const a of Object.values(S.activity))out.push(a);
+  for(const [bid,b] of Object.entries(S.bookings)){if(!bMembers(b).length)continue;const s=S.sessions[b.sessionId]||{};
+    for(const mid of bMembers(b))out.push({memberId:mid,date:b.date,session:s.title||'Session',program:progOf(b.sessionId).name||'',type:s.type==='erg'?'erg':'row',boatId:b.boatId||null,rig:b.rig||'',sessionId:b.sessionId,bookingId:bid})}
+  return out;
+}
+
+/* ---------- weekly schedule ---------- */
+function viewPrograms(){
+  if(S.sess)return viewSession();
+  const wk=S.week||mondayOf(today()),t=today(),me=myMemberId();
+  const mine=me?(S.members[me].programs||[]):[];
+  const scope=S.pscope||(mine.length?'mine':'all');
+  const list=Object.entries(S.sessions).filter(([,s])=>s.active!==false).filter(([id])=>scope==='all'||eligNames(id).some(n=>mine.includes(n)));
+  const progs=Object.entries(S.programs).filter(([,p])=>p.active!==false).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+  const upcoming=me?allActs().filter(a=>a.memberId===me&&a.bookingId&&a.date>=t).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6):[];
+  const days=[0,1,2,3,4,5,6].map(i=>addDays(wk,i));
+  return `<div class="page-h"><div><h2>Week of ${pd(wk).toLocaleDateString(undefined,{month:'long',day:'numeric'})}</h2><p>${scope==='mine'?'Sessions for your programs.':'All club sessions.'} Tap a session to book a boat, join a crew or sign up for an erg.</p></div>
+    <div class="actions" style="margin:0">
+      <div class="chips"><button class="chip" data-wk="-7" aria-label="Previous week">‹</button><button class="chip ${wk===mondayOf(t)?'on':''}" data-wk="0">This week</button><button class="chip" data-wk="7" aria-label="Next week">›</button></div>
+      ${mine.length?`<div class="chips">${[['mine','My programs'],['all','All']].map(([k,l])=>`<button class="chip ${scope===k?'on':''}" data-pscope="${k}">${l}</button>`).join('')}</div>`:''}
+      ${canAdmin()?`<a class="btn" href="#manage">Manage programs</a>`:''}
+    </div></div>
+  ${!me&&S.me&&canMember()?`<div class="callout">Link your member profile to book sessions. <a href="#me">Go to My profile →</a></div>`:''}
+  ${upcoming.length?`<div class="sec mybk"><h4><span>Your upcoming sessions</span><button class="btn sm" id="allIcs">📅 Add all to calendar</button></h4><div class="mybk-row">${upcoming.map(a=>`<div class="mb" data-sess="${esc(a.sessionId)}" data-date="${a.date}" style="--pc:${esc(progOf(a.sessionId).color||'#888')}"><button class="calmini" data-mcal="${esc(a.bookingId)}" title="Add to calendar" aria-label="Add to calendar">📅</button><b>${dayLabel(a.date)}</b><div>${esc(a.session)}</div><div class="tag">${a.boatId&&S.boats[a.boatId]?esc((a.rig||'')+' '+S.boats[a.boatId].name):a.type==='erg'?'Erg':'Boat TBC'}</div></div>`).join('')}</div></div>`:''}
+  <div class="legend">${progs.map(([,p])=>`<span><i style="background:${esc(p.color||'#888')}"></i>${esc(p.name)}</span>`).join('')}</div>
+  ${!Object.keys(S.sessions).length?`<div class="banner"><h3>No sessions yet</h3>${canAdmin()?'Set up programs and their weekly sessions under Manage programs.':'Programs haven’t been set up yet.'}</div>`:
+  `<div class="week">${days.map((d,i)=>{const items=list.filter(([,s])=>+s.weekday===i).sort((a,b)=>String(a[1].start).localeCompare(String(b[1].start)));
+    return `<div class="day ${d===t?'today':''}"><h4>${DAYS[i]} <span>${pd(d).getDate()}</span></h4>${items.length?items.map(([id,s])=>sessCard(id,s,d)).join(''):'<div class="none">—</div>'}</div>`}).join('')}</div>`}`;
+}
+function sessCard(id,s,d){
+  const p=progOf(id),o=occ(id,d),bk=sessBookings(id,d),cap=capacity(id,d),w=windowState(id,d),mine=myBookingIn(id,d);
+  const open=bk.filter(([,b])=>b.open&&(b.crew||[]).some(x=>!x)).length;
+  return `<div class="sc ${o.cancelled?'cx':''} ${w.state==='closed'?'past':''}" data-sess="${esc(id)}" data-date="${d}" style="--pc:${esc(p.color||'#888')}">
+   <div class="sc-t">${esc(timeRange(s))}</div><div class="sc-n">${esc(s.title)}</div>
+   <div class="sc-m">${s.type==='erg'?'Erg':'On water'}${coachOf(id,d)?' · '+esc(coachOf(id,d)):''}</div>
+   <div class="sc-f">${o.cancelled?'<span class="pill s-dnr">Cancelled</span>':mine?'<span class="pill s-available">✓ Booked</span>':w.state==='soon'?`<span class="tag">Opens ${pd(w.at).toLocaleDateString(undefined,{weekday:'short'})}</span>`:''}
+   ${!o.cancelled&&cap?`<span class="cap"><i style="width:${Math.min(100,bk.length/cap*100)}%"></i></span><span class="tag">${bk.length}/${cap}</span>`:(!o.cancelled&&bk.length?`<span class="tag">${bk.length} booked</span>`:'')}
+   ${open&&!o.cancelled?`<span class="pill pv">${open} open seat${open>1?'s':''}</span>`:''}</div></div>`;
+}
+
+/* ---------- session sign-out sheet ---------- */
+function viewSession(){
+  const {id,date:d}=S.sess,s=S.sessions[id];
+  if(!s)return `<div class="page-h"><div><a href="#programs" class="lnk">‹ Back to schedule</a><h2>Session not found</h2></div></div>`;
+  const p=progOf(id),o=occ(id,d),bk=sessBookings(id,d),cap=capacity(id,d),w=windowState(id,d),me=myMemberId(),mine=myBookingIn(id,d),erg=s.type==='erg';
+  const full=!!cap&&bk.length>=cap;
+  const canBook=!o.cancelled&&(canAdmin()||(w.state==='open'&&!!me&&eligible(me,id)&&canMember()&&!full));
+  let notice='';
+  if(o.cancelled)notice=`<div class="callout bad"><b>Cancelled.</b> ${esc(o.reason||'')}</div>`;
+  else if(w.state==='soon')notice=`<div class="callout">Sign-ups open ${dayLabel(w.at,true)}.</div>`;
+  else if(w.state==='closed')notice=`<div class="callout">This session has started or finished. Sign-ups are closed${canAdmin()?' (admins can still edit)':''}.</div>`;
+  else if(!S.me)notice='';
+  else if(!me)notice=`<div class="callout">Link your member profile to book. <a href="#me">Go to My profile →</a></div>`;
+  else if(!eligible(me,id))notice=`<div class="callout">This session is for ${esc(eligNames(id).join(', '))}. ${s.guestNote?esc(s.guestNote):'Contact the coach if you’d like to join.'}</div>`;
+  else if(full&&!mine)notice=`<div class="callout">This session is full (${cap} ${erg?'ergs':'boats'}).${!erg?' Look for open seats below.':''}</div>`;
+  const used=new Set(bk.map(([,b])=>b.boatId).filter(Boolean));
+  const avail=erg?[]:Object.entries(S.boats).filter(([bid,b])=>b.status==='available'&&!used.has(bid)).sort((a,b)=>(a[1].seats-b[1].seats)||a[1].name.localeCompare(b[1].name));
+  const rows=bk.map(([bid,b],i)=>{
+    const boat=S.boats[b.boatId];const rerig=boat&&b.rig&&b.rig!==boat.currentRig;const amIn=!!me&&bMembers(b).includes(me);
+    const isCapt=(!!me&&b.captain===me)||(!!S.me&&b.createdBy===S.me);const live=w.state!=='closed'&&!o.cancelled;
+    const canJoin=live&&!!me&&!amIn&&!mine&&b.open&&(b.crew||[]).some(x=>!x)&&canMember()&&(eligible(me,id)||canAdmin());
+    const crew=(b.crew||[]).map(x=>x?`<span class="lnk" data-member="${esc(x)}">${esc(mName(x))}</span>`:'<span class="oseat">open seat</span>').join(', ')+(b.cox?` <span class="tag">· cox</span> <span class="lnk" data-member="${esc(b.cox)}">${esc(mName(b.cox))}</span>`:(boat&&/\+/.test(b.rig||'')?' <span class="tag">· cox</span> <span class="oseat">needed</span>':''));
+    const acts=[amIn&&b.date>=today()?`<button class="btn sm" data-bcal="${esc(bid)}" title="Add to my calendar">📅 Calendar</button>`:'',(isCapt||canAdmin())&&(live||canAdmin())?`<button class="btn sm" data-bedit="${esc(bid)}">Edit</button><button class="btn sm dan" data-bcancel="${esc(bid)}">Cancel</button>`:'',amIn&&!isCapt&&live?`<button class="btn sm" data-bleave="${esc(bid)}">Leave</button>`:'',canJoin?`<button class="btn sm pri" data-bjoin="${esc(bid)}">Join</button>`:''].join('');
+    return erg?`<tr class="${amIn?'me':''}"><td class="num">${b.erg||i+1}</td><td>${crew}</td><td class="hide-s">${esc(b.notes||'')}</td><td class="ra">${acts}</td></tr>`:
+    `<tr class="${amIn?'me':''}"><td class="num">${i+1}</td><td>${crew}</td><td>${boat?`<span class="bchip" data-boat="${esc(b.boatId)}"><b style="color:var(--ink)">${esc(b.rig||boat.currentRig)}</b> ${esc(boat.name)}</span>${rerig?`<span class="rerig" title="Boat is currently rigged as ${esc(boat.currentRig)}">Re-rig from ${esc(boat.currentRig)}</span>`:''}${boat.status!=='available'?` <span class="pill s-${esc(boat.status)}">${esc(STATUS[boat.status])}</span>`:''}`:'<span class="muted">Coach to assign</span>'}</td><td class="hide-s">${esc(b.crewMix||'')}${b.pcoc?' <span class="tag">· PCOC</span>':''}${b.notes?`<div class="tag">${esc(b.notes)}</div>`:''}</td><td class="ra">${acts}</td></tr>`;
+  }).join('');
+  return `<div class="shead" style="--pc:${esc(p.color||'#888')}">
+    <a href="#programs" class="lnk">‹ Back to schedule</a>
+    <div class="sh-row"><div><div class="tag" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--pc)">${esc(p.name||'')} · ${erg?'Erg':'On water'}</div><h2>${esc(s.title)}</h2>
+    <p>${dayLabel(d,true)} · ${esc(timeRange(s))}${coachOf(id,d)?` · Coach ${esc(coachOf(id,d))}`:''}${safetyOf(id,d)?` · Safety boat ${esc(safetyOf(id,d))}`:''}</p></div>
+    <div class="sh-cap">${cap?`<b>${bk.length}</b>/${cap}<span>${erg?'ergs':'boats'}</span>`:`<b>${bk.length}</b><span>${erg?'signed up':'boats'}</span>`}</div></div>
+    ${o.note||s.notes?`<div class="tag" style="margin-top:6px">${esc(o.note||s.notes)}</div>`:''}
+    <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Add someone':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
+  </div>
+  ${notice}
+  <div class="${erg?'':'sgrid'}">
+   <div>${bk.length?`<table class="t sheet"><thead><tr><th>${erg?'Erg':'#'}</th><th>${erg?'Rower':'Crew'}</th>${erg?'<th class="hide-s">Notes</th>':'<th>Boat</th><th class="hide-s">Crew mix / notes</th>'}<th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="banner">${o.cancelled?'No sign-ups.':'No one has signed up yet.'}</div>`}
+   ${!erg&&p.pcocAllowed===false?`<p class="tag" style="margin-top:10px">PCOC rowing isn’t permitted during this session.</p>`:''}</div>
+   ${erg?'':`<aside class="sec avail"><h4>Boats still available · ${avail.length}</h4>${avail.length?CLASSES.map(c=>{const g=avail.filter(([,b])=>b.seats===c.k);return g.length?`<div class="av-g"><div class="tag">${c.t}</div>${g.map(([bid,b])=>`<div class="avb" ${canBook&&(!mine||canAdmin())?`data-bookboat="${esc(bid)}"`:''}><span><b>${esc(b.currentRig)}</b> ${esc(b.name)}${b.ownership==='private'?' <span class="tag">private</span>':''}</span><span class="tag">${b.weight&&b.weight.lbsMax?wtText(b.weight).split(' · ')[0]:''}</span></div>`).join('')}</div>`:''}).join(''):'<div class="empty">Every available boat is booked.</div>'}${canBook&&(!mine||canAdmin())?'<p class="tag" style="margin:8px 0 0">Tap a boat to book it.</p>':''}</aside>`}
+  </div>`;
+}
+function bindPrograms(){
+  const m=$('#main');
+  m.querySelectorAll('[data-sess]').forEach(el=>el.onclick=()=>goSession(el.dataset.sess,el.dataset.date));
+  m.querySelectorAll('[data-mcal]').forEach(el=>el.onclick=e=>{e.stopPropagation();calendarDialog(el.dataset.mcal,S.bookings[el.dataset.mcal],false)});
+  {const a=$('#allIcs');if(a)a.onclick=allMyIcs}
+  m.querySelectorAll('[data-wk]').forEach(el=>el.onclick=()=>{const n=+el.dataset.wk;S.week=n?addDays(S.week||mondayOf(today()),n):mondayOf(today());render()});
+  m.querySelectorAll('[data-pscope]').forEach(el=>el.onclick=()=>{S.pscope=el.dataset.pscope;render()});
+  m.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
+  m.querySelectorAll('[data-boat]').forEach(el=>el.onclick=()=>openBoat(el.dataset.boat));
+  if(!S.sess)return;
+  const {id,date:d}=S.sess;
+  const on=(s,f)=>{const e=$(s);if(e)e.onclick=f};
+  on('#bookNew',()=>bookingForm(id,d,null,null));
+  on('#ergMe',()=>{const me=myMemberId();if(!me&&canAdmin())return ergForm(id,d);ergSignup(id,d,me)});
+  on('#ergOther',()=>ergForm(id,d));
+  on('#occEdit',()=>occForm(id,d));on('#sessEdit',()=>sessionForm(id));
+  m.querySelectorAll('[data-bookboat]').forEach(el=>el.onclick=()=>bookingForm(id,d,null,el.dataset.bookboat));
+  m.querySelectorAll('[data-bedit]').forEach(el=>el.onclick=()=>{const b=S.bookings[el.dataset.bedit];if(S.sessions[id].type==='erg')return ergForm(id,d,el.dataset.bedit);bookingForm(id,d,el.dataset.bedit,null)});
+  m.querySelectorAll('[data-bcancel]').forEach(el=>el.onclick=()=>cancelBooking(el.dataset.bcancel));
+  m.querySelectorAll('[data-bleave]').forEach(el=>el.onclick=()=>leaveBooking(el.dataset.bleave));
+  m.querySelectorAll('[data-bjoin]').forEach(el=>el.onclick=()=>joinBooking(el.dataset.bjoin));
+  m.querySelectorAll('[data-bcal]').forEach(el=>el.onclick=()=>calendarDialog(el.dataset.bcal,S.bookings[el.dataset.bcal],false));
+}
+
+/* ---------- booking actions ---------- */
+function memberOpts(sid,d,sel,exclBid){
+  const busy=new Set();sessBookings(sid,d).forEach(([bid,b])=>{if(bid!==exclBid)bMembers(b).forEach(x=>busy.add(x))});
+  const all=Object.entries(S.members).filter(([,m])=>m.status!=='inactive').sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  const inP=all.filter(([x])=>eligible(x,sid)),out=all.filter(([x])=>!eligible(x,sid));
+  const o=([x,m])=>`<option value="${esc(x)}" ${x===sel?'selected':''} ${busy.has(x)&&x!==sel?'disabled':''}>${esc(m.displayName)}${busy.has(x)&&x!==sel?' (already booked)':''}</option>`;
+  return `<option value="">— Open seat —</option><optgroup label="${esc(eligNames(sid).join(' / '))}">${inP.map(o).join('')}</optgroup><optgroup label="Other members (guests)">${out.map(o).join('')}</optgroup>`;
+}
+function bookingForm(sid,d,bid,preBoat){
+  const s=S.sessions[sid],p=progOf(sid),b=bid?S.bookings[bid]:null,me=myMemberId();
+  const taken=new Set(sessBookings(sid,d).filter(([x])=>x!==bid).map(([,x])=>x.boatId).filter(Boolean));
+  const boats=Object.entries(S.boats).filter(([x,o])=>o.status!=='retired'&&!taken.has(x)).sort((a,c)=>(a[1].seats-c[1].seats)||a[1].name.localeCompare(c[1].name));
+  const cur=b?b.boatId||'':preBoat||'';
+  const boatSel=`<select name="boatId" id="bBoat">${p.boatRequired===false?`<option value="" ${cur===''?'selected':''}>No boat – coach will assign</option>`:'<option value="">Choose a boat…</option>'}${CLASSES.map(c=>{const g=boats.filter(([,o])=>o.seats===c.k);return g.length?`<optgroup label="${c.t}">${g.map(([x,o])=>`<option value="${esc(x)}" ${x===cur?'selected':''} ${o.status!=='available'&&!canAdmin()?'disabled':''}>${esc(o.name)} · ${esc((o.rigs||[]).join('/'))}${o.weight&&o.weight.lbsMax?' · '+esc(wtText(o.weight).split(' · ')[0]):''}${o.status!=='available'?' · '+esc(STATUS[o.status]):''}</option>`).join('')}</optgroup>`:''}).join('')}</select>`;
+  openModal(`<h3>${b?'Edit booking':'Book a boat'}</h3><p class="muted" style="margin-top:-6px">${esc(s.title)} · ${dayLabel(d,true)} · ${esc(timeRange(s))}</p><form id="mform"><div class="fg">
+    ${fld('Boat',boatSel,'full')}
+    ${fld('Rig',`<select name="rig" id="bRig"></select>`,'',`<span id="rigHint"></span>`)}
+    ${fld('Crew mix',`<select name="crewMix">${CREW_MIX.map(x=>`<option ${(b?b.crewMix:CREW_MIX[0])===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+    <div class="full"><label class="fl">Crew <span class="tag">· seat 1 is bow</span></label><div class="seatgrid" id="seats"></div></div>
+    ${fld('Notes',`<input name="notes" value="${esc(b?b.notes||'':'')}" placeholder="e.g. Looking for a stroke seat">`,'full')}
+    <div class="full" style="display:flex;gap:18px;flex-wrap:wrap">
+      <label class="tog"><input type="checkbox" name="open" value="1" ${!b||b.open?'checked':''}> Others can join open seats</label>
+      ${p.pcocAllowed===false?'':`<label class="tog"><input type="checkbox" name="pcoc" value="1" ${b&&b.pcoc?'checked':''}> Rowing under PCOC</label>`}
+    </div>
+  </div>${formFoot(b?'Save booking':'Book')}</form>`,()=>{
+    const boatEl=$('#bBoat'),rigEl=$('#bRig'),seatsEl=$('#seats');let saved=null;
+    const meBusy=!!me&&sessBookings(sid,d).some(([x,o])=>x!==bid&&bMembers(o).includes(me));
+    let crew=b?[...(b.crew||[])]:[meBusy?'':(me||'')],cox=b?b.cox||'':'';
+    const readSeats=()=>{crew=[...seatsEl.querySelectorAll('select[data-seat]')].map(x=>x.value);const c=seatsEl.querySelector('select[data-cox]');cox=c?c.value:cox};
+    const drawSeats=()=>{const rig=rigEl.value||'1x';const {rowers,cox:hasCox}=seatsFor(boatEl.value?rig:'1x');
+      seatsEl.innerHTML=Array.from({length:rowers},(_,i)=>`<div class="fld"><label>${rowers===1?'Sculler':i===0?'Bow (1)':i===rowers-1?`Stroke (${i+1})`:`Seat ${i+1}`}</label><select data-seat="${i}">${memberOpts(sid,d,crew[i]||'',bid)}</select></div>`).join('')+(hasCox?`<div class="fld"><label>Cox</label><select data-cox="1">${memberOpts(sid,d,cox,bid)}</select></div>`:'');
+      seatsEl.querySelectorAll('select').forEach(x=>x.onchange=readSeats)};
+    const drawRig=()=>{const o=S.boats[boatEl.value];const keep=rigEl.value||(b&&b.boatId===boatEl.value?b.rig:'');
+      rigEl.innerHTML=o?(o.rigs||[]).map(r=>`<option ${r===(keep||o.currentRig)?'selected':''}>${esc(r)}</option>`).join(''):'<option value="">—</option>';rigEl.disabled=!o;hint()};
+    const hint=()=>{const o=S.boats[boatEl.value];$('#rigHint').innerHTML=o&&rigEl.value&&rigEl.value!==o.currentRig?`<span class="rerig">Re-rig needed · currently ${esc(o.currentRig)}</span>`:o?'Matches current rig':''};
+    boatEl.onchange=()=>{readSeats();drawRig();drawSeats()};rigEl.onchange=()=>{readSeats();hint();drawSeats()};
+    drawRig();drawSeats();
+    wireForm({msg:b?'Booking updated':'Booked – see you on the water',
+      validate:fd=>{readSeats();
+        if(p.boatRequired!==false&&!fd.boatId)return'Choose a boat.';
+        const rig=fd.boatId?fd.rig:'1x';const {rowers,cox:hasCox}=seatsFor(rig);
+        const cr=crew.slice(0,rowers).map(x=>x||null);while(cr.length<rowers)cr.push(null);const cx=hasCox?(cox||null):null;
+        const ms=[...cr,cx].filter(Boolean);if(!ms.length)return'Add at least one person to the crew.';
+        if(new Set(ms).size!==ms.length)return'Someone is in two seats.';
+        if(!canAdmin()&&me&&!ms.includes(me))return'Include yourself in the crew (admins can book for others).';
+        const busy=new Set();sessBookings(sid,d).forEach(([x,o])=>{if(x!==bid)bMembers(o).forEach(y=>busy.add(y))});
+        const clash=ms.find(x=>busy.has(x));if(clash)return`${mName(clash)} is already in another boat this session.`;
+        if(fd.boatId&&sessBookings(sid,d).some(([x,o])=>x!==bid&&o.boatId===fd.boatId))return'That boat was just booked by someone else.';
+        if(!bid&&!canAdmin()&&capacity(sid,d)&&sessBookings(sid,d).length>=capacity(sid,d))return'This session is full.';
+        if(!canAdmin()&&windowState(sid,d).state!=='open')return'Sign-ups aren’t open for this session.';
+        fd._crew=cr;fd._cox=cx;return null},
+      save:async fd=>{
+        const data={sessionId:sid,date:d,boatId:fd.boatId||null,rig:fd.boatId?fd.rig:'',crew:fd._crew,cox:fd._cox,crewMix:fd.crewMix,notes:fd.notes.trim(),
+          open:!!(fd._c.open||[]).length&&fd._crew.some(x=>!x),pcoc:!!(fd._c.pcoc||[]).length,
+          captain:b?b.captain||null:(me||fd._crew.find(Boolean)||null),createdBy:b?b.createdBy||null:(S.me||null),at:b?b.at:nowIso(),updatedAt:nowIso()};
+        const ref=bid?S.db.doc('bookings/'+bid):S.db.collection('bookings').doc();await ref.set(data);saved={id:ref.id,data};
+      },after:()=>{if(saved&&!bid)maybeCalendar(saved.id,saved.data)}});
+  });
+}
+async function ergSignup(sid,d,mid){
+  if(!mid)return;
+  const s=S.sessions[sid];const bk=sessBookings(sid,d);
+  if(!canAdmin()&&capacity(sid,d)&&bk.length>=capacity(sid,d))return toast('This session is full');
+  if(bk.some(([,b])=>bMembers(b).includes(mid)))return toast(`${mName(mid)} is already signed up`);
+  const data={sessionId:sid,date:d,boatId:null,rig:'',crew:[mid],cox:null,open:false,notes:'',erg:nextErg(sid,d),captain:mid,createdBy:S.me||null,at:nowIso()};let ref=null;
+  const ok=await guarded(async()=>{ref=await S.db.collection('bookings').add(data)},mid===myMemberId()&&prefsOf(mid).calPrompt===false?'You’re signed up':(mid===myMemberId()?'':'Added'));
+  if(ok&&ref&&mid===myMemberId())maybeCalendar(ref.id,data);
+}
+function ergForm(sid,d,bid){
+  const b=bid&&S.bookings[bid];
+  openModal(`<h3>${b?'Edit erg sign-up':'Add to erg session'}</h3><form id="mform"><div class="fg">
+    ${fld('Member',`<select name="mid">${memberOpts(sid,d,b?b.crew[0]:'',bid)}</select>`,'full')}
+    ${fld('Notes',`<input name="notes" value="${esc(b?b.notes||'':'')}">`,'full')}
+  </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Saved',validate:fd=>!fd.mid?'Choose a member.':null,
+    save:async fd=>{if(b)await S.db.doc('bookings/'+bid).update({crew:[fd.mid],notes:fd.notes.trim(),updatedAt:nowIso()});
+      else{await S.db.collection('bookings').add({sessionId:sid,date:d,boatId:null,rig:'',crew:[fd.mid],cox:null,open:false,notes:fd.notes.trim(),erg:nextErg(sid,d),captain:fd.mid,createdBy:S.me||null,at:nowIso()})}}}));
+}
+function cancelBooking(bid){
+  const b=S.bookings[bid];const boat=S.boats[b.boatId];
+  openModal(`<h3>Cancel this booking?</h3><p class="muted" style="margin-top:-6px">${boat?esc(boat.name)+' · ':''}${esc(bMembers(b).map(mName).join(', '))}. Everyone in the crew is removed from the session.</p><form id="mform">${formFoot('Cancel booking',true)}</form>`,
+    ()=>wireForm({msg:'Booking cancelled',save:()=>S.db.doc('bookings/'+bid).delete(),after:()=>{const me=myMemberId();if(me&&prefsOf(me).calPrompt!==false)cancelledDialog(bid,b)}}));
+}
+async function leaveBooking(bid){
+  const b=S.bookings[bid],me=myMemberId();if(!b||!me)return;
+  const crew=(b.crew||[]).map(x=>x===me?null:x),cox=b.cox===me?null:b.cox;
+  const ok=await guarded(()=>S.db.doc('bookings/'+bid).update({crew,cox,open:true,updatedAt:nowIso()}),'You’ve left the crew');
+  if(ok&&prefsOf(me).calPrompt!==false)cancelledDialog(bid,b);
+}
+async function joinBooking(bid){
+  const b=S.bookings[bid],me=myMemberId();if(!b||!me)return;
+  const i=(b.crew||[]).findIndex(x=>!x);if(i<0)return toast('No open seats left');
+  const crew=[...b.crew];crew[i]=me;
+  const ok=await guarded(()=>S.db.doc('bookings/'+bid).update({crew,open:crew.some(x=>!x),updatedAt:nowIso()}),prefsOf(me).calPrompt===false?'You’ve joined the crew':'');
+  if(ok)maybeCalendar(bid,{...b,crew,updatedAt:nowIso()});
+}
+
+/* ---------- admin: per-date overrides ---------- */
+function occForm(sid,d){
+  const s=S.sessions[sid],o=occ(sid,d);
+  openModal(`<h3>${esc(s.title)} · ${dayLabel(d)}</h3><p class="muted" style="margin-top:-6px">Changes for this date only.</p><form id="mform"><div class="fg">
+    ${fld('Cancel this session',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="cancelled" value="1" ${o.cancelled?'checked':''}> Cancelled</label>`)}
+    ${fld('Reason',`<input name="reason" value="${esc(o.reason||'')}" placeholder="e.g. Wind warning">`)}
+    ${fld('Coach',`<input name="coach" value="${esc(o.coach||'')}" placeholder="${esc(s.coach||'')}">`)}
+    ${fld('Safety boat',`<input name="safety" value="${esc(o.safety||'')}" placeholder="${esc(s.safety||'None')}">`)}
+    ${fld(s.type==='erg'?'Ergs available':'Max boats',`<input name="capacity" type="number" min="0" value="${esc(o.capacity||'')}" placeholder="${esc(s.capacity||'')}">`,'','Leave blank to use the usual limit')}
+    ${fld('Note for rowers',`<input name="note" value="${esc(o.note||'')}">`)}
+  </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Session updated',
+    save:fd=>S.db.doc('occurrences/'+occKey(sid,d)).set({sessionId:sid,date:d,cancelled:!!(fd._c.cancelled||[]).length,reason:fd.reason.trim(),coach:fd.coach.trim(),safety:fd.safety.trim(),capacity:fd.capacity?+fd.capacity:null,note:fd.note.trim(),updatedAt:nowIso()})}));
+}
+
+/* ---------- admin: manage programs & sessions ---------- */
+function viewManage(){
+  if(!canAdmin())return `<div class="banner"><h3>Admins only</h3>Ask an admin to change programs or sessions.</div>`;
+  const progs=Object.entries(S.programs).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+  const ses=Object.entries(S.sessions);
+  return `<div class="page-h"><div><a href="#programs" class="lnk">‹ Back to schedule</a><h2>Manage programs</h2><p>Programs decide who can book. Sessions repeat weekly; use “Edit this date” on a session to cancel or change a single day.</p></div><div class="actions" style="margin:0"><a class="btn" href="#import">Import data</a><button class="btn" id="addProg">+ Add program</button><button class="btn pri" id="addSess">+ Add session</button></div></div>
+  <table class="t"><thead><tr><th>Program</th><th>Members</th><th class="hide-s">Sign-ups open</th><th class="hide-s">Boat choice</th><th class="hide-s">PCOC</th><th></th></tr></thead><tbody>
+  ${progs.map(([pid,p])=>`<tr><td class="name"><span class="dot" style="background:${esc(p.color||'#888')};width:10px;height:10px"></span> ${esc(p.name)}${p.active===false?' <span class="tag">inactive</span>':''}</td><td>${Object.values(S.members).filter(m=>(m.programs||[]).includes(p.name)&&m.status!=='inactive').length}</td><td class="hide-s">${p.opensDays==null?6:p.opensDays} days before</td><td class="hide-s">${p.boatRequired===false?'Optional (coach assigns)':'Members choose'}</td><td class="hide-s">${p.pcocAllowed===false?'Not allowed':'Allowed'}</td><td class="ra"><button class="btn sm" data-eprog="${esc(pid)}">Edit</button></td></tr>`).join('')}
+  </tbody></table>
+  ${progs.map(([pid,p])=>{const g=ses.filter(([,s])=>s.programId===pid).sort((a,b)=>(a[1].weekday-b[1].weekday)||String(a[1].start).localeCompare(String(b[1].start)));
+    return g.length?`<h3 style="margin:26px 0 10px;font-size:17px;border-left:4px solid ${esc(p.color||'#888')};padding-left:10px">${esc(p.name)} sessions</h3><table class="t"><thead><tr><th>Session</th><th>Day</th><th>Time</th><th class="hide-s">Type</th><th class="hide-s">Coach</th><th class="hide-s">Limit</th><th class="hide-s">Who can book</th><th></th></tr></thead><tbody>${g.map(([sid,s])=>`<tr class="${s.active===false?'inact':''}"><td class="name">${esc(s.title)}${s.active===false?` <span class="tag">${esc(s.season||'inactive')}</span>`:''}</td><td>${DAYS[s.weekday]}</td><td>${esc(timeRange(s))}</td><td class="hide-s">${s.type==='erg'?'Erg':'Water'}</td><td class="hide-s">${esc(s.coach||'—')}</td><td class="hide-s">${s.capacity||'—'}</td><td class="hide-s">${esc(eligNames(sid).join(', '))}</td><td class="ra"><button class="btn sm" data-esess="${esc(sid)}">Edit</button><button class="btn sm" data-tsess="${esc(sid)}">${s.active===false?'Activate':'Pause'}</button></td></tr>`).join('')}</tbody></table>`:''}).join('')}`;
+}
+function bindManage(){
+  const m=$('#main');const on=(s,f)=>{const e=$(s);if(e)e.onclick=f};
+  on('#addProg',()=>programForm(null));on('#addSess',()=>sessionForm(null));
+  m.querySelectorAll('[data-eprog]').forEach(el=>el.onclick=()=>programForm(el.dataset.eprog));
+  m.querySelectorAll('[data-esess]').forEach(el=>el.onclick=()=>sessionForm(el.dataset.esess));
+  m.querySelectorAll('[data-tsess]').forEach(el=>el.onclick=()=>{const s=S.sessions[el.dataset.tsess];guarded(()=>S.db.doc('sessions/'+el.dataset.tsess).update({active:s.active===false,updatedAt:nowIso()}),s.active===false?'Session active':'Session paused')});
+}
+function programForm(pid){
+  const p=pid?S.programs[pid]:{color:PCOLORS[Object.keys(S.programs).length%PCOLORS.length],opensDays:6,boatRequired:true,pcocAllowed:true,active:true};
+  openModal(`<h3>${pid?'Edit '+esc(p.name):'Add a program'}</h3><form id="mform"><div class="fg">
+    ${fld('Name',`<input name="name" required value="${esc(p.name||'')}">`)}
+    ${fld('Colour',`<div class="rigpick">${PCOLORS.map(c=>`<label style="padding:4px 6px"><input type="radio" name="color" value="${c}" ${p.color===c?'checked':''} style="width:auto"><span class="dot" style="background:${c};width:14px;height:14px"></span></label>`).join('')}</div>`)}
+    ${fld('Sign-ups open',`<select name="opensDays">${[1,2,3,4,5,6,7,10,14].map(n=>`<option value="${n}" ${+p.opensDays===n?'selected':''}>${n} day${n>1?'s':''} before</option>`).join('')}</select>`)}
+    ${fld('Boat choice',`<select name="boatRequired"><option value="1" ${p.boatRequired!==false?'selected':''}>Members choose a boat</option><option value="0" ${p.boatRequired===false?'selected':''}>Optional – coach can assign</option></select>`)}
+    ${fld('PCOC rowing',`<select name="pcocAllowed"><option value="1" ${p.pcocAllowed!==false?'selected':''}>Allowed</option><option value="0" ${p.pcocAllowed===false?'selected':''}>Not allowed</option></select>`)}
+    ${fld('Status',`<select name="active"><option value="1" ${p.active!==false?'selected':''}>Active</option><option value="0" ${p.active===false?'selected':''}>Inactive</option></select>`)}
+    ${fld('Description',`<input name="description" value="${esc(p.description||'')}">`,'full')}
+  </div>${pid?'<p class="tag" style="margin:10px 0 0">Renaming also updates every member and session in this program.</p>':''}${formFoot(pid?'Save':'Add program')}</form>`,()=>wireForm({msg:pid?'Program saved':'Program added',
+    validate:fd=>!fd.name.trim()?'Name is required.':(!pid&&Object.values(S.programs).some(x=>x.name.toLowerCase()===fd.name.trim().toLowerCase())?'That program already exists.':null),
+    save:async fd=>{
+      const data={name:fd.name.trim(),color:fd.color||p.color,opensDays:+fd.opensDays,boatRequired:fd.boatRequired==='1',pcocAllowed:fd.pcocAllowed==='1',active:fd.active==='1',description:fd.description.trim(),updatedAt:nowIso()};
+      if(pid){const old=p.name;await S.db.doc('programs/'+pid).update(data);
+        if(old!==data.name){for(const [mid,m] of Object.entries(S.members))if((m.programs||[]).includes(old))await S.db.doc('members/'+mid).update({programs:m.programs.map(x=>x===old?data.name:x)});
+          for(const [sid,s] of Object.entries(S.sessions))if((s.eligible||[]).includes(old))await S.db.doc('sessions/'+sid).update({eligible:s.eligible.map(x=>x===old?data.name:x)})}}
+      else await S.db.doc('programs/'+slugify(data.name)).set({...data,order:Object.keys(S.programs).length+1,createdAt:nowIso()});
+    }}));
+}
+function sessionForm(sid){
+  const s=sid?S.sessions[sid]:{weekday:5,type:'water',capacity:15,active:true,programId:Object.keys(S.programs)[0]};
+  const progs=Object.entries(S.programs).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+  openModal(`<h3>${sid?'Edit session':'Add a weekly session'}</h3><form id="mform"><div class="fg">
+    ${fld('Title',`<input name="title" required value="${esc(s.title||'')}" placeholder="e.g. Masters · Sat AM">`,'full')}
+    ${fld('Program',`<select name="programId">${progs.map(([pid,p])=>`<option value="${esc(pid)}" ${s.programId===pid?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`)}
+    ${fld('Type',`<select name="type"><option value="water" ${s.type!=='erg'?'selected':''}>On water</option><option value="erg" ${s.type==='erg'?'selected':''}>Erg</option></select>`)}
+    ${fld('Day',`<select name="weekday">${DAYS_L.map((n,i)=>`<option value="${i}" ${+s.weekday===i?'selected':''}>${n}</option>`).join('')}</select>`)}
+    ${fld('Limit',`<input name="capacity" type="number" min="0" value="${esc(s.capacity||'')}">`,'','Max boats on the water, or number of ergs')}
+    ${fld('Start',`<input name="start" type="time" value="${esc(s.start||'')}">`)}
+    ${fld('End',`<input name="end" type="time" value="${esc(s.end||'')}">`)}
+    ${fld('Coach',`<input name="coach" value="${esc(s.coach||'')}">`)}
+    ${fld('Safety boat',`<input name="safety" value="${esc(s.safety||'')}">`)}
+    ${fld('Who can book',checks('eligible',progNames(),s.eligible&&s.eligible.length?s.eligible:[progOf(sid).name].filter(Boolean)),'full','Leave all unticked to allow only the session’s own program.')}
+    ${fld('Note shown to rowers',`<input name="notes" value="${esc(s.notes||'')}">`,'full')}
+    ${fld('Season label',`<input name="season" value="${esc(s.season||'')}" placeholder="e.g. Summer">`)}
+    ${fld('Status',`<select name="active"><option value="1" ${s.active!==false?'selected':''}>Active</option><option value="0" ${s.active===false?'selected':''}>Paused</option></select>`)}
+  </div>${formFoot(sid?'Save':'Add session')}</form>`,()=>wireForm({msg:sid?'Session saved':'Session added',
+    validate:fd=>!fd.title.trim()?'Give the session a title.':(fd.start&&fd.end&&fd.end<=fd.start?'End time must be after the start.':null),
+    save:async fd=>{const data={title:fd.title.trim(),programId:fd.programId,type:fd.type,weekday:+fd.weekday,capacity:fd.capacity?+fd.capacity:0,start:fd.start,end:fd.end,coach:fd.coach.trim(),safety:fd.safety.trim(),eligible:fd._c.eligible||[],notes:fd.notes.trim(),season:fd.season.trim(),active:fd.active==='1',updatedAt:nowIso()};
+      if(sid)await S.db.doc('sessions/'+sid).update(data);else{let id=slugify(data.title);if(S.sessions[id])id+='-'+Date.now().toString(36);await S.db.doc('sessions/'+id).set({...data,createdAt:nowIso()})}}}));
+}
+
+/* ---------- boat drawer: upcoming bookings + re-rig ---------- */
+function boatBookingsHtml(boatId){
+  const t=today();const up=Object.entries(S.bookings).filter(([,b])=>b.boatId===boatId&&b.date>=t).sort((a,b)=>a[1].date.localeCompare(b[1].date)).slice(0,8);
+  const boat=S.boats[boatId];
+  return `<div class="sec"><h4>Upcoming bookings</h4>${up.length?up.map(([bid,b])=>{const s=S.sessions[b.sessionId]||{};const rr=b.rig&&b.rig!==boat.currentRig;
+    return `<div class="item"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><div><b>${dayLabel(b.date)}</b> <span class="lnk" data-gosess="${esc(b.sessionId)}|${b.date}">${esc(s.title||'Session')}</span> <span class="tag">· as ${esc(b.rig||boat.currentRig)}</span>${rr?` <span class="rerig">Re-rig from ${esc(boat.currentRig)}</span>`:''}</div>${rr&&canAdmin()?`<button class="btn sm" data-rerig="${esc(b.rig)}">Mark re-rigged as ${esc(b.rig)}</button>`:''}</div><div class="tag" style="margin-top:3px">${esc(bMembers(b).map(mName).join(', '))}</div></div>`}).join(''):'<div class="empty">No upcoming bookings.</div>'}</div>`;
+}
+
+/* =================== CALENDAR INVITES =================== */
+const CLUB_TZ='America/Vancouver';
+const CLUB_LOC='Vancouver Rowing Club, Stanley Park, Vancouver, BC';
+const PORTAL_URL=location.origin+location.pathname;
+function tzOffsetMin(dt){
+  // BC moved to permanent UTC-7 (Pacific Time) after the final clock change on 8 Mar 2026; don't rely on device tz data being current
+  if(dt.getTime()>=Date.UTC(2026,2,8,10))return -420;
+  const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:CLUB_TZ,hourCycle:'h23',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).formatToParts(dt).map(x=>[x.type,x.value]));
+  return (Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute,+p.second)-dt.getTime())/60000;
+}
+function clubInstant(d,t){const [y,m,dd]=d.split('-').map(Number),[h,mi]=t.split(':').map(Number);const g=Date.UTC(y,m-1,dd,h,mi);return new Date(g-tzOffsetMin(new Date(g))*60000)}
+const icsUtc=dt=>dt.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+const icsEsc=s=>String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/([,;])/g,'\\$1');
+function icsFold(line){const out=[];let s=line;while(new TextEncoder().encode(s).length>73){let n=73;while(new TextEncoder().encode(s.slice(0,n)).length>73)n--;out.push(s.slice(0,n));s=s.slice(n)}out.push(s);return out.join('\r\n ')}
+function myEmail(){const me=myMemberId();const p=me&&privOf(me);return (p&&p.email)||''}
+function calProvider(email){const dom=(email.split('@')[1]||'').toLowerCase();
+  if(/^(gmail|googlemail)\.com$/.test(dom))return 'google';
+  if(/^(outlook|hotmail|live|msn)\./.test(dom))return 'outlook';
+  if(/^(icloud|me|mac)\.com$/.test(dom))return 'apple';
+  return email?'other':'';}
+function eventFor(bid,b){
+  const s=S.sessions[b.sessionId]||{},boat=S.boats[b.boatId],p=progOf(b.sessionId);
+  const what=boat?`${b.rig||boat.currentRig} ${boat.name}`:(s.type==='erg'?(b.erg?`Erg ${b.erg}`:'Erg'):'');
+  const title=`${s.title||'Rowing session'}${what?' · '+what:''}`;
+  const crew=bMembers(b).map(mName);
+  const link=`${PORTAL_URL}#s-${b.sessionId}-${b.date.replace(/-/g,'')}`;
+  const details=[`${p.name||'Club'} session at Vancouver Rowing Club.`,coachOf(b.sessionId,b.date)?`Coach: ${coachOf(b.sessionId,b.date)}`:'',boat?`Boat: ${what}`:'',s.type==='erg'&&b.erg?`Erg: ${b.erg}`:'',crew.length>1?`Crew: ${crew.join(', ')}${b.cox?' (cox '+mName(b.cox)+')':''}`:'',b.notes?`Notes: ${b.notes}`:'',`Sign-out sheet: ${link}`].filter(Boolean).join('\n');
+  let start=null,end=null,allDay=!s.start;
+  if(!allDay){start=clubInstant(b.date,s.start);end=s.end?clubInstant(b.date,s.end):new Date(start.getTime()+90*60000)}
+  return {uid:`${bid}@vrc-rowing-portal`,title,details,start,end,allDay,date:b.date,link,seq:Math.floor(Date.parse(b.updatedAt||b.at||nowIso())/1000)||0};
+}
+function icsFor(evs,cancel){
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VRC Rowing Portal//EN','CALSCALE:GREGORIAN',`METHOD:${cancel?'CANCEL':'PUBLISH'}`,'X-WR-CALNAME:VRC Rowing'];
+  for(const e of evs){
+    L.push('BEGIN:VEVENT',`UID:${e.uid}`,`DTSTAMP:${icsUtc(new Date())}`,`SEQUENCE:${e.seq+(cancel?1:0)}`);
+    if(e.allDay){L.push(`DTSTART;VALUE=DATE:${e.date.replace(/-/g,'')}`,`DTEND;VALUE=DATE:${addDays(e.date,1).replace(/-/g,'')}`)}
+    else L.push(`DTSTART:${icsUtc(e.start)}`,`DTEND:${icsUtc(e.end)}`);
+    L.push(`SUMMARY:${icsEsc((cancel?'Cancelled: ':'')+e.title)}`,`DESCRIPTION:${icsEsc(e.details)}`,`LOCATION:${icsEsc(CLUB_LOC)}`,`URL:${e.link}`,`STATUS:${cancel?'CANCELLED':'CONFIRMED'}`);
+    if(!cancel&&!e.allDay)L.push('BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Rowing session in 1 hour','TRIGGER:-PT60M','END:VALARM');
+    L.push('END:VEVENT');
+  }
+  L.push('END:VCALENDAR');return L.map(icsFold).join('\r\n')+'\r\n';
+}
+function googleUrl(e){const dates=e.allDay?`${e.date.replace(/-/g,'')}/${addDays(e.date,1).replace(/-/g,'')}`:`${icsUtc(e.start)}/${icsUtc(e.end)}`;
+  return 'https://calendar.google.com/calendar/render?'+new URLSearchParams({action:'TEMPLATE',text:e.title,dates,details:e.details,location:CLUB_LOC,ctz:CLUB_TZ}).toString()}
+function outlookUrl(e,work){const q={path:'/calendar/action/compose',rru:'addevent',subject:e.title,body:e.details,location:CLUB_LOC};
+  if(e.allDay){q.startdt=e.date;q.enddt=addDays(e.date,1);q.allday='true'}else{q.startdt=e.start.toISOString();q.enddt=e.end.toISOString()}
+  return `https://outlook.${work?'office':'live'}.com/calendar/0/deeplink/compose?`+new URLSearchParams(q).toString()}
+async function saveIcs(evs,filename,cancel){
+  const dl=await claude.use('downloads');
+  if(!dl){toast('Calendar files can’t be downloaded in this view – use the Google or Outlook option');return false}
+  try{await dl.save({filename,data:new Blob([icsFor(evs,cancel)],{type:'text/calendar'})});return true}
+  catch(e){toast('Calendar file wasn’t saved');return false}
+}
+function calButtons(e,bid){
+  const email=myEmail(),prov=calProvider(email),work=prov==='other';
+  const g=`<a class="btn ${prov==='google'?'pri':''}" href="${esc(googleUrl(e))}" target="_blank" rel="noopener">Google Calendar</a>`;
+  const o=`<a class="btn ${prov==='outlook'?'pri':''}" href="${esc(outlookUrl(e,work))}" target="_blank" rel="noopener">Outlook${work?' (work)':''}</a>`;
+  const i=`<button class="btn ${prov==='apple'||prov==='other'?'pri':''}" type="button" id="calIcs">${prov==='apple'?'Apple Calendar':'Calendar file (.ics)'}</button>`;
+  const order=prov==='google'?[g,i,o]:prov==='outlook'?[o,i,g]:[i,g,o];
+  return `<div class="calbtns">${order.join('')}</div>`;
+}
+function calendarDialog(bid,b,justBooked){
+  if(!b)return;const me=myMemberId();const e=eventFor(bid,b);const email=myEmail();const pr=me?prefsOf(me):{};
+  openModal(`<h3>${justBooked?'You’re booked ✓':'Add to your calendar'}</h3>
+    <div class="calcard"><b>${esc(e.title)}</b><div class="tag">${dayLabel(b.date,true)} · ${esc(timeRange(S.sessions[b.sessionId]||{}))}</div>${bMembers(b).length>1?`<div class="tag">Crew: ${esc(bMembers(b).map(mName).join(', '))}</div>`:''}</div>
+    <p class="muted" style="margin:12px 0 8px;font-size:13px">${email?`Add it to the calendar for <b>${esc(email)}</b> – it includes a 1-hour reminder and a link back to the sign-out sheet.`:`Add it to your calendar. <a href="#me" id="calMe">Add your email in My profile</a> and we’ll suggest the right calendar automatically.`}</p>
+    ${calButtons(e,bid)}
+    ${justBooked&&me?`<label class="tog" style="margin-top:14px"><input type="checkbox" id="calNoAsk" ${pr.calPrompt===false?'checked':''}> Don’t ask after each booking</label>`:''}
+    <div class="mfoot"><button class="btn" id="calDone">Done</button></div>`,()=>{
+      $('#calDone').onclick=closeModal;
+      const ci=$('#calIcs');if(ci)ci.onclick=async()=>{if(await saveIcs([e],`vrc-${b.date}-${(S.sessions[b.sessionId]||{}).title||'session'}.ics`.replace(/[^\w.-]+/g,'-').toLowerCase()))toast('Calendar file ready – open it to add the event')};
+      const nm=$('#calNoAsk');if(nm)nm.onchange=()=>{S.db.doc('memberPrefs/'+S.me).set({...prefsOf(me),calPrompt:!nm.checked,updatedAt:nowIso()}).catch(()=>{})};
+      const cm=$('#calMe');if(cm)cm.onclick=()=>closeModal();
+    });
+}
+function maybeCalendar(bid,b){const me=myMemberId();if(!me||!b||!bMembers(b).includes(me))return;if(prefsOf(me).calPrompt===false){toast('Booked');return}calendarDialog(bid,b,true)}
+async function allMyIcs(){
+  const me=myMemberId(),t=today();if(!me)return;
+  const list=Object.entries(S.bookings).filter(([,b])=>b.date>=t&&bMembers(b).includes(me));
+  if(!list.length)return toast('No upcoming bookings');
+  if(await saveIcs(list.map(([id,b])=>eventFor(id,b)),'vrc-my-sessions.ics'))toast(`${list.length} session${list.length>1?'s':''} ready to add`);
+}
+function cancelledDialog(bid,b){
+  const me=myMemberId();if(!me||!bMembers(b).includes(me))return;const e=eventFor(bid,b);
+  openModal(`<h3>Booking cancelled</h3><p class="muted" style="margin-top:-6px">If you added this session to Apple Calendar or Outlook from a calendar file, download the cancellation to remove it. Google Calendar events need to be deleted in Google Calendar.</p>
+   <div class="calbtns"><button class="btn" id="calCx">Download cancellation (.ics)</button></div><div class="mfoot"><button class="btn" id="calDone">Done</button></div>`,()=>{
+    $('#calDone').onclick=closeModal;$('#calCx').onclick=async()=>{if(await saveIcs([e],`vrc-cancel-${b.date}.ics`,true))toast('Cancellation ready – open it to remove the event')}});
+}
+
+/* =================== ISSUE PHOTOS =================== */
+let ASSETS;
+async function assetsNs(){if(ASSETS===undefined){try{ASSETS=await claude.use('assets')}catch(e){ASSETS=null}}return ASSETS}
+const MAX_PHOTOS=4;
+async function shrinkPhoto(file){
+  try{const bmp=await createImageBitmap(file);const sc=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.82));if(b)return b}catch(e){}
+  if(/^image\/(png|jpeg|gif|webp)$/.test(file.type))return file;
+  throw {code:'photo',message:'That photo format isn’t supported – try a JPEG or PNG.'};
+}
+async function uploadPhotos(files){
+  const a=await assetsNs();if(!a)throw {code:'photo',message:'Photo uploads aren’t available for your account.'};
+  const ids=[];
+  for(const f of files){const blob=await shrinkPhoto(f);
+    try{const r=await a.upload(blob,{type:blob.type||'image/jpeg'});ids.push(r.id)}
+    catch(e){throw {code:'photo',message:e&&e.code==='quota_or_state'?'Photo storage is full – ask an admin.':e&&e.code==='too_large'?'That photo is too large.':'A photo couldn’t be uploaded – please try again.'}}}
+  return ids;
+}
+function photoStrip(ids){return ids&&ids.length?`<div class="thumbs">${ids.map(id=>`<img src="${esc(blobUrl(id))}" data-photo="${esc(id)}" loading="lazy" alt="Damage photo">`).join('')}</div>`:''}
+/* picker inside a form: returns getter for selected files */
+function photoPicker(root){
+  const files=[];const list=root.querySelector('.phlist'),inp=root.querySelector('input[type=file]'),add=root.querySelector('.phadd');
+  const draw=()=>{list.innerHTML=files.map((f,i)=>`<span class="ph"><img src="${f.url}" alt=""><button type="button" data-rm="${i}" aria-label="Remove photo">×</button></span>`).join('');
+    list.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{URL.revokeObjectURL(files[+b.dataset.rm].url);files.splice(+b.dataset.rm,1);draw()});
+    add.style.display=files.length>=MAX_PHOTOS?'none':''};
+  inp.onchange=()=>{for(const f of inp.files){if(files.length>=MAX_PHOTOS)break;if(/^image\//.test(f.type)||/\.(heic|heif)$/i.test(f.name))files.push({file:f,url:URL.createObjectURL(f)})}inp.value='';draw()};
+  draw();return ()=>files.map(f=>f.file);
+}
+function photoField(){return `<div class="fld full" id="phField"><label>Photos <span class="tag">· optional, up to ${MAX_PHOTOS}</span></label><div class="phrow"><div class="phlist"></div><label class="btn sm phadd"><input type="file" accept="image/*" multiple hidden>📷 Take or add photo</label></div><div class="hint" id="phHint">On a phone you can take a photo straight from the camera.</div></div>`}
+async function enablePhotoField(){const root=$('#phField');if(!root)return null;const a=await assetsNs();
+  if(!a){root.querySelector('.phrow').style.display='none';$('#phHint').textContent='Photo uploads aren’t available for your account yet – please post photos in the maintenance channel.';return null}
+  return photoPicker(root);}
+function addPhotosToIssue(iid){
+  const i=S.issues[iid];if(!i)return;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;
+  inp.onchange=async()=>{const fs=[...inp.files].slice(0,Math.max(0,MAX_PHOTOS-(i.photos||[]).length));if(!fs.length)return toast(`Up to ${MAX_PHOTOS} photos per issue`);
+    toast('Uploading…');await guarded(async()=>{const ids=await uploadPhotos(fs);await S.db.doc('issues/'+iid).update({photos:[...(i.photos||[]),...ids],updatedAt:nowIso()})},'Photo added')};
+  inp.click();
+}
+function lightbox(src){let lb=$('#lb');if(!lb){lb=document.createElement('div');lb.id='lb';lb.innerHTML='<img alt="Damage photo"><button aria-label="Close">×</button>';document.body.appendChild(lb);lb.onclick=()=>lb.classList.remove('on')}
+  lb.querySelector('img').src=src;lb.classList.add('on')}
+document.addEventListener('click',e=>{const im=e.target.closest&&e.target.closest('img[data-photo]');if(im){e.preventDefault();e.stopPropagation();lightbox(im.src)}},true);
+document.addEventListener('error',e=>{if(e.target&&e.target.matches&&e.target.matches('img[data-photo]'))e.target.classList.add('broken');if(e.target&&e.target.matches&&e.target.matches('img.avph'))e.target.remove()},true);
+
+
+/* =================== PROFILE PHOTOS =================== */
+async function squarePhoto(file){
+  let bmp;try{bmp=await createImageBitmap(file)}catch(e){throw {code:'photo',message:'That photo format isn’t supported – try a JPEG or PNG.'}}
+  const side=Math.min(bmp.width,bmp.height),out=Math.min(400,side),c=document.createElement('canvas');c.width=c.height=out;
+  c.getContext('2d').drawImage(bmp,(bmp.width-side)/2,(bmp.height-side)/2,side,side,0,0,out,out);
+  const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.85));if(!b)throw {code:'photo',message:'Couldn’t process that photo.'};return b;
+}
+function avatarField(id){const ph=prefsOf(id).photo;
+  return `<div class="fld full" id="avField"><label>Profile photo</label><div class="avrow"><span id="avPrev">${avatar(id,64)}</span><label class="btn sm" id="avPick"><input type="file" accept="image/*" hidden id="avIn">📷 ${ph?'Change photo':'Add a photo'}</label>${ph?'<button type="button" class="btn sm dan" id="avRm">Remove</button>':''}</div><div class="hint" id="avHint">Cropped to a square and shown to club members next to your name.</div></div>`}
+async function wireAvatarField(id){
+  const st={file:null,removed:false};const a=await assetsNs();if(!$('#avField'))return st;
+  if(!a){$('#avPick').style.display='none';const r=$('#avRm');if(r)r.style.display='none';$('#avHint').textContent='Photo uploads aren’t available for this account yet.';return st}
+  const blank=()=>`<span class="av" style="width:64px;height:64px;font-size:23px">${esc(initials(mName(id)||'?'))}</span>`;
+  $('#avIn').onchange=()=>{const f=$('#avIn').files[0];if(!f)return;st.file=f;st.removed=false;$('#avPrev').innerHTML=`<span class="av" style="width:64px;height:64px"><img class="avph" src="${URL.createObjectURL(f)}" alt=""></span>`};
+  const r=$('#avRm');if(r)r.onclick=()=>{st.file=null;st.removed=true;$('#avPrev').innerHTML=blank();r.style.display='none'};
+  return st;
+}
+async function savePhoto(st,old){
+  if(st.file){const a=await assetsNs();const blob=await squarePhoto(st.file);let id;
+    try{id=(await a.upload(blob,{type:'image/jpeg'})).id}catch(e){throw {code:'photo',message:e&&e.code==='quota_or_state'?'Photo storage is full – ask an admin.':'Your photo couldn’t be uploaded – please try again.'}}
+    if(old)a.delete(old).catch(()=>{});return id}
+  if(st.removed){if(old){const a=await assetsNs();if(a)a.delete(old).catch(()=>{})}return null}
+  return undefined;
+}
+
+
+/* =================== CLUB ADMINS =================== */
+const ownerUid=()=>(S.settings.settings||{}).ownerUid||null;
+const adminActive=m=>!!m.linkedUser&&(!!S.admins[m.linkedUser]||m.linkedUser===ownerUid());
+function adminRoster(){
+  if(!canAdmin())return '';
+  const list=Object.entries(S.members).filter(([,m])=>m.siteAdmin||(m.linkedUser&&m.linkedUser===ownerUid())).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  const ownerLinked=list.some(([,m])=>m.linkedUser===ownerUid());
+  return `<div class="sec admins"><h4><span>Club admins · ${list.length+(ownerLinked||!ownerUid()?0:1)}</span><button class="btn sm" id="addAdmin">+ Add admin</button></h4>
+   ${!ownerLinked&&ownerUid()?`<div class="item claim"><div><b>${esc((S.settings.settings||{}).ownerName||'Portal owner')}</b> <span class="tag">· owner${S.me===ownerUid()?' (you)':''}</span><div class="tag">Owner account – link it to a member profile under My profile.</div></div></div>`:''}
+   ${list.map(([id,m])=>{const own=m.linkedUser===ownerUid();return `<div class="item claim"><div style="display:flex;gap:10px;align-items:center">${avatar(id,32)}<div><span class="lnk" data-member="${esc(id)}">${esc(m.displayName)}</span>${own?' <span class="tag">· owner</span>':''}${S.me&&m.linkedUser===S.me?' <span class="tag">(you)</span>':''}<div class="tag">${adminActive(m)?'<span style="color:var(--ok)">✓ Admin</span>':'<span style="color:var(--warn)">Becomes admin when they link their account</span>'}</div></div></div>
+   <div class="actions" style="margin:0;flex:none">${own||(S.me&&m.linkedUser===S.me)?'':`<button class="btn sm dan" data-unadmin="${esc(id)}">Remove</button>`}</div></div>`}).join('')}
+   <p class="tag" style="margin:10px 0 0">Admins can change boats, members, programs and sessions, approve profile requests and see private details. A new admin’s tools appear the next time they open the portal.</p></div>`;
+}
+function makeAdminForm(id){
+  const pick=!id;const opts=Object.entries(S.members).filter(([,m])=>!m.siteAdmin&&m.status!=='inactive').sort((a,b)=>(!!b[1].linkedUser-!!a[1].linkedUser)||a[1].displayName.localeCompare(b[1].displayName));
+  const m=id?S.members[id]:null;
+  const note=x=>x?(x.linkedUser?`<div class="tag">Their admin tools appear the next time they open the portal.</div>`:`<div class="callout" style="margin:0">${esc(x.displayName)} hasn’t linked a sign-in account yet. They’ll become an admin as soon as you approve their profile request.</div>`):'';
+  openModal(`<h3>${m?'Make '+esc(m.displayName)+' an admin':'Add a club admin'}</h3><p class="muted" style="margin-top:-6px">Admins can edit boats, members, programs and sessions, approve profile requests, and see members’ private details.</p>
+   <form id="mform"><div class="fg">
+    ${pick?fld('Member',`<select name="mid" id="admPick"><option value="">Choose a member…</option><optgroup label="Account linked">${opts.filter(([,o])=>o.linkedUser).map(([x,o])=>`<option value="${esc(x)}">${esc(o.displayName)}</option>`).join('')}</optgroup><optgroup label="Not linked yet">${opts.filter(([,o])=>!o.linkedUser).map(([x,o])=>`<option value="${esc(x)}">${esc(o.displayName)}</option>`).join('')}</optgroup></select>`,'full'):''}
+    <div class="full" id="admNote">${note(m)}</div>
+   </div>${formFoot('Make admin')}</form>`,()=>{
+    const sel=$('#admPick');if(sel)sel.onchange=()=>{$('#admNote').innerHTML=note(S.members[sel.value])};
+    wireForm({msg:'Admin added',validate:fd=>pick&&!fd.mid?'Choose a member.':null,
+      save:async fd=>{const mid=id||fd.mid,x=S.members[mid];
+        await S.db.doc('members/'+mid).update({siteAdmin:true,adminSince:nowIso(),updatedAt:nowIso()});
+        if(x.linkedUser)await S.db.doc('admins/'+x.linkedUser).set({memberId:mid,since:nowIso()});}});
+  });
+}
+function adminHow(id){}
+function removeAdminForm(id){
+  const m=S.members[id];
+  openModal(`<h3>Remove ${esc(m.displayName)} as admin?</h3><p class="muted" style="margin-top:-6px">They keep their member access – booking, reporting and their profile – but lose admin tools the next time they open the portal.</p><form id="mform">${formFoot('Remove admin',true)}</form>`,
+    ()=>wireForm({msg:'Admin removed',save:async()=>{if(m.linkedUser&&S.admins[m.linkedUser])await S.db.doc('admins/'+m.linkedUser).delete();await S.db.doc('members/'+id).update({siteAdmin:false,updatedAt:nowIso()})}}));
+}
+function syncMyAdmin(){
+  if(S._adminSynced||!S.loaded.members||!S.me||!S.db||S.guest)return;
+  const mid=myMemberId();if(!mid)return;S._adminSynced=true;const m=S.members[mid];
+  if(S.isAdmin&&!m.siteAdmin)S.db.doc('members/'+mid).update({siteAdmin:true}).catch(()=>{});
+}
+function adminNotice(){return ''}
+
+/* =================== IMPORT (one-time move from the claude.ai portal) =================== */
+S.imp=null;
+const IMPORT_ORDER=['programs','sessions','boats','members','memberPrefs','memberPrivate','crews','activity','occurrences','bookings','issues','maintenance','events'];
+function transformExport(x){
+  const C=x.collections||{};const uidToMid={};
+  for(const [mid,m] of Object.entries(C.members||{}))if(m.linkedUser)uidToMid[m.linkedUser]=mid;
+  const out={};
+  const copy=(name,fn)=>{out[name]={};for(const [id,v] of Object.entries(C[name]||{})){const r=fn?fn(id,v):[id,v];if(r)out[name][r[0]]=r[1]}};
+  for(const n of ['boats','programs','sessions','occurrences','activity','crews'])copy(n);
+  const who=v=>({by:null,byMember:v.byMember||uidToMid[v.by]||null});
+  copy('maintenance',(id,v)=>[id,{...v,...who(v)}]);
+  copy('events',(id,v)=>[id,{...v,...who(v)}]);
+  copy('issues',(id,v)=>[id,{...v,...who(v),resolvedBy:null}]);
+  copy('bookings',(id,v)=>[id,{...v,createdBy:null}]);
+  // Sign-in accounts don't carry over: everyone links their profile again (admins approve).
+  copy('members',(id,v)=>[id,{...v,linkedUser:null,linkedAt:null,siteAdmin:false,adminConfirmedAt:null,previouslyLinked:!!v.linkedUser||!!v.previouslyLinked}]);
+  copy('memberPrefs',(k,v)=>[uidToMid[k]||k,v]);
+  copy('memberPrivate',(k,v)=>[uidToMid[k]||k,v]);
+  for(const n of ['memberPrefs','memberPrivate'])for(const k of Object.keys(out[n]))if(!out.members[k])delete out[n][k];
+  return out;
+}
+function viewImport(){
+  if(!canAdmin())return `<div class="banner"><h3>Admins only</h3></div>`;
+  const d=S.imp;
+  return `<div class="page-h"><div><a href="#manage" class="lnk">‹ Back to Manage programs</a><h2>Import club data</h2><p>Bring everything over from the original portal on claude.ai: boats, members, programs, bookings, history and photos. In the original portal, go to <b>Programs → Manage programs → Export all data</b>, then choose that file here.</p></div></div>
+  <div class="sec" style="max-width:760px">
+    <label class="btn"><input type="file" accept="application/json,.json" hidden id="impFile">Choose export file…</label>
+    ${d?`<div style="margin-top:14px"><b>${esc(d.name)}</b> <span class="tag">· exported ${fmtDate(d.raw.exportedAt)}</span>
+      <table class="t" style="margin-top:10px"><tbody>${IMPORT_ORDER.map(n=>`<tr><td>${esc(n)}</td><td class="ra">${Object.keys(d.data[n]||{}).length}</td></tr>`).join('')}<tr><td>photos</td><td class="ra">${Object.keys(d.raw.photos||{}).length}</td></tr></tbody></table>
+      <div class="callout" style="margin-top:12px">Importing writes these records into this portal. Records with the same ID are replaced, so it’s safe to run again with a newer export. Sign-in accounts don’t carry over: members link their profile again from <b>My profile</b> and you approve them, then re-add admins on the Members page.</div>
+      <div class="actions"><button class="btn pri" id="impGo">Import ${Object.values(d.data).reduce((n,o)=>n+Object.keys(o).length,0)} records</button></div>
+      <div id="impProg" class="tag" style="margin-top:10px"></div></div>`:''}
+  </div>`;
+}
+function bindImport(){
+  const f=$('#impFile');if(f)f.onchange=async()=>{const file=f.files[0];if(!file)return;
+    try{const raw=JSON.parse(await file.text());if(!raw.collections)throw 0;S.imp={name:file.name,raw,data:transformExport(raw)};render()}
+    catch(e){toast('That doesn’t look like a portal export file')}};
+  const g=$('#impGo');if(g)g.onclick=runImport;
+}
+async function runImport(){
+  const d=S.imp;if(!d)return;const btn=$('#impGo');btn.disabled=true;const prog=$('#impProg');
+  const say=t=>{if(prog)prog.textContent=t};
+  try{
+    // 1. photos
+    const photoMap={};const ph=Object.entries(d.raw.photos||{});const a=await assetsNs();
+    for(let i=0;i<ph.length;i++){say(`Uploading photos ${i+1} of ${ph.length}…`);
+      try{const blob=await (await fetch(ph[i][1])).blob();const r=await a.upload(blob,{type:blob.type||'image/jpeg'});photoMap[ph[i][0]]=r.id}catch(e){}}
+    for(const v of Object.values(d.data.issues||{}))if(v.photos)v.photos=v.photos.map(x=>photoMap[x]).filter(Boolean);
+    for(const v of Object.values(d.data.memberPrefs||{}))if(v.photo)v.photo=photoMap[v.photo]||null;
+    // 2. records, a few at a time
+    const jobs=[];for(const n of IMPORT_ORDER)for(const [id,v] of Object.entries(d.data[n]||{}))jobs.push([n+'/'+id,v]);
+    let done=0;const workers=Array.from({length:8},async()=>{while(jobs.length){const [path,v]=jobs.shift();await S.db.doc(path).set(v);done++;if(done%20===0)say(`Saved ${done} records…`)}});
+    await Promise.all(workers);
+    say(`Done – ${done} records and ${Object.keys(photoMap).length} photos imported.`);toast('Import complete');
+    S.imp=null;setTimeout(()=>{location.hash='members'},1500);
+  }catch(e){say('Import stopped: '+((e&&e.message)||'error')+'. You can run it again – it picks up where it left off.');btn.disabled=false}
+}
+
+/* ---------- go ---------- */
+try{const l=localStorage.getItem('fleetLayout');if(l)S.layout=l;const ml=localStorage.getItem('memberLayout');if(ml)S.mlayout=ml}catch(e){}
+route();init();
+</script>
+</body>
+</html>
