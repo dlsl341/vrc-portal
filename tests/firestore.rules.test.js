@@ -34,6 +34,9 @@ beforeEach(async () => {
       open: true, captain: 'm_alice', createdBy: 'alice', notes: '' });
     await put('bookings/closed', { sessionId: 's1', date: '2026-11-22', boatId: 'b2', crew: ['m_alice', null], cox: null,
       open: false, captain: 'm_alice', createdBy: 'alice', notes: '' });
+    await put('accounts/dan', { memberId: 'm_dan' });
+    await put('members/m_dan', { displayName: 'Dan (coach)', linkedUser: 'dan', roles: ['rower', 'coach'] });
+    await put('members/m_bob', { displayName: 'Bob', linkedUser: 'bob', roles: ['rower'] });
     await put('results/r1', { memberId: 'm_alice', by: 'alice', date: '2026-11-16', type: 'erg', program: 'Masters',
       km: 10, timeSec: 2700, likes: {} });
     await put('issues/i1', { boatId: 'b1', status: 'open', by: 'alice', description: 'Crack', photos: [] });
@@ -150,4 +153,15 @@ test('the owner of a result can edit and delete it; admins can too', async () =>
   await assertFails(updateDoc(doc(as('alice'), 'results/r1'), { memberId: 'm_bob' }));
   await assertSucceeds(updateDoc(doc(as('carol'), 'results/r1'), { km: 12 }));
   await assertSucceeds(deleteDoc(doc(as('alice'), 'results/r1')));
+});
+
+// ---- attendance
+test('coaches and admins can check athletes in; other members can only look', async () => {
+  const att = { sessionId: 's1', date: '2026-11-22', marks: { m_alice: 'present' } };
+  await assertSucceeds(setDoc(doc(as('dan'), 'attendance/s1_20261122'), att));
+  await assertSucceeds(updateDoc(doc(as('carol'), 'attendance/s1_20261122'), { 'marks.m_bob': 'absent' }));
+  await assertFails(updateDoc(doc(as('bob'), 'attendance/s1_20261122'), { 'marks.m_bob': 'present' }));
+  await assertFails(setDoc(doc(as('alice'), 'attendance/s1_20261123'), att));
+  await assertSucceeds(getDoc(doc(as('bob'), 'attendance/s1_20261122')));
+  await assertFails(getDoc(doc(as('stranger'), 'attendance/s1_20261122')));
 });

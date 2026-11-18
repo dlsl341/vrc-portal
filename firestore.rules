@@ -29,6 +29,9 @@ service cloud.firestore {
     function myMemberId() {
       return get(/databases/$(database)/documents/accounts/$(uid())).data.memberId;
     }
+    function isCoach() {                  // a linked member with the Coach role
+      return isMember() && 'coach' in get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []);
+    }
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -99,6 +102,12 @@ service cloud.firestore {
       allow read: if canUse();
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
       allow update, delete: if isAdmin();
+    }
+
+    // ---- attendance: coaches and admins check athletes in; everyone in the club can see it ----
+    match /attendance/{id} {
+      allow read: if canUse();
+      allow write: if isAdmin() || isCoach();
     }
 
     // ---- results: members log their own training; anyone in the club can add/remove only their own like ----

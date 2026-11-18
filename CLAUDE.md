@@ -31,6 +31,12 @@ language, and keep the "propose → preview link → merge" workflow.
   appears on your own booking once a session has started. Rules: own results only; others may only
   add/remove their own key in `likes`.
 
+- **Attendance**: coaches (members with the `coach` role, set by an admin under Edit member → Roles)
+  and admins get "✓ Check in athletes" on a session sheet from the day of the session. Present / Late /
+  No-show per booked person, walk-ins, "mark the rest present". Stored in `attendance/{sessionId}_{YYYYMMDD}`
+  `{sessionId, date, marks{memberId: present|late|absent}}`. Shown as ✓/⏱/✗ on the sheet and as an
+  Attendance section + badges on member profiles; walk-ins count as sessions.
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
