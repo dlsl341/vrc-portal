@@ -41,6 +41,13 @@ language, and keep the "propose → preview link → merge" workflow.
   Kilometres / Time (from `results`, by `program`), Sessions attended (from `attendance`, by the session's
   program) or Best 2k erg (2.000 km erg results); period + erg/water filters; podium for top 3.
 
+- **Scheduled maintenance** (Maintenance tab, `maintJobs`): admins schedule a boat + task + time + crew.
+  The form suggests free slots (07:00–21:00, avoiding every on-water session ±30 min, the boat's bookings
+  and other jobs) and shows a day timeline + clash warnings ("Schedule anyway" to override). A scheduled
+  boat is hidden from booking during overlapping sessions. Members join/leave with "I can help"; crew add it
+  to their calendar (reuses the booking calendar helpers) and can mark it done (also writes a `maintenance`
+  log). Admins get "Email crew" (mailto with calendar links).
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
@@ -60,6 +67,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
+`maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
 

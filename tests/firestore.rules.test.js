@@ -37,6 +37,8 @@ beforeEach(async () => {
     await put('accounts/dan', { memberId: 'm_dan' });
     await put('members/m_dan', { displayName: 'Dan (coach)', linkedUser: 'dan', roles: ['rower', 'coach'] });
     await put('members/m_bob', { displayName: 'Bob', linkedUser: 'bob', roles: ['rower'] });
+    await put('maintJobs/j1', { boatId: 'b1', task: 'Rigging check', date: '2026-11-25', start: '13:00', end: '15:00',
+      crew: ['m_alice'], crewNeeded: 3, status: 'scheduled' });
     await put('results/r1', { memberId: 'm_alice', by: 'alice', date: '2026-11-16', type: 'erg', program: 'Masters',
       km: 10, timeSec: 2700, likes: {} });
     await put('issues/i1', { boatId: 'b1', status: 'open', by: 'alice', description: 'Crack', photos: [] });
@@ -164,4 +166,23 @@ test('coaches and admins can check athletes in; other members can only look', as
   await assertFails(setDoc(doc(as('alice'), 'attendance/s1_20261123'), att));
   await assertSucceeds(getDoc(doc(as('bob'), 'attendance/s1_20261122')));
   await assertFails(getDoc(doc(as('stranger'), 'attendance/s1_20261122')));
+});
+
+// ---- scheduled maintenance
+test('only admins schedule maintenance', async () => {
+  const job = { boatId: 'b1', task: 'Wash', date: '2026-11-26', start: '13:00', end: '14:00', crew: [], status: 'scheduled' };
+  await assertSucceeds(setDoc(doc(as('carol'), 'maintJobs/j2'), job));
+  await assertFails(setDoc(doc(as('bob'), 'maintJobs/j3'), job));
+  await assertFails(updateDoc(doc(as('bob'), 'maintJobs/j1'), { date: '2026-11-27' }));
+  await assertFails(deleteDoc(doc(as('bob'), 'maintJobs/j1')));
+});
+test('members can join or leave a maintenance crew, but not move others', async () => {
+  await assertSucceeds(updateDoc(doc(as('bob'), 'maintJobs/j1'), { crew: ['m_alice', 'm_bob'] }));   // join
+  await assertSucceeds(updateDoc(doc(as('bob'), 'maintJobs/j1'), { crew: ['m_alice'] }));            // leave
+  await assertFails(updateDoc(doc(as('bob'), 'maintJobs/j1'), { crew: [] }));                        // remove Alice
+  await assertFails(updateDoc(doc(as('bob'), 'maintJobs/j1'), { crew: ['m_alice', 'm_x'] }));        // add someone else
+});
+test('the crew can mark a job done; others cannot', async () => {
+  await assertFails(updateDoc(doc(as('bob'), 'maintJobs/j1'), { status: 'done' }));
+  await assertSucceeds(updateDoc(doc(as('alice'), 'maintJobs/j1'), { status: 'done', doneNotes: 'All good' }));
 });
