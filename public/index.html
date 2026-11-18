@@ -220,6 +220,15 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .pod-b{width:100%;margin-top:8px;border-radius:8px 8px 0 0;background:var(--pc);color:#fff;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;opacity:.9}
 .pod-1 .pod-b{height:74px}.pod-2 .pod-b{height:52px;opacity:.7}.pod-3 .pod-b{height:38px;opacity:.55}.pod.me .pod-n{color:var(--red-d)}
 .lb-t tr{cursor:pointer}.lb-t tr.me td{background:#fdeeee}.lb-t small{font-size:11px;font-weight:400}
+.mj{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-left:4px solid #2a5d9c;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.mj.mj-done{border-left-color:var(--ok);opacity:.85}.mj.mj-cancelled{opacity:.6}.mj-d{text-align:center;min-width:54px}.mj-dd{font-family:'Libre Baskerville',serif;font-size:24px;font-weight:700;line-height:1}
+.mj-crew{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}.mj-p{display:inline-flex;gap:5px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:2px 8px 2px 2px;font-size:12.5px;cursor:pointer}
+.mj-p .x{border:0;background:none;cursor:pointer;font-size:14px;color:var(--ink3);padding:0 0 0 2px}
+.tl{margin:4px 0}.tl-track{position:relative;height:30px;background:repeating-linear-gradient(90deg,#f4f4f2 0 1px,transparent 1px 6.45%);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.tl-b{position:absolute;top:3px;bottom:3px;border-radius:4px;font-size:10.5px;color:#fff;padding:0 4px;overflow:hidden;white-space:nowrap;line-height:24px}
+.tl-s{opacity:.85}.tl-k{background:var(--red-d);top:16px}.tl-j{background:#2a5d9c}.tl-me{background:transparent;border:2px dashed #111;color:#111;font-weight:700;z-index:2}
+.tl-ticks{position:relative;height:16px;font-size:10.5px;color:var(--ink3)}.tl-ticks span{position:absolute;transform:translateX(-50%)}
+.tl-key{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.tl-key .k{display:inline-block;width:12px;height:10px;border-radius:2px;margin-left:8px}.tl-key .k.tl-s{background:#999}.tl-key .k.tl-me{border:2px dashed #111}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -406,7 +415,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -523,9 +532,10 @@ function viewMaint(){
   const active=Object.entries(S.boats).filter(([,b])=>b.status!=='retired'&&b.ownership!=='private');
   const due=active.map(([id,b])=>({id,b,lm:lastMaint(id)})).filter(x=>daysSince(x.lm&&x.lm.date)>MAINT_DUE_DAYS).sort((a,b)=>(a.lm?.date||'').localeCompare(b.lm?.date||''));
   const logs=Object.entries(S.maint).sort((a,b)=>String(b[1].date).localeCompare(String(a[1].date))).slice(0,80);
-  return `<div class="page-h"><div><h2>Maintenance</h2><p>Each club boat is assigned to a program for its maintenance cycle. Boats with nothing logged in the last ${MAINT_DUE_DAYS} days are shown as due.</p></div>${canMember()?`<button class="btn pri" id="logAny">Log maintenance</button>`:''}</div>
+  return `<div class="page-h"><div><h2>Maintenance</h2><p>Each club boat is assigned to a program for its maintenance cycle. Schedule work at times that avoid on-water sessions, build a crew, and add it to your calendar.</p></div><div class="actions" style="margin:0">${canMember()?`<button class="btn" id="logAny">Log maintenance</button>`:''}${canAdmin()?`<button class="btn pri" id="schedMaint">+ Schedule maintenance</button>`:''}</div></div>
+  ${scheduledMaintHtml()}
   <h3 style="margin:0 0 10px;font-size:17px">Due for maintenance <span class="muted" style="font-family:Inter;font-size:12px">${due.length}</span></h3>
-  ${due.length?`<table class="t"><thead><tr><th>Boat</th><th>Rig</th><th>Assigned program</th><th>Last done</th></tr></thead><tbody>${due.map(x=>`<tr class="row" data-boat="${esc(x.id)}"><td class="name">${esc(x.b.name)}</td><td>${rigChips(x.b)}</td><td>${esc(x.b.maintenanceProgram||'Unassigned')}</td><td>${x.lm?fmtDate(x.lm.date):'<span class="muted">never logged</span>'}</td></tr>`).join('')}</tbody></table>`:'<div class="banner">Every club boat has been maintained recently.</div>'}
+  ${due.length?`<table class="t"><thead><tr><th>Boat</th><th>Rig</th><th>Assigned program</th><th>Last done</th></tr></thead><tbody>${due.map(x=>`<tr class="row" data-boat="${esc(x.id)}"><td class="name">${esc(x.b.name)}</td><td>${rigChips(x.b)}</td><td>${esc(x.b.maintenanceProgram||'Unassigned')}</td><td>${x.lm?fmtDate(x.lm.date):'<span class="muted">never logged</span>'}${(j=>j?` <span class="pill s-dnr" style="background:#e3eefb;color:#2a5d9c">Scheduled ${fmtDate(j[1].date)}</span>`:'')(Object.entries(S.mjobs).find(([,j])=>j.boatId===x.id&&j.status==='scheduled'))}</td></tr>`).join('')}</tbody></table>`:'<div class="banner">Every club boat has been maintained recently.</div>'}
   <h3 style="margin:26px 0 10px;font-size:17px">Maintenance log</h3>
   ${logs.length?`<table class="t"><thead><tr><th>Date</th><th>Boat</th><th class="hide-s">Program</th><th class="hide-s">Crew</th><th>Notes</th></tr></thead><tbody>${logs.map(([,l])=>`<tr class="row" data-boat="${esc(l.boatId)}"><td style="white-space:nowrap">${fmtDate(l.date)}</td><td class="name">${esc(S.boats[l.boatId]?.name||'—')}</td><td class="hide-s">${esc(l.program||'')}</td><td class="hide-s">${esc(l.crew||'')}</td><td>${esc(l.notes||'')}</td></tr>`).join('')}</tbody></table>`:'<div class="banner">Nothing logged yet.</div>'}`;
 }
@@ -541,6 +551,7 @@ function bindMain(){
   const ab=$('#addBoat');if(ab)ab.onclick=()=>boatForm(null);
   const ra=$('#reportAny');if(ra)ra.onclick=()=>issueForm(null);
   const la=$('#logAny');if(la)la.onclick=()=>maintForm(null);
+  if(S.view==='maintenance')bindMaintJobs($('#main'));
 }
 
 /* ---------- drawer ---------- */
@@ -594,6 +605,7 @@ function renderDrawer(){
     <div class="sec"><h4>Maintenance history</h4>
       ${logs.length?logs.map(l=>`<div class="item"><b>${fmtDate(l.date)}</b> <span class="muted">· ${esc(l.program||'')}</span>${l.crew?`<div class="when">${esc(l.crew)}</div>`:''}${l.notes?`<div style="margin-top:3px">${esc(l.notes)}</div>`:''}</div>`).join(''):'<div class="empty">Nothing logged yet.</div>'}
     </div>
+    ${boatJobsHtml(id)}
     ${boatBookingsHtml(id)}
     ${boatCrewsHtml(id)}
     <div class="sec"><h4>Activity</h4>
@@ -609,6 +621,7 @@ function renderDrawer(){
   d.querySelectorAll('[data-addphoto]').forEach(el=>el.onclick=()=>addPhotosToIssue(el.dataset.addphoto));
   d.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
   d.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=()=>{const [a,c]=el.dataset.gosess.split('|');goSession(a,c)});
+  d.querySelectorAll('[data-mjnew]').forEach(el=>el.onclick=()=>jobForm(null,el.dataset.mjnew));
   d.querySelectorAll('[data-rerig]').forEach(el=>el.onclick=()=>{const r=el.dataset.rerig;guarded(async()=>{await S.db.doc('boats/'+id).update({currentRig:r,updatedAt:nowIso()});await logEvent(id,'edit',`Re-rigged ${b.currentRig} → ${r}`)},'Rig updated')});
 }
 
@@ -1179,7 +1192,7 @@ function viewSession(){
     <li>Any reserved erg still free at <b>${esc(ergOpenLabel(id))} on the day</b> opens to everyone${eg.some(g=>g.only)?`, except ${eg.filter(g=>g.only).map(g=>`${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to} (${esc(g.name)} only)`).join(', ')}`:''}.${ergOverflow(id,d)?` <b>${eg.some(g=>g.only)?'The other reserved ergs':'Reserved ergs'} are now open to everyone.</b>`:''}</li>
     <li>Reservations open ${days} day${days===1?'':'s'} before and close when the session starts. Cancel if you can’t make it, so someone else can row.</li></ul></div>`:'';
   const used=new Set(bk.map(([,b])=>b.boatId).filter(Boolean));
-  const avail=erg?[]:Object.entries(S.boats).filter(([bid,b])=>b.status==='available'&&!used.has(bid)).sort((a,b)=>(a[1].seats-b[1].seats)||a[1].name.localeCompare(b[1].name));
+  const avail=erg?[]:Object.entries(S.boats).filter(([bid,b])=>b.status==='available'&&!used.has(bid)&&!boatInMaint(bid,id,d)).sort((a,b)=>(a[1].seats-b[1].seats)||a[1].name.localeCompare(b[1].name));
   const rows=bk.map(([bid,b],i)=>{
     const boat=S.boats[b.boatId];const rerig=boat&&b.rig&&b.rig!==boat.currentRig;const amIn=!!me&&bMembers(b).includes(me);
     const isCapt=(!!me&&b.captain===me)||(!!S.me&&b.createdBy===S.me);const live=w.state!=='closed'&&!o.cancelled;
@@ -1254,6 +1267,7 @@ function memberOpts(sid,d,sel,exclBid){
 function bookingForm(sid,d,bid,preBoat){
   const s=S.sessions[sid],p=progOf(sid),b=bid?S.bookings[bid]:null,me=myMemberId();
   const taken=new Set(sessBookings(sid,d).filter(([x])=>x!==bid).map(([,x])=>x.boatId).filter(Boolean));
+  Object.keys(S.boats).forEach(x=>{if(boatInMaint(x,sid,d))taken.add(x)}); // in scheduled maintenance
   const boats=Object.entries(S.boats).filter(([x,o])=>o.status!=='retired'&&!taken.has(x)).sort((a,c)=>(a[1].seats-c[1].seats)||a[1].name.localeCompare(c[1].name));
   const cur=b?b.boatId||'':preBoat||'';
   const boatSel=`<select name="boatId" id="bBoat">${p.boatRequired===false?`<option value="" ${cur===''?'selected':''}>No boat – coach will assign</option>`:'<option value="">Choose a boat…</option>'}${CLASSES.map(c=>{const g=boats.filter(([,o])=>o.seats===c.k);return g.length?`<optgroup label="${c.t}">${g.map(([x,o])=>`<option value="${esc(x)}" ${x===cur?'selected':''} ${o.status!=='available'&&!canAdmin()?'disabled':''}>${esc(o.name)} · ${esc((o.rigs||[]).join('/'))}${o.weight&&o.weight.lbsMax?' · '+esc(wtText(o.weight).split(' · ')[0]):''}${o.status!=='available'?' · '+esc(STATUS[o.status]):''}</option>`).join('')}</optgroup>`:''}).join('')}</select>`;
@@ -1861,6 +1875,168 @@ function bindLeaderboard(){
   [['#lbType','lbType'],['#lbPeriod','lbPeriod']].forEach(([s,k])=>{const x=$(s);if(x)x.onchange=()=>{S[k]=x.value;render()}});
   {const b=$('#lbLog');if(b)b.onclick=()=>resultForm(null)}
 }
+
+
+/* =================== SCHEDULED MAINTENANCE =================== */
+// maintJobs/{id}: boatId, task, date, start, end ("HH:MM"), crew[] memberIds, crewNeeded, notes,
+// status scheduled|done|cancelled, createdBy, at. Admins schedule; members can join/leave the crew;
+// crew can mark a job done (which also writes a maintenance log entry).
+// Scheduling avoids on-water sessions (+ a buffer for launching/landing) and the boat's own bookings.
+S.mjobs={};
+const MJ_BUFFER=30, MJ_DAY=['07:00','21:00'];
+const toMin=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+(m||0)};
+const toHM=n=>pad(Math.floor(n/60))+':'+pad(n%60);
+const overlaps=(a1,a2,b1,b2)=>a1<b2&&b1<a2;
+function waterSessionsOn(d){const wd=(pd(d).getDay()+6)%7;
+  return Object.entries(S.sessions).filter(([sid,s])=>s.active!==false&&s.type!=='erg'&&+s.weekday===wd&&s.start&&!occ(sid,d).cancelled)
+    .map(([sid,s])=>({sid,s,p:progOf(sid),a:toMin(s.start),b:toMin(s.end||toHM(toMin(s.start)+120))}))}
+function jobsOn(boatId,d,exclude){return Object.entries(S.mjobs).filter(([id,j])=>id!==exclude&&j.status==='scheduled'&&j.date===d&&(!boatId||j.boatId===boatId))}
+// boat is in scheduled maintenance during a session on date d?
+function boatInMaint(boatId,sid,d){const s=S.sessions[sid]||{};if(!s.start)return jobsOn(boatId,d).length>0;const a=toMin(s.start),b=toMin(s.end||toHM(a+120));
+  return jobsOn(boatId,d).some(([,j])=>overlaps(a,b,toMin(j.start),toMin(j.end)))}
+function jobConflicts(boatId,d,start,end,exclude){
+  const a=toMin(start),b=toMin(end),out=[];if(!d||!start||!end)return out;
+  for(const [bid,bk] of Object.entries(S.bookings)){if(bk.boatId!==boatId||bk.date!==d||!bMembers(bk).length)continue;const s=S.sessions[bk.sessionId]||{};
+    const sa=s.start?toMin(s.start):0,sb=s.start?toMin(s.end||toHM(sa+120)):1440;if(overlaps(a,b,sa-MJ_BUFFER,sb+MJ_BUFFER))out.push({hard:true,text:`${S.boats[boatId].name} is booked for ${s.title||'a session'} (${timeRange(s)})`})}
+  for(const w of waterSessionsOn(d))if(overlaps(a,b,w.a-MJ_BUFFER,w.b+MJ_BUFFER))out.push({hard:false,text:`Overlaps on-water time: ${w.s.title} (${timeRange(w.s)})`});
+  for(const [,j] of jobsOn(boatId,d,exclude))if(overlaps(a,b,toMin(j.start),toMin(j.end)))out.push({hard:true,text:`Already scheduled: ${j.task} (${fmtTime(j.start)}–${fmtTime(j.end)})`});
+  return out;
+}
+// free windows of `dur` minutes, earliest first, for the next `days` days from `from`
+function suggestSlots(boatId,from,dur,days=21,max=6){
+  const out=[];const t=today();
+  for(let i=0;i<days&&out.length<max;i++){const d=addDays(from,i);if(d<t)continue;
+    for(let m=toMin(MJ_DAY[0]);m+dur<=toMin(MJ_DAY[1]);m+=30){
+      if(d===t&&m<new Date().getHours()*60+new Date().getMinutes()+60)continue;
+      if(!jobConflicts(boatId,d,toHM(m),toHM(m+dur)).length){out.push({d,start:toHM(m),end:toHM(m+dur)});break}}}
+  return out;
+}
+function dayTimeline(boatId,d,start,end,exclude){
+  const lo=toMin('06:00'),hi=toMin('21:30'),pct=m=>Math.max(0,Math.min(100,(m-lo)/(hi-lo)*100));
+  const bar=(a,b,cls,label,color)=>`<div class="tl-b ${cls}" style="left:${pct(a)}%;width:${Math.max(1,pct(b)-pct(a))}%;${color?`background:${color}`:''}" title="${esc(label)}">${esc(label)}</div>`;
+  const items=[];
+  for(const w of waterSessionsOn(d))items.push(bar(w.a,w.b,'tl-s',w.s.title,w.p.color));
+  for(const [,bk] of Object.entries(S.bookings)){if(bk.boatId!==boatId||bk.date!==d||!bMembers(bk).length)continue;const s=S.sessions[bk.sessionId]||{};if(s.start)items.push(bar(toMin(s.start),toMin(s.end||toHM(toMin(s.start)+120)),'tl-k','Booked: '+(s.title||'')))}
+  for(const [,j] of jobsOn(boatId,d,exclude))items.push(bar(toMin(j.start),toMin(j.end),'tl-j','Maintenance: '+j.task));
+  if(start&&end&&toMin(end)>toMin(start))items.push(bar(toMin(start),toMin(end),'tl-me','This job'));
+  const ticks=[6,9,12,15,18,21].map(h=>`<span style="left:${pct(h*60)}%">${h<=12?h:h-12}${h<12?'am':'pm'}</span>`).join('');
+  return `<div class="tl"><div class="tl-track">${items.join('')}</div><div class="tl-ticks">${ticks}</div></div>`;
+}
+
+function jobEvent(id,j){const boat=S.boats[j.boatId]||{};const link=`${PORTAL_URL}#maintenance`;
+  const details=[`Boat maintenance at Vancouver Rowing Club.`,`Boat: ${boat.name||''}`,`Task: ${j.task}`,j.crew&&j.crew.length?`Crew: ${j.crew.map(mName).join(', ')}`:'',j.notes?`Notes: ${j.notes}`:'',`Details: ${link}`].filter(Boolean).join('\n');
+  const start=clubInstant(j.date,j.start),end=clubInstant(j.date,j.end);
+  return {uid:`mj-${id}@vrc-rowing-portal`,title:`Boat maintenance · ${boat.name||''} · ${j.task}`,details,start,end,allDay:false,date:j.date,link,seq:Math.floor(Date.parse(j.updatedAt||j.at||nowIso())/1000)||0}}
+function jobCalendarDialog(id,justSaved){const j=S.mjobs[id];if(!j)return;const e=jobEvent(id,j);const email=myEmail();
+  openModal(`<h3>${justSaved?'Maintenance scheduled ✓':'Add to your calendar'}</h3>
+   <div class="calcard"><b>${esc(e.title)}</b><div class="tag">${dayLabel(j.date,true)} · ${fmtTime(j.start)} – ${fmtTime(j.end)}</div>${(j.crew||[]).length?`<div class="tag">Crew: ${esc(j.crew.map(mName).join(', '))}</div>`:''}</div>
+   <p class="muted" style="margin:12px 0 8px;font-size:13px">${email?`Add it to the calendar for <b>${esc(email)}</b>.`:'Add it to your calendar.'} It includes a reminder and a link back to the portal.</p>
+   ${calButtons(e,id)}<div class="mfoot"><button class="btn" id="calDone">Done</button></div>`,()=>{
+    $('#calDone').onclick=closeModal;
+    const ci=$('#calIcs');if(ci)ci.onclick=async()=>{if(await saveIcs([e],`vrc-maintenance-${j.date}.ics`))toast('Calendar file ready – open it to add the event')}});
+}
+// admins: email the whole crew with calendar links
+function crewMailto(id){const j=S.mjobs[id];const e=jobEvent(id,j);
+  const to=(j.crew||[]).map(m=>(privOf(m)||{}).email).filter(Boolean);
+  const body=`Hi crew,\n\nYou're on the maintenance crew for ${S.boats[j.boatId]?.name||'a boat'}:\n${j.task}\n${dayLabel(j.date,true)}, ${fmtTime(j.start)} – ${fmtTime(j.end)}\n${j.notes?'\n'+j.notes+'\n':''}\nAdd it to your calendar:\nGoogle: ${googleUrl(e)}\nOutlook: ${outlookUrl(e,false)}\nOr open the portal (Maintenance tab → Add to calendar): ${e.link}\n\nThanks!`;
+  return {to,href:`mailto:${to.map(encodeURIComponent).join(',')}?subject=${encodeURIComponent(e.title)}&body=${encodeURIComponent(body)}`}}
+
+function jobCard(id,j){
+  const boat=S.boats[j.boatId]||{};const me=myMemberId();const onCrew=!!me&&(j.crew||[]).includes(me);
+  const need=Math.max(0,(+j.crewNeeded||0)-(j.crew||[]).length);const past=j.date<today();
+  const conf=j.status==='scheduled'?jobConflicts(j.boatId,j.date,j.start,j.end,id):[];
+  const acts=[
+    onCrew&&j.status==='scheduled'&&!past?`<button class="btn sm" data-mjcal="${esc(id)}">📅 Add to calendar</button>`:'',
+    canMember()&&me&&!onCrew&&j.status==='scheduled'&&!past?`<button class="btn sm pri" data-mjjoin="${esc(id)}">I can help</button>`:'',
+    onCrew&&j.status==='scheduled'&&!past?`<button class="btn sm" data-mjleave="${esc(id)}">Leave crew</button>`:'',
+    (onCrew||canAdmin())&&j.status==='scheduled'&&j.date<=today()?`<button class="btn sm pri" data-mjdone="${esc(id)}">Mark done</button>`:'',
+    canAdmin()&&j.status==='scheduled'&&(j.crew||[]).length?`<a class="btn sm" href="${esc(crewMailto(id).href)}">✉ Email crew</a>`:'',
+    canAdmin()&&j.status==='scheduled'?`<button class="btn sm" data-mjedit="${esc(id)}">Edit</button>`:''].filter(Boolean).join('');
+  return `<div class="mj ${j.status!=='scheduled'?'mj-'+j.status:''}"><div class="mj-d"><div class="mj-dd">${pd(j.date).getDate()}</div><div class="tag">${pd(j.date).toLocaleDateString(undefined,{month:'short'})} · ${pd(j.date).toLocaleDateString(undefined,{weekday:'short'})}</div></div>
+   <div style="flex:1;min-width:0"><div><b>${esc(j.task)}</b> · <span class="bchip" data-boat="${esc(j.boatId)}">${esc(boat.currentRig||'')} ${esc(boat.name||'Boat')}</span>${j.status==='done'?' <span class="pill s-available">Done</span>':j.status==='cancelled'?' <span class="pill s-retired">Cancelled</span>':past?' <span class="pill s-repair">Waiting to be marked done</span>':''}</div>
+    <div class="tag">${fmtTime(j.start)} – ${fmtTime(j.end)}${boat.maintenanceProgram?` · ${esc(boat.maintenanceProgram)} maintenance`:''}</div>
+    <div class="mj-crew">${(j.crew||[]).map(m=>`<span class="mj-p" data-member="${esc(m)}">${avatar(m,22)}${esc(mName(m))}</span>`).join('')}${need?`<span class="tag">${need} more helper${need===1?'':'s'} needed</span>`:''}${!(j.crew||[]).length&&!need?'<span class="tag">No crew yet</span>':''}</div>
+    ${j.notes?`<div class="tag" style="margin-top:4px">${esc(j.notes)}</div>`:''}
+    ${conf.length?`<div class="warnline" style="margin-top:6px">⚠ ${conf.map(c=>esc(c.text)).join(' · ')}</div>`:''}
+    ${acts?`<div class="actions" style="margin:8px 0 0">${acts}</div>`:''}</div></div>`;
+}
+function scheduledMaintHtml(){
+  const t=today();const jobs=Object.entries(S.mjobs).filter(([,j])=>j.status==='scheduled').sort((a,b)=>(a[1].date+a[1].start).localeCompare(b[1].date+b[1].start));
+  const overdue=jobs.filter(([,j])=>j.date<t),up=jobs.filter(([,j])=>j.date>=t);const me=myMemberId();
+  const mine=up.filter(([,j])=>me&&(j.crew||[]).includes(me));
+  const recent=Object.entries(S.mjobs).filter(([,j])=>j.status==='done').sort((a,b)=>b[1].date.localeCompare(a[1].date)).slice(0,5);
+  return `<h3 style="margin:0 0 10px;font-size:17px">Scheduled maintenance <span class="muted" style="font-family:Inter;font-size:12px">${up.length} upcoming${mine.length?` · you’re on ${mine.length}`:''}</span></h3>
+   ${overdue.length?overdue.map(([id,j])=>jobCard(id,j)).join(''):''}
+   ${up.length?up.map(([id,j])=>jobCard(id,j)).join(''):`<div class="banner" style="margin-bottom:10px">Nothing scheduled.${canAdmin()?' Use “Schedule maintenance” to book a boat in – it suggests times that avoid on-water sessions.':''}</div>`}
+   ${recent.length?`<details style="margin:6px 0 22px"><summary class="tag" style="cursor:pointer">Recently completed (${recent.length})</summary>${recent.map(([id,j])=>jobCard(id,j)).join('')}</details>`:'<div style="height:16px"></div>'}`;
+}
+function bindMaintJobs(m){
+  m.querySelectorAll('[data-mjcal]').forEach(el=>el.onclick=e=>{e.stopPropagation();jobCalendarDialog(el.dataset.mjcal)});
+  m.querySelectorAll('[data-mjedit]').forEach(el=>el.onclick=e=>{e.stopPropagation();jobForm(el.dataset.mjedit)});
+  m.querySelectorAll('[data-mjdone]').forEach(el=>el.onclick=e=>{e.stopPropagation();jobDoneForm(el.dataset.mjdone)});
+  m.querySelectorAll('[data-mjjoin]').forEach(el=>el.onclick=async e=>{e.stopPropagation();const id=el.dataset.mjjoin,j=S.mjobs[id],me=myMemberId();
+    if(await guarded(()=>S.db.doc('maintJobs/'+id).update({crew:[...(j.crew||[]),me],updatedAt:nowIso()}),'You’re on the crew'))setTimeout(()=>jobCalendarDialog(id),300)});
+  m.querySelectorAll('[data-mjleave]').forEach(el=>el.onclick=e=>{e.stopPropagation();const id=el.dataset.mjleave,j=S.mjobs[id],me=myMemberId();
+    guarded(()=>S.db.doc('maintJobs/'+id).update({crew:(j.crew||[]).filter(x=>x!==me),updatedAt:nowIso()}),'You’ve left the crew')});
+  m.querySelectorAll('.mj [data-member]').forEach(el=>el.onclick=e=>{e.stopPropagation();openMember(el.dataset.member)});
+  {const b=$('#schedMaint');if(b)b.onclick=()=>jobForm(null)}
+}
+function jobForm(id,preBoat){
+  const j=id?S.mjobs[id]:{boatId:preBoat||'',task:'',date:'',start:'',end:'',crew:[],crewNeeded:2,notes:''};
+  const st={boatId:j.boatId,date:j.date,start:j.start,end:j.end,dur:j.start&&j.end?toMin(j.end)-toMin(j.start):120,crew:[...(j.crew||[])]};
+  const members=Object.entries(S.members).filter(([,m])=>m.status!=='inactive').sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  openModal(`<h3>${id?'Edit maintenance':'Schedule maintenance'}</h3><form id="mform"><div class="fg">
+    ${fld('Boat',`<select name="boatId" id="mjBoat" required><option value="">Choose a boat…</option>${boatOptions(st.boatId)}</select>`,'full')}
+    ${fld('Task',`<input name="task" required value="${esc(j.task)}" placeholder="e.g. Clean & check rigging, replace footstretcher">`,'full')}
+    ${fld('How long',`<select id="mjDur">${[60,90,120,180,240,300].map(n=>`<option value="${n}" ${st.dur===n?'selected':''}>${n<120?n+' min':n/60+' hours'}</option>`).join('')}</select>`)}
+    ${fld('Find a time from',`<input type="date" id="mjFrom" value="${esc(j.date||today())}" min="${today()}">`)}
+    <div class="fld full"><label>Suggested times <span class="tag">– avoid on-water sessions and this boat’s bookings</span></label><div id="mjSug" class="chips" style="flex-wrap:wrap"></div></div>
+    ${fld('Date',`<input type="date" name="date" id="mjDate" required value="${esc(st.date)}">`)}
+    ${fld('Start',`<input type="time" name="start" id="mjStart" required value="${esc(st.start)}">`)}
+    ${fld('End',`<input type="time" name="end" id="mjEnd" required value="${esc(st.end)}">`)}
+    ${fld('Helpers needed',`<input type="number" name="crewNeeded" min="0" max="12" value="${esc(j.crewNeeded??2)}">`,'','Members can sign up with “I can help”')}
+    <div class="full" id="mjTl"></div>
+    <div class="full" id="mjConf"></div>
+    ${fld('Crew',`<div class="mj-crew" id="mjCrew"></div><select id="mjAdd" class="f" style="margin-top:6px"><option value="">Add a member to the crew…</option>${members.map(([x,m])=>`<option value="${esc(x)}">${esc(m.displayName)}</option>`).join('')}</select>`,'full')}
+    ${fld('Notes',`<input name="notes" value="${esc(j.notes||'')}" placeholder="Parts, tools, where to meet">`,'full')}
+  </div>${formFoot(id?'Save':'Schedule')}${id?`<div style="margin-top:10px"><button class="btn sm dan" type="button" id="mjCancel">Cancel this maintenance</button></div>`:''}</form>`,()=>{
+    const q=s=>$('#mform '+s);
+    const drawCrew=()=>{$('#mjCrew').innerHTML=st.crew.length?st.crew.map(m=>`<span class="mj-p">${avatar(m,22)}${esc(mName(m))} <button type="button" class="x" data-rm="${esc(m)}" title="Remove">×</button></span>`).join(''):'<span class="tag">No crew yet – add people, or let members sign up.</span>';
+      $('#mjCrew').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{st.crew=st.crew.filter(x=>x!==b.dataset.rm);drawCrew()})};
+    const sug=()=>{const box=$('#mjSug');if(!st.boatId){box.innerHTML='<span class="tag">Choose a boat first.</span>';return}
+      const s=suggestSlots(st.boatId,$('#mjFrom').value||today(),+$('#mjDur').value);
+      box.innerHTML=s.length?s.map(x=>`<button type="button" class="chip" data-slot="${x.d}|${x.start}|${x.end}">${esc(dayLabel(x.d))} · ${fmtTime(x.start)}–${fmtTime(x.end)}</button>`).join(''):'<span class="tag">No free slot in the next 3 weeks – pick a time manually.</span>';
+      box.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{const [d,a,e]=b.dataset.slot.split('|');q('#mjDate').value=d;q('#mjStart').value=a;q('#mjEnd').value=e;check()})};
+    const check=()=>{st.boatId=q('#mjBoat').value;st.date=q('#mjDate').value;st.start=q('#mjStart').value;st.end=q('#mjEnd').value;
+      $('#mjTl').innerHTML=st.boatId&&st.date?`<div class="fld"><label>${esc(dayLabel(st.date,true))}</label></div>${dayTimeline(st.boatId,st.date,st.start,st.end,id)}<div class="tag tl-key"><span class="k tl-s"></span>On-water session <span class="k tl-k"></span>Boat booked <span class="k tl-j"></span>Other maintenance <span class="k tl-me"></span>This job</div>`:'';
+      const c=st.boatId?jobConflicts(st.boatId,st.date,st.start,st.end,id):[];
+      $('#mjConf').innerHTML=c.length?`<div class="callout ${c.some(x=>x.hard)?'bad':''}" style="margin:0">${c.map(x=>`<div>⚠ ${esc(x.text)}</div>`).join('')}<label class="tog" style="margin-top:6px"><input type="checkbox" name="override"> Schedule anyway</label></div>`:(st.start&&st.end&&st.date?'<div class="tag" style="color:var(--ok)">✓ No clashes with on-water sessions or bookings.</div>':'')};
+    q('#mjBoat').onchange=()=>{check();sug()};$('#mjDur').onchange=sug;$('#mjFrom').onchange=sug;['#mjDate','#mjStart','#mjEnd'].forEach(s=>q(s).oninput=check);
+    $('#mjAdd').onchange=()=>{const v=$('#mjAdd').value;if(v&&!st.crew.includes(v))st.crew.push(v);$('#mjAdd').value='';drawCrew()};
+    drawCrew();check();sug();
+    const cx=$('#mjCancel');if(cx)cx.onclick=async()=>{if(await guarded(()=>S.db.doc('maintJobs/'+id).update({status:'cancelled',updatedAt:nowIso()}),'Maintenance cancelled')){closeModal();logEvent(j.boatId,'maint','Scheduled maintenance cancelled: '+j.task)}};
+    let newId=null;
+    wireForm({msg:id?'Maintenance updated':'',
+      validate:fd=>{if(!fd.boatId)return 'Choose a boat.';if(!fd.task.trim())return 'Describe the task.';if(!fd.date||!fd.start||!fd.end)return 'Pick a date and time (or tap a suggested time).';
+        if(toMin(fd.end)<=toMin(fd.start))return 'End time must be after the start.';
+        if(jobConflicts(fd.boatId,fd.date,fd.start,fd.end,id).length&&!fd.override)return 'This time clashes – pick a suggested time or tick “Schedule anyway”.';return null},
+      save:async fd=>{const data={boatId:fd.boatId,task:fd.task.trim(),date:fd.date,start:fd.start,end:fd.end,crew:st.crew,crewNeeded:+fd.crewNeeded||0,notes:fd.notes.trim(),updatedAt:nowIso()};
+        if(id)await S.db.doc('maintJobs/'+id).update(data);
+        else{const r=await S.db.collection('maintJobs').add({...data,status:'scheduled',createdBy:S.me||null,at:nowIso()});newId=r.id}
+        logEvent(fd.boatId,'maint',`Maintenance ${id?'rescheduled':'scheduled'}: ${data.task} on ${fmtDate(data.date)}`)},
+      after:()=>{if(newId){const me=myMemberId();if(me&&st.crew.includes(me))setTimeout(()=>jobCalendarDialog(newId,true),300);else toast('Maintenance scheduled')}}});
+  });
+}
+function jobDoneForm(id){const j=S.mjobs[id];const boat=S.boats[j.boatId]||{};
+  openModal(`<h3>Mark maintenance done</h3><p class="muted" style="margin-top:-6px">${esc(j.task)} · ${esc(boat.name||'')}</p><form id="mform"><div class="fg">
+   ${fld('Notes for the log',`<textarea name="notes" placeholder="What was done, anything still needing attention">${esc(j.notes||'')}</textarea>`,'full')}
+  </div>${formFoot('Mark done')}</form>`,()=>wireForm({msg:'Marked done and logged',save:async fd=>{
+    await S.db.doc('maintJobs/'+id).update({status:'done',doneAt:nowIso(),doneNotes:fd.notes.trim(),updatedAt:nowIso()});
+    await S.db.collection('maintenance').add({boatId:j.boatId,date:j.date,program:boat.maintenanceProgram||'',crew:(j.crew||[]).map(mName).join(', '),notes:[j.task,fd.notes.trim()].filter(Boolean).join(' – '),completed:true,jobId:id,by:S.me||null,at:nowIso()});
+    await logEvent(j.boatId,'maint','Maintenance done: '+j.task)}}));
+}
+function boatJobsHtml(boatId){const jobs=Object.entries(S.mjobs).filter(([,j])=>j.boatId===boatId&&j.status==='scheduled').sort((a,b)=>(a[1].date+a[1].start).localeCompare(b[1].date+b[1].start));
+  return `<div class="sec"><h4><span>Scheduled maintenance</span>${canAdmin()?`<button class="btn sm" data-mjnew="${esc(boatId)}">+ Schedule</button>`:''}</h4>${jobs.length?jobs.map(([,j])=>`<div class="item"><b>${dayLabel(j.date)}</b> ${fmtTime(j.start)}–${fmtTime(j.end)} · ${esc(j.task)}<div class="tag">${(j.crew||[]).length?esc(j.crew.map(mName).join(', ')):'No crew yet'}</div></div>`).join(''):'<div class="empty">Nothing scheduled.</div>'}</div>`}
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
 function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}

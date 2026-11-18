@@ -98,6 +98,21 @@ service cloud.firestore {
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
       allow update, delete: if isAdmin();
     }
+    // ---- scheduled maintenance: admins schedule; members can join/leave the crew; the crew can mark it done ----
+    match /maintJobs/{id} {
+      function crewChange() {           // only adds or removes the signed-in member
+        let before = resource.data.get('crew', []).toSet();
+        let after = request.resource.data.get('crew', []).toSet();
+        return after.difference(before).union(before.difference(after)).hasOnly([myMemberId()]);
+      }
+      allow read: if canUse();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+                    || (isMember() && resource.data.status == 'scheduled' && onlyChanges(['crew', 'updatedAt']) && crewChange())
+                    || (isMember() && myMemberId() in resource.data.crew
+                        && onlyChanges(['status', 'doneAt', 'doneNotes', 'updatedAt'])
+                        && request.resource.data.status == 'done');
+    }
     match /events/{id} {                  // boat activity log
       allow read: if canUse();
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
