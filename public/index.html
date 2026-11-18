@@ -192,6 +192,8 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .bchip b{color:var(--red-d)}
 .claim,.act{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .sec.claims{border-left:4px solid var(--red);margin-bottom:18px}
+.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
 .fsub{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
 .mepage{max-width:760px}
@@ -1132,7 +1134,12 @@ function viewSession(){
   else if(full&&!mine)notice=`<div class="callout">This session is full (${cap} ${erg?'ergs':'boats'}).${!erg?' Look for open seats below.':''}</div>`;
   else if(ergNone)notice=`<div class="callout">${ergFullMsg(id,d,me)}</div>`;
   const eg=erg?ergGroups(id):[];
-  const ergLegend=eg.length?`<p class="tag" style="margin:0 0 10px">Ergs ${eg.map(g=>`<b>${g.from===g.to?g.from:g.from+'–'+g.to}</b> ${esc(g.name)}`).join(' · ')}. ${ergOverflow(id,d)?'Reserved ergs are now open to everyone.':`Any erg still free opens to everyone at ${esc(ergOpenLabel(id))} on the day.`}</p>`:'';
+  const days=p.opensDays==null?6:+p.opensDays;
+  const ergLegend=eg.length?`<div class="sec policy"><h4>Erg reservation policy</h4><ul>
+    <li>Ergs are reserved by program: ${eg.map(g=>`<b>${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to}</b> ${esc(g.name)}`).join(' · ')}.</li>
+    <li>Reserve an erg in your own program’s block. You can only hold one erg per session.</li>
+    <li>Any reserved erg still free at <b>${esc(ergOpenLabel(id))} on the day</b> opens to everyone.${ergOverflow(id,d)?' <b>Reserved ergs are now open to everyone.</b>':''}</li>
+    <li>Reservations open ${days} day${days===1?'':'s'} before and close when the session starts. Cancel if you can’t make it, so someone else can row.</li></ul></div>`:'';
   const used=new Set(bk.map(([,b])=>b.boatId).filter(Boolean));
   const avail=erg?[]:Object.entries(S.boats).filter(([bid,b])=>b.status==='available'&&!used.has(bid)).sort((a,b)=>(a[1].seats-b[1].seats)||a[1].name.localeCompare(b[1].name));
   const rows=bk.map(([bid,b],i)=>{
@@ -1145,17 +1152,26 @@ function viewSession(){
     return erg?`<tr class="${amIn?'me':''}"><td class="num">${b.erg||i+1}${eGrp?`<div class="tag">${esc(eGrp.name)}</div>`:''}</td><td>${crew}</td><td class="hide-s">${esc(b.notes||'')}</td><td class="ra">${acts}</td></tr>`:
     `<tr class="${amIn?'me':''}"><td class="num">${i+1}</td><td>${crew}</td><td>${boat?`<span class="bchip" data-boat="${esc(b.boatId)}"><b style="color:var(--ink)">${esc(b.rig||boat.currentRig)}</b> ${esc(boat.name)}</span>${rerig?`<span class="rerig" title="Boat is currently rigged as ${esc(boat.currentRig)}">Re-rig from ${esc(boat.currentRig)}</span>`:''}${boat.status!=='available'?` <span class="pill s-${esc(boat.status)}">${esc(STATUS[boat.status])}</span>`:''}`:'<span class="muted">Coach to assign</span>'}</td><td class="hide-s">${esc(b.crewMix||'')}${b.pcoc?' <span class="tag">· PCOC</span>':''}${b.notes?`<div class="tag">${esc(b.notes)}</div>`:''}</td><td class="ra">${acts}</td></tr>`;
   }).join('');
+  let ergRows=rows;
+  if(erg&&eg.length&&cap){ // show every erg, free ones labelled with their group
+    const byN={};bk.forEach(e=>{if(e[1].erg)byN[e[1].erg]=e});const html=rows.split('</tr>');const at={};bk.forEach((e,i)=>at[e[0]]=html[i]+'</tr>');
+    const live=w.state!=='closed'&&!o.cancelled;const meIn=!!me&&!!mine;const myOk=me?ergChoices(id,d,me):[];
+    ergRows=[...Array(cap)].map((_,i)=>{const n=i+1;if(byN[n])return at[byN[n][0]];const g=ergGroupOf(id,n);
+      const canRes=!o.cancelled&&(canAdmin()||(live&&w.state==='open'&&!!me&&!meIn&&eligible(me,id)&&canMember()&&myOk.includes(n)));
+      return `<tr class="free"><td class="num">${n}${g?`<div class="tag">${esc(g.name)}</div>`:''}</td><td><span class="oseat">Free</span>${g&&!ergOverflow(id,d)?` <span class="tag">· reserved for ${esc(g.name)}</span>`:''}</td><td class="hide-s"></td><td class="ra">${canRes?`<button class="btn sm pri" data-ergres="${n}">Reserve</button>`:''}</td></tr>`}).join('')
+      +bk.filter(e=>!e[1].erg||e[1].erg>cap).map(e=>at[e[0]]).join('');
+  }
   return `<div class="shead" style="--pc:${esc(p.color||'#888')}">
     <a href="#programs" class="lnk">‹ Back to schedule</a>
     <div class="sh-row"><div><div class="tag" style="text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--pc)">${esc(p.name||'')} · ${erg?'Erg':'On water'}</div><h2>${esc(s.title)}</h2>
     <p>${dayLabel(d,true)} · ${esc(timeRange(s))}${coachOf(id,d)?` · Coach ${esc(coachOf(id,d))}`:''}${safetyOf(id,d)?` · Safety boat ${esc(safetyOf(id,d))}`:''}</p></div>
     <div class="sh-cap">${cap?`<b>${bk.length}</b>/${cap}<span>${erg?'ergs':'boats'}</span>`:`<b>${bk.length}</b><span>${erg?'signed up':'boats'}</span>`}</div></div>
     ${o.note||s.notes?`<div class="tag" style="margin-top:6px">${esc(o.note||s.notes)}</div>`:''}
-    <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Add someone':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
+    <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Reserve':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
   </div>
   ${notice}
   <div class="${erg?'':'sgrid'}">
-   <div>${ergLegend}${bk.length?`<table class="t sheet"><thead><tr><th>${erg?'Erg':'#'}</th><th>${erg?'Rower':'Crew'}</th>${erg?'<th class="hide-s">Notes</th>':'<th>Boat</th><th class="hide-s">Crew mix / notes</th>'}<th></th></tr></thead><tbody>${rows}</tbody></table>`:`<div class="banner">${o.cancelled?'No sign-ups.':'No one has signed up yet.'}</div>`}
+   <div>${ergLegend}${bk.length||(erg&&eg.length&&cap)?`<table class="t sheet"><thead><tr><th>${erg?'Erg':'#'}</th><th>${erg?'Rower':'Crew'}</th>${erg?'<th class="hide-s">Notes</th>':'<th>Boat</th><th class="hide-s">Crew mix / notes</th>'}<th></th></tr></thead><tbody>${erg?ergRows:rows}</tbody></table>`:`<div class="banner">${o.cancelled?'No sign-ups.':'No one has signed up yet.'}</div>`}
    ${!erg&&p.pcocAllowed===false?`<p class="tag" style="margin-top:10px">PCOC rowing isn’t permitted during this session.</p>`:''}</div>
    ${erg?'':`<aside class="sec avail"><h4>Boats still available · ${avail.length}</h4>${avail.length?CLASSES.map(c=>{const g=avail.filter(([,b])=>b.seats===c.k);return g.length?`<div class="av-g"><div class="tag">${c.t}</div>${g.map(([bid,b])=>`<div class="avb" ${canBook&&(!mine||canAdmin())?`data-bookboat="${esc(bid)}"`:''}><span><b>${esc(b.currentRig)}</b> ${esc(b.name)}${b.ownership==='private'?' <span class="tag">private</span>':''}</span><span class="tag">${b.weight&&b.weight.lbsMax?wtText(b.weight).split(' · ')[0]:''}</span></div>`).join('')}</div>`:''}).join(''):'<div class="empty">Every available boat is booked.</div>'}${canBook&&(!mine||canAdmin())?'<p class="tag" style="margin:8px 0 0">Tap a boat to book it.</p>':''}</aside>`}
   </div>`;
@@ -1175,6 +1191,7 @@ function bindPrograms(){
   on('#bookNew',()=>bookingForm(id,d,null,null));
   on('#ergMe',()=>{const me=myMemberId();if(!me&&canAdmin())return ergForm(id,d);ergSignup(id,d,me)});
   on('#ergOther',()=>ergForm(id,d));
+  m.querySelectorAll('[data-ergres]').forEach(el=>el.onclick=()=>{const n=+el.dataset.ergres,me=myMemberId();if(canAdmin())return ergForm(id,d,null,n);ergSignup(id,d,me,n)});
   on('#occEdit',()=>occForm(id,d));on('#sessEdit',()=>sessionForm(id));
   m.querySelectorAll('[data-bookboat]').forEach(el=>el.onclick=()=>bookingForm(id,d,null,el.dataset.bookboat));
   m.querySelectorAll('[data-bedit]').forEach(el=>el.onclick=()=>{const b=S.bookings[el.dataset.bedit];if(S.sessions[id].type==='erg')return ergForm(id,d,el.dataset.bedit);bookingForm(id,d,el.dataset.bedit,null)});
@@ -1243,26 +1260,28 @@ function bookingForm(sid,d,bid,preBoat){
       },after:()=>{if(saved&&!bid)maybeCalendar(saved.id,saved.data)}});
   });
 }
-async function ergSignup(sid,d,mid){
+const ergTaken=(sid,d,n)=>sessBookings(sid,d).some(([,b])=>b.erg===n);
+async function ergSignup(sid,d,mid,want){
   if(!mid)return;
+  if(want&&ergTaken(sid,d,want))return toast(`Erg ${want} was just taken`);
   const s=S.sessions[sid];const bk=sessBookings(sid,d);
   if(!canAdmin()&&capacity(sid,d)&&bk.length>=capacity(sid,d))return toast('This session is full');
   if(bk.some(([,b])=>bMembers(b).includes(mid)))return toast(`${mName(mid)} is already signed up`);
-  let n=nextErg(sid,d,mid);
+  let n=want&&(canAdmin()||ergChoices(sid,d,mid).includes(want))?want:nextErg(sid,d,mid);
   if(!n&&canAdmin())n=nextErg(sid,d,mid,true);
   if(!n)return toast(ergFullMsg(sid,d,mid).replace(/&[^;]+;/g,''));
   const data={sessionId:sid,date:d,boatId:null,rig:'',crew:[mid],cox:null,open:false,notes:'',erg:n,captain:mid,createdBy:S.me||null,at:nowIso()};let ref=null;
   const ok=await guarded(async()=>{ref=await S.db.collection('bookings').add(data)},mid===myMemberId()&&prefsOf(mid).calPrompt===false?'You’re signed up':(mid===myMemberId()?'':'Added'));
   if(ok&&ref&&mid===myMemberId())maybeCalendar(ref.id,data);
 }
-function ergForm(sid,d,bid){
+function ergForm(sid,d,bid,n){
   const b=bid&&S.bookings[bid];
-  openModal(`<h3>${b?'Edit erg sign-up':'Add to erg session'}</h3><form id="mform"><div class="fg">
+  openModal(`<h3>${b?'Edit erg reservation':n?'Reserve erg '+n:'Reserve an erg'}</h3><form id="mform"><div class="fg">
     ${fld('Member',`<select name="mid">${memberOpts(sid,d,b?b.crew[0]:'',bid)}</select>`,'full')}
     ${fld('Notes',`<input name="notes" value="${esc(b?b.notes||'':'')}">`,'full')}
   </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Saved',validate:fd=>!fd.mid?'Choose a member.':null,
     save:async fd=>{if(b)await S.db.doc('bookings/'+bid).update({crew:[fd.mid],notes:fd.notes.trim(),updatedAt:nowIso()});
-      else{await S.db.collection('bookings').add({sessionId:sid,date:d,boatId:null,rig:'',crew:[fd.mid],cox:null,open:false,notes:fd.notes.trim(),erg:nextErg(sid,d,fd.mid)||nextErg(sid,d,fd.mid,true),captain:fd.mid,createdBy:S.me||null,at:nowIso()})}}}));
+      else{await S.db.collection('bookings').add({sessionId:sid,date:d,boatId:null,rig:'',crew:[fd.mid],cox:null,open:false,notes:fd.notes.trim(),erg:n&&!ergTaken(sid,d,n)?n:(nextErg(sid,d,fd.mid)||nextErg(sid,d,fd.mid,true)),captain:fd.mid,createdBy:S.me||null,at:nowIso()})}}}));
 }
 function cancelBooking(bid){
   const b=S.bookings[bid];const boat=S.boats[b.boatId];
