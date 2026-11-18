@@ -101,6 +101,23 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---- results: members log their own training; anyone in the club can add/remove only their own like ----
+    match /results/{id} {
+      function likesOf(d) { return d.get('likes', {}); }
+      function onlyMyLike() { return likesOf(request.resource.data).diff(likesOf(resource.data)).affectedKeys().hasOnly([uid()]); }
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
+                                      && request.resource.data.memberId == myMemberId()
+                                      && likesOf(request.resource.data).size() == 0);
+      allow update: if isAdmin()
+                    || (isMember() && resource.data.by == uid()                        // my own result
+                        && request.resource.data.by == uid()
+                        && request.resource.data.memberId == resource.data.memberId
+                        && onlyMyLike())
+                    || (isMember() && onlyChanges(['likes']) && onlyMyLike());        // liking someone else's
+      allow delete: if isAdmin() || (isMember() && resource.data.by == uid());
+    }
+
     // ---- bookings: the booker/captain or an admin manages a booking; crew can leave; anyone eligible can join an open seat ----
     match /bookings/{id} {
       function inCrew(data) { return myMemberId() in data.crew || data.cox == myMemberId(); }

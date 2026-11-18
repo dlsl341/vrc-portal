@@ -26,6 +26,11 @@ language, and keep the "propose → preview link → merge" workflow.
 - **Admin page** (`#admin`, nav item shown to admins only, red badge = pending profile requests): requests
   to approve/decline, club admins roster, shortcuts. The Members page links there when requests wait.
 
+- **Results page** (`#results`): members log erg/on-water results (km + time primary; split /500m and
+  ~watts computed), filter by program/type/period, a top-km board, and ♥ likes. "Log result" also
+  appears on your own booking once a session has started. Rules: own results only; others may only
+  add/remove their own key in `likes`.
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
@@ -44,6 +49,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `sessions` (programId, weekday 0=Mon, start/end "HH:MM", type water|erg, capacity, eligible[] program names, coach, safety, season, active) ·
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
+`results` (memberId, by uid, date, type erg|water, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
 

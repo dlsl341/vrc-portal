@@ -34,6 +34,8 @@ beforeEach(async () => {
       open: true, captain: 'm_alice', createdBy: 'alice', notes: '' });
     await put('bookings/closed', { sessionId: 's1', date: '2026-11-22', boatId: 'b2', crew: ['m_alice', null], cox: null,
       open: false, captain: 'm_alice', createdBy: 'alice', notes: '' });
+    await put('results/r1', { memberId: 'm_alice', by: 'alice', date: '2026-11-16', type: 'erg', program: 'Masters',
+      km: 10, timeSec: 2700, likes: {} });
     await put('issues/i1', { boatId: 'b1', status: 'open', by: 'alice', description: 'Crack', photos: [] });
   });
 });
@@ -121,4 +123,31 @@ test('admins and the owner manage club data and admin roles', async () => {
   await assertSucceeds(setDoc(doc(as('carol'), 'admins/alice'), { memberId: 'm_alice' }));
   // ...and once promoted, she can
   await assertSucceeds(setDoc(doc(as('alice'), 'admins/bob'), { memberId: 'm_bob' }));
+});
+
+// ---- results & likes
+const result = (over = {}) => ({ memberId: 'm_bob', by: 'bob', date: '2026-11-16', type: 'erg', program: 'Masters',
+  km: 5, timeSec: 1300, likes: {}, ...over });
+test('members log their own results, not someone else\'s; strangers cannot log', async () => {
+  await assertSucceeds(setDoc(doc(as('bob'), 'results/rb'), result()));
+  await assertFails(setDoc(doc(as('bob'), 'results/rx'), result({ memberId: 'm_alice' })));
+  await assertFails(setDoc(doc(as('bob'), 'results/ry'), result({ by: 'alice' })));
+  await assertFails(setDoc(doc(as('bob'), 'results/rz'), result({ likes: { bob: 'x' } })));
+  await assertFails(setDoc(doc(as('stranger'), 'results/rs'), result({ memberId: 'm_s', by: 'stranger' })));
+  await assertFails(getDoc(doc(as('stranger'), 'results/r1')));
+});
+test('anyone in the club can like a result, but only with their own like', async () => {
+  const bob = as('bob');
+  await assertSucceeds(updateDoc(doc(bob, 'results/r1'), { likes: { bob: '2026-11-17' } }));
+  await assertSucceeds(updateDoc(doc(bob, 'results/r1'), { likes: {} }));                       // unlike
+  await assertFails(updateDoc(doc(bob, 'results/r1'), { likes: { carol: '2026-11-17' } }));     // someone else's like
+  await assertFails(updateDoc(doc(bob, 'results/r1'), { km: 50 }));                              // their numbers
+  await assertFails(updateDoc(doc(bob, 'results/r1'), { km: 50, likes: { bob: 'x' } }));
+  await assertFails(deleteDoc(doc(bob, 'results/r1')));
+});
+test('the owner of a result can edit and delete it; admins can too', async () => {
+  await assertSucceeds(updateDoc(doc(as('alice'), 'results/r1'), { km: 11 }));
+  await assertFails(updateDoc(doc(as('alice'), 'results/r1'), { memberId: 'm_bob' }));
+  await assertSucceeds(updateDoc(doc(as('carol'), 'results/r1'), { km: 12 }));
+  await assertSucceeds(deleteDoc(doc(as('alice'), 'results/r1')));
 });
