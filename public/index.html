@@ -109,6 +109,7 @@ table.t{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--
 .db{padding:18px 22px 40px;overflow:auto;flex:1}
 .sec{background:#fff;border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
 .sec h4{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3)}
+.sec h4:has(> button){display:flex;justify-content:space-between;align-items:center;gap:8px}
 .kv{display:grid;grid-template-columns:130px 1fr;gap:6px 10px;font-size:13.5px}
 .kv dt{color:var(--ink2)}
 .kv dd{margin:0}
@@ -757,8 +758,8 @@ function viewMembers(){
   if(!all.length)body=`<div class="banner"><h3>No members yet</h3>${canAdmin()?'Add the first member with the button above.':'An admin needs to add the member list.'}</div>`;
   else if(!list.length)body=`<div class="banner">No members match these filters.</div>`;
   else if(S.mlayout==='list'){
-    body=`<table class="t"><thead><tr><th>Member</th><th>Programs</th><th class="hide-s">Sides</th><th>Sessions</th><th class="hide-s">Last on water</th>${canAdmin()?'<th class="hide-s">Status</th>':''}<th class="hide-s">Account</th></tr></thead><tbody>`+
-    list.map(([id,m])=>{const st=memberStats(id);return `<tr class="row" data-member="${esc(id)}"><td class="name"><span style="display:inline-flex;gap:8px;align-items:center">${avatar(id,26)}${esc(m.displayName)}</span></td><td>${esc((m.programs||[]).join(', '))}</td><td class="hide-s">${esc((prefsOf(id).sides||[]).join(', '))}</td><td>${st.past.length}</td><td class="hide-s">${st.last?fmtDate(st.last.date):'—'}</td>${canAdmin()?`<td class="hide-s">${m.status==='review'?'<span class="pill s-repair">Needs details</span>':m.status==='inactive'?'<span class="pill s-retired">Inactive</span>':'<span class="pill s-available">Active</span>'}</td>`:''}<td class="hide-s">${m.linkedUser?'<span class="lk">✓ Linked</span>':'<span class="muted">—</span>'}</td></tr>`}).join('')+`</tbody></table>`;
+    body=`<table class="t"><thead><tr><th>Member</th><th>Programs</th><th class="hide-s">Sides</th><th>Sessions</th><th class="hide-s">Km this month</th><th class="hide-s">Last on water</th>${canAdmin()?'<th class="hide-s">Status</th>':''}<th class="hide-s">Account</th></tr></thead><tbody>`+
+    list.map(([id,m])=>{const st=memberStats(id);return `<tr class="row" data-member="${esc(id)}"><td class="name"><span style="display:inline-flex;gap:8px;align-items:center">${avatar(id,26)}${esc(m.displayName)}</span></td><td>${esc((m.programs||[]).join(', '))}</td><td class="hide-s">${esc((prefsOf(id).sides||[]).join(', '))}</td><td>${st.past.length}</td><td class="hide-s">${(k=>k?fmtKm(k):'—')(totals(resultsList({member:id,period:'month'})).km)}</td><td class="hide-s">${st.last?fmtDate(st.last.date):'—'}</td>${canAdmin()?`<td class="hide-s">${m.status==='review'?'<span class="pill s-repair">Needs details</span>':m.status==='inactive'?'<span class="pill s-retired">Inactive</span>':'<span class="pill s-available">Active</span>'}</td>`:''}<td class="hide-s">${m.linkedUser?'<span class="lk">✓ Linked</span>':'<span class="muted">—</span>'}</td></tr>`}).join('')+`</tbody></table>`;
   } else body=`<div class="grid">${list.map(([id,m])=>mcard(id,m)).join('')}</div>`;
   return `
   <div class="stats">${stats.map(([k,l,v,c,f])=>`<div class="stat ${f&&S.mstatus===k?'sel':''} ${f?'':'nf'}" ${f?`data-mstat="${k}"`:''}><div class="v">${v}</div><div class="l"><span class="dot" style="background:${c}"></span>${l}</div></div>`).join('')}</div>
@@ -777,7 +778,7 @@ function mcard(id,m){
   return `<div class="boat mcard ${m.status==='inactive'?'retired':''}" data-member="${esc(id)}">
    <div class="top">${avatar(id)}<div style="flex:1;min-width:0"><h3>${esc(m.displayName)}</h3><div class="tag">${esc((m.programs||[]).join(' · ')||'No program')}</div></div>${m.linkedUser?'<span class="lk" title="Linked to a claude.ai account">✓</span>':''}</div>
    <div class="foot">${(pr.sides||[]).map(s=>`<span class="rig">${esc(s)}</span>`).join('')}${m.siteAdmin?'<span class="rig adm">Admin</span>':''}${(m.roles||[]).filter(r=>r!=='rower').map(r=>`<span class="rig cur">${esc(ROLES[r]||r)}</span>`).join('')}${canAdmin()&&m.status==='review'?'<span class="pill s-repair">Needs details</span>':''}${m.status==='inactive'?'<span class="pill s-retired">Inactive</span>':''}
-   <span class="tag" style="margin-left:auto">${st.past.length} session${st.past.length===1?'':'s'}${st.up.length?` · ${st.up.length} booked`:''}</span></div></div>`;
+   <span class="tag" style="margin-left:auto">${st.past.length} session${st.past.length===1?'':'s'}${st.up.length?` · ${st.up.length} booked`:''}${(()=>{const k=totals(resultsList({member:id,period:'month'})).km;return k?` · <b style="color:var(--red-d)">${fmtKm(k)} km</b> this month`:''})()}</span></div></div>`;
 }
 
 /* ---------- profile detail (drawer + my profile) ---------- */
@@ -817,6 +818,9 @@ function bindMemberDetail(root,id){
   root.querySelectorAll('[data-member]').forEach(el=>el.onclick=e=>{e.stopPropagation();openMember(el.dataset.member)});
   root.querySelectorAll('[data-boat]').forEach(el=>el.onclick=e=>{e.stopPropagation();openBoat(el.dataset.boat)});
   root.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
+  bindResultButtons(root);
+  root.querySelectorAll('[data-reslog]').forEach(el=>el.onclick=e=>{e.stopPropagation();resultForm(null)});
+  root.querySelectorAll('[data-resall]').forEach(el=>el.onclick=e=>{e.stopPropagation();S.resAll=S.resAll===id?null:id;render()});
   root.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{const a=el.dataset.act;
     if(a==='admin')makeAdminForm(id);else if(a==='unadmin')removeAdminForm(id);else if(a==='editSelf')selfForm(id);else if(a==='edit')memberForm(id);else if(a==='merge')mergeForm(id);else if(a==='unlink')unlinkForm(id);
     else if(a==='inactive'||a==='active')guarded(()=>S.db.doc('members/'+id).update({status:a==='active'?'active':'inactive',updatedAt:nowIso()}),a==='active'?'Member reactivated':'Marked inactive')});
@@ -1628,11 +1632,12 @@ const likeCount=r=>Object.keys(r.likes||{}).length;
 const iLiked=r=>!!S.me&&!!(r.likes||{})[S.me];
 function likeNames(r){return Object.keys(r.likes||{}).map(u=>name(u)).join(', ')}
 
-function resultCard(id,r,compact){
+function resultCard(id,r,compact,inProfile){
   const sp=split500(r),w=r.watts||(r.type==='erg'?estWatts(r):null),mine=!!S.me&&r.by===S.me;
   const extra=[sp?`<span><b>${fmtDur(sp,true)}</b> /500m</span>`:'',w?`<span><b>${r.watts?'':'~'}${w}</b> W</span>`:'',r.cals?`<span><b>${r.cals}</b> cal</span>`:'',r.spm?`<span><b>${r.spm}</b> spm</span>`:'',r.hr?`<span><b>${r.hr}</b> bpm</span>`:''].filter(Boolean).join('');
   const lc=likeCount(r);
-  return `<div class="res ${compact?'compact':''}"><div class="res-h">${compact?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${compact?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${r.type==='erg'?'Erg':'On water'}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
+  const hideWho=compact||inProfile;
+  return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${r.type==='erg'?'Erg':'On water'}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
     ${(mine||canAdmin())&&!compact?`<button class="btn sm" data-resedit="${esc(id)}">Edit</button>`:''}</div>
    <div class="res-main"><div><span class="big">${fmtKm(r.km)}</span> km</div><div><span class="big">${fmtDur(r.timeSec)}</span> time</div></div>
    ${extra?`<div class="res-x">${extra}</div>`:''}${r.notes&&!compact?`<div class="res-n">${esc(r.notes)}</div>`:''}
@@ -1711,9 +1716,18 @@ function resultForm(id,pre={}){
   });
 }
 function memberResultsHtml(id){
-  const all=resultsList({member:id});if(!all.length)return '';const m=totals(resultsList({member:id,period:'month'})),y=totals(resultsList({member:id,period:'year'}));
-  return `<div class="sec"><h4>Results</h4><div class="tiles">${tile(fmtKm(m.km)+' km','This month')}${tile(fmtDur(m.sec),'Time this month')}${tile(fmtKm(y.km)+' km','This year')}${tile(all.length,'Logged')}</div>
-   ${all.slice(0,5).map(([rid,r])=>resultCard(rid,r,true)).join('')}<a class="lnk" href="#results" style="display:inline-block;margin-top:6px">All results ›</a></div>`;
+  const all=resultsList({member:id});const self=!!S.me&&(S.members[id]||{}).linkedUser===S.me;
+  if(!all.length)return self&&canMember()?`<div class="sec"><h4>Results</h4><div class="empty">No results logged yet.</div><button class="btn sm pri" data-reslog="1" style="margin-top:8px">+ Log a result</button></div>`:'';
+  const m=totals(resultsList({member:id,period:'month'})),y=totals(resultsList({member:id,period:'year'})),t=totals(all);
+  const byProg={};all.forEach(([,r])=>{const k=(r.program||'Other')+' · '+(r.type==='erg'?'Erg':'On water');const b=byProg[k]||(byProg[k]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
+  const best2k=all.filter(([,r])=>r.type==='erg'&&Math.abs(r.km-2)<0.001&&r.timeSec).sort((a,b)=>a[1].timeSec-b[1].timeSec)[0];
+  const open=S.resAll===id,shown=open?all:all.slice(0,5);
+  return `<div class="sec"><h4><span>Results</span>${self&&canMember()?`<button class="btn sm pri" data-reslog="1">+ Log a result</button>`:''}</h4>
+   <div class="tiles">${tile(fmtKm(m.km)+' km','This month')}${tile(fmtKm(y.km)+' km','This year')}${tile(fmtKm(t.km)+' km','All time')}${tile(fmtDur(t.sec),'Total time',true)}</div>
+   <table class="t" style="margin:4px 0 10px"><thead><tr><th>Program</th><th>Sessions</th><th>Km</th><th>Time</th></tr></thead><tbody>${Object.entries(byProg).sort((a,b)=>b[1].km-a[1].km).map(([k,b])=>`<tr><td>${esc(k)}</td><td>${b.n}</td><td>${fmtKm(b.km)}</td><td>${fmtDur(b.sec)}</td></tr>`).join('')}</tbody></table>
+   ${best2k?`<p class="tag" style="margin:0 0 8px">Best 2k erg: <b>${fmtDur(best2k[1].timeSec,true)}</b> (${fmtDate(best2k[1].date)})</p>`:''}
+   ${shown.map(([rid,r])=>resultCard(rid,r,false,true)).join('')}
+   ${all.length>5?`<button class="btn sm" data-resall="${esc(id)}">${open?'Show fewer':'Show all '+all.length+' results'}</button>`:''}</div>`;
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
