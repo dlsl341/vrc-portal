@@ -1043,9 +1043,9 @@ const safetyOf=(sid,d)=>occ(sid,d).safety||(S.sessions[sid]||{}).safety||'';
 function sessBookings(sid,d){return Object.entries(S.bookings).filter(([,b])=>b.sessionId===sid&&b.date===d&&bMembers(b).length).sort((a,b)=>(a[1].erg||0)-(b[1].erg||0)||String(a[1].at).localeCompare(String(b[1].at)))}
 /* Erg groups: numbered ergs reserved per program (e.g. Masters 1-12, Intermediate 13-17, Para 18).
    Reserved until ergOpenTime on the day (default 12:00), then any free erg can be taken. Admins can always override. */
-const ERG_GROUPS_DEFAULT='Masters 1-12; Intermediate 13-17; Para 18';
+const ERG_GROUPS_DEFAULT='Masters 1-12; Intermediate 13-17; Para 18 only';  // 'only' = never opens to others
 function ergGroupsText(sid){const s=S.sessions[sid]||{};if(s.ergGroups!=null)return s.ergGroups;return /^masters-.*-erg(-2)?$/.test(sid)?ERG_GROUPS_DEFAULT:''}
-function ergGroups(sid){return ergGroupsText(sid).split(/[;\n]/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(.+?)\s+(\d+)\s*(?:[-–]\s*(\d+))?$/);return m?{name:m[1].trim(),from:+m[2],to:+(m[3]||m[2])}:null}).filter(Boolean)}
+function ergGroups(sid){return ergGroupsText(sid).split(/[;\n]/).map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(.+?)\s+(\d+)\s*(?:[-–]\s*(\d+))?(\s+only)?$/i);return m?{name:m[1].trim(),from:+m[2],to:+(m[3]||m[2]),only:!!m[4]}:null}).filter(Boolean)}
 const ergOpenTime=sid=>(S.sessions[sid]||{}).ergOpenTime||'12:00';
 const ergOpenLabel=sid=>ergOpenTime(sid)==='12:00'?'noon':fmtTime(ergOpenTime(sid));
 function ergOpenAt(sid,d){const t=pd(d);const [h,mi]=ergOpenTime(sid).split(':').map(Number);t.setHours(h||0,mi||0,0,0);return t}
@@ -1058,7 +1058,8 @@ function ergChoices(sid,d,mid,any){
   if(!gs.length||any)return all;
   const mine=myErgGroups(sid,mid),own=all.filter(n=>mine.some(g=>n>=g.from&&n<=g.to));
   const open=all.filter(n=>!gs.some(g=>n>=g.from&&n<=g.to)); // numbers not reserved for anyone
-  return ergOverflow(sid,d)?[...own,...all.filter(n=>!own.includes(n))]:[...own,...open];
+  const strict=n=>gs.some(g=>g.only&&n>=g.from&&n<=g.to);
+  return ergOverflow(sid,d)?[...own,...all.filter(n=>!own.includes(n)&&!strict(n))]:[...own,...open];
 }
 function nextErg(sid,d,mid,any){const used=new Set(sessBookings(sid,d).map(([,b])=>b.erg));return ergChoices(sid,d,mid,any).find(n=>!used.has(n))||null}
 function ergFullMsg(sid,d,mid){const g=myErgGroups(sid,mid);const nm=g.length?g.map(x=>x.name).join(' / ')+' ergs are':'ergs for your program are';
@@ -1138,7 +1139,7 @@ function viewSession(){
   const ergLegend=eg.length?`<div class="sec policy"><h4>Erg reservation policy</h4><ul>
     <li>Ergs are reserved by program: ${eg.map(g=>`<b>${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to}</b> ${esc(g.name)}`).join(' · ')}.</li>
     <li>Reserve an erg in your own program’s block. You can only hold one erg per session.</li>
-    <li>Any reserved erg still free at <b>${esc(ergOpenLabel(id))} on the day</b> opens to everyone.${ergOverflow(id,d)?' <b>Reserved ergs are now open to everyone.</b>':''}</li>
+    <li>Any reserved erg still free at <b>${esc(ergOpenLabel(id))} on the day</b> opens to everyone${eg.some(g=>g.only)?`, except ${eg.filter(g=>g.only).map(g=>`${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to} (${esc(g.name)} only)`).join(', ')}`:''}.${ergOverflow(id,d)?` <b>${eg.some(g=>g.only)?'The other reserved ergs':'Reserved ergs'} are now open to everyone.</b>`:''}</li>
     <li>Reservations open ${days} day${days===1?'':'s'} before and close when the session starts. Cancel if you can’t make it, so someone else can row.</li></ul></div>`:'';
   const used=new Set(bk.map(([,b])=>b.boatId).filter(Boolean));
   const avail=erg?[]:Object.entries(S.boats).filter(([bid,b])=>b.status==='available'&&!used.has(bid)).sort((a,b)=>(a[1].seats-b[1].seats)||a[1].name.localeCompare(b[1].name));
@@ -1158,7 +1159,7 @@ function viewSession(){
     const live=w.state!=='closed'&&!o.cancelled;const meIn=!!me&&!!mine;const myOk=me?ergChoices(id,d,me):[];
     ergRows=[...Array(cap)].map((_,i)=>{const n=i+1;if(byN[n])return at[byN[n][0]];const g=ergGroupOf(id,n);
       const canRes=!o.cancelled&&(canAdmin()||(live&&w.state==='open'&&!!me&&!meIn&&eligible(me,id)&&canMember()&&myOk.includes(n)));
-      return `<tr class="free"><td class="num">${n}${g?`<div class="tag">${esc(g.name)}</div>`:''}</td><td><span class="oseat">Free</span>${g&&!ergOverflow(id,d)?` <span class="tag">· reserved for ${esc(g.name)}</span>`:''}</td><td class="hide-s"></td><td class="ra">${canRes?`<button class="btn sm pri" data-ergres="${n}">Reserve</button>`:''}</td></tr>`}).join('')
+      return `<tr class="free"><td class="num">${n}${g?`<div class="tag">${esc(g.name)}</div>`:''}</td><td><span class="oseat">Free</span>${g&&(g.only||!ergOverflow(id,d))?` <span class="tag">· ${g.only?esc(g.name)+' only':'reserved for '+esc(g.name)}</span>`:''}</td><td class="hide-s"></td><td class="ra">${canRes?`<button class="btn sm pri" data-ergres="${n}">Reserve</button>`:''}</td></tr>`}).join('')
       +bk.filter(e=>!e[1].erg||e[1].erg>cap).map(e=>at[e[0]]).join('');
   }
   return `<div class="shead" style="--pc:${esc(p.color||'#888')}">
@@ -1369,7 +1370,7 @@ function sessionForm(sid){
     ${fld('Coach',`<input name="coach" value="${esc(s.coach||'')}">`)}
     ${fld('Safety boat',`<input name="safety" value="${esc(s.safety||'')}">`)}
     ${fld('Who can book',checks('eligible',progNames(),s.eligible&&s.eligible.length?s.eligible:[progOf(sid).name].filter(Boolean)),'full','Leave all unticked to allow only the session’s own program.')}
-    ${fld('Erg numbers reserved by program',`<input name="ergGroups" value="${esc(sid?ergGroupsText(sid):'')}" placeholder="e.g. Masters 1-12; Intermediate 13-17; Para 18">`,'full','Erg sessions only. Leave empty for first come, first served.')}
+    ${fld('Erg numbers reserved by program',`<input name="ergGroups" value="${esc(sid?ergGroupsText(sid):'')}" placeholder="e.g. Masters 1-12; Intermediate 13-17; Para 18">`,'full','Erg sessions only. Add “only” after a block to keep it for that program all day (e.g. Para 18 only). Leave empty for first come, first served.')}
     ${fld('Reserved ergs open to all at',`<input name="ergOpenTime" type="time" value="${esc((sid&&S.sessions[sid].ergOpenTime)||'12:00')}">`,'','On the day of the session')}
     ${fld('Note shown to rowers',`<input name="notes" value="${esc(s.notes||'')}">`,'full')}
     ${fld('Season label',`<input name="season" value="${esc(s.season||'')}" placeholder="e.g. Summer">`)}

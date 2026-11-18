@@ -51,7 +51,7 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 - Member programs are stored by **name** (`'Masters'`), sessions' `eligible[]` too; renaming a program updates both.
 - Masters erg nights have **two waves** (sessions `masters-*-erg` and `masters-*-erg-2`), 18 ergs.
   **Erg numbers are reserved by program** (session field `ergGroups`, default for masters erg sessions
-  `Masters 1-12; Intermediate 13-17; Para 18`): members get the lowest free erg in their own block; the
+  `Masters 1-12; Intermediate 13-17; Para 18 only`; `only` = block never opens to others): members get the lowest free erg in their own block; the
   other blocks open to everyone at `ergOpenTime` (default 12:00 = noon) on the day. Admins can override.
   Enforced in the app, not in firestore.rules.
 - **BC is on permanent UTC-7 since Nov 2026**; `tzOffsetMin()` hard-codes −420 after 2026-03-08 so
