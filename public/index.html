@@ -1671,7 +1671,10 @@ function parseTime(t){t=String(t||'').trim();if(!t)return null;if(/^\d+(\.\d+)?$
 function fmtDur(sec,tenths){if(sec==null||isNaN(sec))return '—';const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
   const ss=tenths?s.toFixed(1).padStart(4,'0'):String(Math.round(s)).padStart(2,'0');return h?`${h}:${pad(m)}:${ss}`:`${m}:${ss}`}
 const fmtKm=k=>(k==null||isNaN(k))?'—':(+k).toLocaleString(undefined,{maximumFractionDigits:k<10?2:1});
-function split500(r){return r.km>0&&r.timeSec>0?r.timeSec/(r.km*2):null}
+// A single session of 100 "km" or more is a distance typed in metres (e.g. 5000 for a 5k): read it as metres.
+const KM_METRES_CUTOFF=100;
+const kmOf=r=>{const k=+r.km||0;return k>=KM_METRES_CUTOFF?k/1000:k};
+function split500(r){const k=kmOf(r);return k>0&&r.timeSec>0?r.timeSec/(k*2):null}
 function estWatts(r){const sp=split500(r);return sp?Math.round(2.8/Math.pow(sp/500,3)):null}
 function weekStartOf(d){const x=pd(d);const wd=(x.getDay()+6)%7;return addDays(d,-wd)}
 function periodStart(p){const t=today();return p==='week'?weekStartOf(t):p==='month'?t.slice(0,8)+'01':p==='year'?t.slice(0,5)+'01-01':'0000'}
@@ -1685,7 +1688,7 @@ function typeMatch(r,t){return !t||t==='all'?true:t==='cross'?isCross(r):t==='er
 function resultsList(f={}){const from=f.period?periodStart(f.period):'0000';
   return Object.entries(S.results).filter(([,r])=>r.date>=from&&r.date<=today()&&(!f.member||r.memberId===f.member)&&(!f.prog||f.prog==='all'||r.program===f.prog)&&typeMatch(r,f.type))
    .sort((a,b)=>b[1].date.localeCompare(a[1].date)||String(b[1].at).localeCompare(String(a[1].at)))}
-function totals(list){return list.reduce((t,[,r])=>isCross(r)?{...t,xkm:t.xkm+(+r.km||0),xsec:t.xsec+(+r.timeSec||0),xn:t.xn+1}:{...t,km:t.km+(+r.km||0),sec:t.sec+(+r.timeSec||0),n:t.n+1},{km:0,sec:0,n:0,xkm:0,xsec:0,xn:0})}
+function totals(list){return list.reduce((t,[,r])=>isCross(r)?{...t,xkm:t.xkm+kmOf(r),xsec:t.xsec+(+r.timeSec||0),xn:t.xn+1}:{...t,km:t.km+kmOf(r),sec:t.sec+(+r.timeSec||0),n:t.n+1},{km:0,sec:0,n:0,xkm:0,xsec:0,xn:0})}
 const likeCount=r=>Object.keys(r.likes||{}).length;
 const iLiked=r=>!!S.me&&!!(r.likes||{})[S.me];
 function likeNames(r){return Object.keys(r.likes||{}).map(u=>name(u)).join(', ')}
@@ -1697,7 +1700,7 @@ function resultCard(id,r,compact,inProfile){
   const hideWho=compact||inProfile;
   return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${isCross(r)?`<b class="xtag">${esc(MACHINE_NAMES[r.machine]||r.machine)} · cross-training</b>`:r.type==='erg'?'Erg':'On water'}${r.source==='concept2'?' · <span class="c2tag">Concept2</span>':''}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
     ${(mine||canAdmin())&&!compact?`<button class="btn sm" data-resedit="${esc(id)}">Edit</button>`:''}</div>
-   <div class="res-main"><div><span class="big">${fmtKm(r.km)}</span> km</div><div><span class="big">${fmtDur(r.timeSec)}</span> time</div></div>
+   <div class="res-main"><div><span class="big">${fmtKm(kmOf(r))}</span> km</div><div><span class="big">${fmtDur(r.timeSec)}</span> time</div></div>
    ${extra?`<div class="res-x">${extra}</div>`:''}${r.notes&&!compact?`<div class="res-n">${esc(r.notes)}</div>`:''}
    ${compact?'':`<div class="res-f"><button class="like ${iLiked(r)?'on':''}" ${mine||!canMember()?'disabled':''} data-like="${esc(id)}" title="${esc(lc?'Liked by '+likeNames(r):(mine?'Your result':'Like this result'))}">${iLiked(r)?'♥':'♡'} ${lc||''}</button>${lc?`<span class="tag">${esc(likeNames(r))}</span>`:''}</div>`}</div>`;
 }
@@ -1706,7 +1709,7 @@ function viewResults(){
   const me=myMemberId(),f={prog:S.rProg,type:S.rType,period:S.rPeriod,member:S.rWho==='mine'?me:null};
   const list=resultsList(f);
   const mineT=me?{w:totals(resultsList({member:me,period:'week'})),m:totals(resultsList({member:me,period:'month'})),y:totals(resultsList({member:me,period:'year'}))}:null;
-  const board={};resultsList({prog:S.rProg,type:S.rType==='cross'?'all':S.rType,period:S.rPeriod}).filter(([,r])=>!isCross(r)).forEach(([,r])=>{const b=board[r.memberId]||(board[r.memberId]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
+  const board={};resultsList({prog:S.rProg,type:S.rType==='cross'?'all':S.rType,period:S.rPeriod}).filter(([,r])=>!isCross(r)).forEach(([,r])=>{const b=board[r.memberId]||(board[r.memberId]={km:0,sec:0,n:0});b.km+=kmOf(r);b.sec+=+r.timeSec||0;b.n++});
   const top=Object.entries(board).sort((a,b)=>b[1].km-a[1].km).slice(0,10);
   const progs=[...new Set([...progNames(),...Object.values(S.results).map(r=>r.program).filter(Boolean)])];
   const canLog=canMember()&&(!!me||canAdmin());
@@ -1755,7 +1758,7 @@ function resultForm(id,pre={}){
     ${fld('Machine',`<select name="machine">${[['','RowErg'],['skierg','SkiErg'],['bike','BikeErg']].map(([k,l])=>`<option value="${k}" ${(isCross(r||{})?r.machine:'')===k?'selected':''}>${l}</option>`).join('')}</select>`,'','For erg results')}
     ${fld('Program',`<select name="program">${progs.map(p=>`<option ${p===prog?'selected':''}>${esc(p)}</option>`).join('')}</select>`)}
     ${fld('Workout',`<input name="workout" value="${esc(r?r.workout||'':(pre.workout||''))}" placeholder="e.g. 2k test, 3×10′ steady">`)}
-    ${fld('Distance (km)',`<input name="km" type="number" step="0.001" min="0" required value="${esc(r&&r.km!=null?r.km:'')}" placeholder="e.g. 10">`)}
+    ${fld('Distance (km)',`<input name="km" type="number" step="0.001" min="0" required value="${esc(r&&r.km!=null?kmOf(r):'')}" placeholder="e.g. 10">`)}
     ${fld('Time',`<input name="time" required value="${esc(r&&r.timeSec?fmtDur(r.timeSec,r.timeSec%1!==0):'')}" placeholder="h:mm:ss or mm:ss">`,'','e.g. 45:00 or 1:02:30. A plain number means minutes.')}
     ${fld('Avg watts',`<input name="watts" type="number" min="0" value="${esc(r&&r.watts||'')}">`,'','Optional')}
     ${fld('Calories',`<input name="cals" type="number" min="0" value="${esc(r&&r.cals||'')}">`,'','Optional')}
@@ -1764,8 +1767,8 @@ function resultForm(id,pre={}){
     ${fld('Notes',`<input name="notes" value="${esc(r?r.notes||'':'')}" placeholder="How did it feel?">`,'full')}
     <div class="full tag" id="resCalc"></div>
   </div>${formFoot(r?'Save':'Log result')}${r?`<div style="margin-top:10px"><button class="btn sm dan" type="button" id="resDel">Delete this result</button></div>`:''}</form>`,()=>{
-    const calc=()=>{const km=+$('#mform [name=km]').value,t=parseTime($('#mform [name=time]').value);const x={km,timeSec:t};const sp=split500(x);
-      $('#resCalc').innerHTML=sp?`Average split <b>${fmtDur(sp,true)}</b> /500m${$('#mform [name=type]').value==='erg'?` · about <b>${estWatts(x)}</b> W`:''}`:''};
+    const calc=()=>{const raw=+$('#mform [name=km]').value,km=kmOf({km:raw}),t=parseTime($('#mform [name=time]').value);const x={km,timeSec:t};const sp=split500(x);
+      $('#resCalc').innerHTML=(raw>=KM_METRES_CUTOFF?`<div style="color:var(--warn)">That looks like metres – it will be saved as <b>${fmtKm(km)} km</b>.</div>`:'')+(sp?`Average split <b>${fmtDur(sp,true)}</b> /500m${$('#mform [name=type]').value==='erg'?` · about <b>${estWatts(x)}</b> W`:''}`:'')};
     ['km','time','type'].forEach(n=>$('#mform [name='+n+']').addEventListener('input',calc));calc();
     const del=$('#resDel');if(del)del.onclick=async()=>{if(await guarded(()=>S.db.doc('results/'+id).delete(),'Result deleted'))closeModal()};
     wireForm({msg:r?'Result saved':'Result logged',
@@ -1773,7 +1776,7 @@ function resultForm(id,pre={}){
       save:async fd=>{const num=v=>v===''||v==null?null:+v;
         const keepRow=r&&ROW_MACHINES.includes(r.machine)?r.machine:null;
         const mach=fd.type==='erg'?(fd.machine||(keepRow!=='water'?keepRow:null)):(keepRow==='water'?'water':null);
-        const data={date:fd.date,type:fd.type,machine:mach||null,program:fd.program,workout:fd.workout.trim(),km:+fd.km,timeSec:parseTime(fd.time),watts:num(fd.watts),cals:num(fd.cals),spm:num(fd.spm),hr:num(fd.hr),notes:fd.notes.trim(),updatedAt:nowIso()};
+        const data={date:fd.date,type:fd.type,machine:mach||null,program:fd.program,workout:fd.workout.trim(),km:kmOf({km:fd.km}),timeSec:parseTime(fd.time),watts:num(fd.watts),cals:num(fd.cals),spm:num(fd.spm),hr:num(fd.hr),notes:fd.notes.trim(),updatedAt:nowIso()};
         if(r)await S.db.doc('results/'+id).update(data);
         else await S.db.collection('results').add({...data,memberId:adminPick?fd.mid:mid,by:adminPick&&fd.mid!==me?(S.members[fd.mid]||{}).linkedUser||S.me:S.me,sessionId:pre.sessionId||null,bookingId:pre.bookingId||null,likes:{},at:nowIso()})}});
   });
@@ -1782,8 +1785,8 @@ function memberResultsHtml(id){
   const all=resultsList({member:id});const self=!!S.me&&(S.members[id]||{}).linkedUser===S.me;
   if(!all.length)return self&&canMember()?`<div class="sec"><h4>Results</h4><div class="empty">No results logged yet.</div><button class="btn sm pri" data-reslog="1" style="margin-top:8px">+ Log a result</button></div>`:'';
   const m=totals(resultsList({member:id,period:'month'})),y=totals(resultsList({member:id,period:'year'})),t=totals(all);
-  const byProg={};all.forEach(([,r])=>{const k=isCross(r)?'Cross-training · '+(MACHINE_NAMES[r.machine]||r.machine):(r.program||'Other')+' · '+(r.type==='erg'?'Erg':'On water');const b=byProg[k]||(byProg[k]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
-  const best2k=all.filter(([,r])=>r.type==='erg'&&!isCross(r)&&Math.abs(r.km-2)<0.001&&r.timeSec).sort((a,b)=>a[1].timeSec-b[1].timeSec)[0];
+  const byProg={};all.forEach(([,r])=>{const k=isCross(r)?'Cross-training · '+(MACHINE_NAMES[r.machine]||r.machine):(r.program||'Other')+' · '+(r.type==='erg'?'Erg':'On water');const b=byProg[k]||(byProg[k]={km:0,sec:0,n:0});b.km+=kmOf(r);b.sec+=+r.timeSec||0;b.n++});
+  const best2k=all.filter(([,r])=>r.type==='erg'&&!isCross(r)&&Math.abs(kmOf(r)-2)<0.001&&r.timeSec).sort((a,b)=>a[1].timeSec-b[1].timeSec)[0];
   const open=S.resAll===id,shown=open?all:all.slice(0,5);
   return `<div class="sec"><h4><span>Results</span>${self&&canMember()?`<button class="btn sm pri" data-reslog="1">+ Log a result</button>`:''}</h4>
    <div class="tiles">${tile(fmtKm(m.km)+' km','This month')}${tile(fmtKm(y.km)+' km','This year')}${tile(fmtKm(t.km)+' km','All time')}${tile(fmtDur(t.sec),'Total time',true)}${t.xn?tile(fmtKm(t.xkm)+' km','Bike/ski cross-training'):''}</div>
@@ -1860,8 +1863,8 @@ function lbRows(prog,metric,period,type){
       for(const [mid,mk] of Object.entries(a.marks||{}))if(mk!=='absent')add(mid,1)}
   } else {
     for(const r of Object.values(S.results)){if(r.date<from||r.date>t||r.program!==prog||isCross(r))continue;
-      if(metric==='best2k'){if(r.type==='erg'&&Math.abs(r.km-2)<0.001&&r.timeSec>0)add(r.memberId,r.timeSec,r.date);continue}
-      if(type!=='all'&&r.type!==type)continue;add(r.memberId,metric==='km'?+r.km||0:+r.timeSec||0)}
+      if(metric==='best2k'){if(r.type==='erg'&&Math.abs(kmOf(r)-2)<0.001&&r.timeSec>0)add(r.memberId,r.timeSec,r.date);continue}
+      if(type!=='all'&&r.type!==type)continue;add(r.memberId,metric==='km'?kmOf(r):+r.timeSec||0)}
   }
   return Object.entries(rows).filter(([mid,r])=>S.members[mid]&&r.v>0).sort((a,b)=>metric==='best2k'?a[1].v-b[1].v:b[1].v-a[1].v);
 }
