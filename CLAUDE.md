@@ -21,7 +21,7 @@ language, and keep the "propose → preview link → merge" workflow.
 - `public/js/config.js` – Firebase web config (not secret) and club constants.
 - `firestore.rules`, `storage.rules` – the real access control. **Tests:** `tests/firestore.rules.test.js`.
 - `.github/workflows/deploy.yml` – PRs: rule tests + preview channel link. `main`: tests → deploy
-  hosting + Firestore rules + Storage rules. Secret: `FIREBASE_SERVICE_ACCOUNT`.
+  hosting + Firestore rules + Storage rules + functions. Secrets: `FIREBASE_SERVICE_ACCOUNT`, `C2_CLIENT_SECRET`.
 
 - **Admin page** (`#admin`, nav item shown to admins only, red badge = pending profile requests): requests
   to approve/decline, club admins roster, shortcuts. The Members page links there when requests wait.
@@ -47,6 +47,11 @@ language, and keep the "propose → preview link → merge" workflow.
   boat is hidden from booking during overlapping sessions. Members join/leave with "I can help"; crew add it
   to their calendar (reuses the booking calendar helpers) and can mark it done (also writes a `maintenance`
   log). Admins get "Email crew" (mailto with calendar links).
+
+- **Concept2 Logbook** (see `docs/CONCEPT2.md`): "Connect Concept2" on My profile → OAuth (read-only) →
+  server function `functions/index.js` (`/c2/*` via Hosting rewrite) imports results as `results/c2_<id>`
+  (`source:'concept2'`) and follows webhooks. Tokens in `c2Tokens`/`c2Users` are server-only. Client
+  secret = GitHub secret `C2_CLIENT_SECRET`, written to `functions/.env` at deploy.
 
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,

@@ -186,3 +186,20 @@ test('the crew can mark a job done; others cannot', async () => {
   await assertFails(updateDoc(doc(as('bob'), 'maintJobs/j1'), { status: 'done' }));
   await assertSucceeds(updateDoc(doc(as('alice'), 'maintJobs/j1'), { status: 'done', doneNotes: 'All good' }));
 });
+
+// ---- Concept2 connection
+test('Concept2 tokens are never readable or writable from the browser', async () => {
+  await assertFails(getDoc(doc(as('alice'), 'c2Tokens/alice')));
+  await assertFails(setDoc(doc(as('alice'), 'c2Tokens/alice'), { access: 'x' }));
+  await assertFails(getDoc(doc(as('carol'), 'c2Users/123')));
+  await assertFails(setDoc(doc(as('alice'), 'c2Users/123'), { uid: 'alice' }));
+});
+test('members start a Concept2 sign-in only for themselves, and see only their own link', async () => {
+  await assertSucceeds(setDoc(doc(as('alice'), 'c2States/s1'), { uid: 'alice', at: '2026-11-18T00:00:00Z' }));
+  await assertFails(setDoc(doc(as('alice'), 'c2States/s2'), { uid: 'bob', at: '2026-11-18T00:00:00Z' }));
+  await assertFails(getDoc(doc(as('alice'), 'c2States/s1')));
+  await assertSucceeds(getDoc(doc(as('alice'), 'c2Links/alice')));
+  await assertFails(getDoc(doc(as('bob'), 'c2Links/alice')));
+  await assertSucceeds(getDoc(doc(as('carol'), 'c2Links/alice')));
+  await assertFails(setDoc(doc(as('alice'), 'c2Links/alice'), { connected: true }));
+});

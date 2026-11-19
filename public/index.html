@@ -229,6 +229,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .tl-s{opacity:.85}.tl-k{background:var(--red-d);top:16px}.tl-j{background:#2a5d9c}.tl-me{background:transparent;border:2px dashed #111;color:#111;font-weight:700;z-index:2}
 .tl-ticks{position:relative;height:16px;font-size:10.5px;color:var(--ink3)}.tl-ticks span{position:absolute;transform:translateX(-50%)}
 .tl-key{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.tl-key .k{display:inline-block;width:12px;height:10px;border-radius:2px;margin-left:8px}.tl-key .k.tl-s{background:#999}.tl-key .k.tl-me{border:2px dashed #111}
+.c2tag{color:#2a5d9c;font-weight:600}.c2sec{border-left:4px solid #2a5d9c}.c2sec h4{display:flex;justify-content:space-between;align-items:center}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -343,6 +344,7 @@ body.guest header nav,body.guest .mods .role{display:none}
 <div class="toast" id="toast"></div>
 
 <script type="module">
+import { CONCEPT2 } from './js/config.js';
 /* ---------- constants ---------- */
 const RIGS=['1x','2x','2-','2+','4x','4x+','4-','4+','8+','8x+'];
 const STATUS={available:'Available',dnr:'Do Not Row',repair:'Long-Term Repair',retired:'Retired'};
@@ -419,6 +421,8 @@ async function init(){
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
+  if(S.me)subDoc('c2Links/'+S.me,'c2');
+  c2Return();
   render();
 }
 const canMember=()=>!!S.db&&!S.readOnly&&S.canWrite!==false;
@@ -841,6 +845,7 @@ function memberDetail(id,inPage){
      ${canAdmin()&&m.linkedUser?`<dt>Sign-in account</dt><dd>${esc((S.profiles[m.linkedUser]&&S.profiles[m.linkedUser].name)||'Linked')}</dd>`:''}
    </dl></div>`:''}
    ${memberAttendanceHtml(id)}
+   ${self?c2Html():''}
    ${memberResultsHtml(id)}
    <div class="sec"><h4>Sessions</h4>${acts.length?acts.map(([a,up])=>`<div class="item act"><div><b>${fmtDate(a.date)}</b> ${up?'<span class="pill s-dnr" style="background:#ece8f6;color:#5b4b96">Booked</span>':''}${a.sessionId?(mk=>mk?`<span class="pill att-${mk}">${MARKS[mk][0]} ${MARKS[mk][1]}</span>`:'')(markOf(a.sessionId,a.date,id)):''}${a.walkIn?' <span class="tag">walk-in</span>':''}<div class="when">${a.sessionId?`<span class="lnk" data-gosess="${esc(a.sessionId)}|${a.date}">${esc(a.session)}</span>`:esc(a.session||a.program||'')}</div></div><div>${a.boatId&&S.boats[a.boatId]?`<span class="bchip" data-boat="${esc(a.boatId)}">${esc(a.rig||S.boats[a.boatId].currentRig||'')} ${esc(S.boats[a.boatId].name)}</span>`:a.type==='erg'?'<span class="tag">Erg</span>':esc(a.boatText||'')}</div></div>`).join(''):'<div class="empty">No sessions recorded yet.</div>'}</div>
    <div class="sec"><h4>Boats rowed</h4>${st.topBoats.length?st.topBoats.map(([b,n])=>`<span class="bchip" data-boat="${esc(b)}">${esc(S.boats[b]?S.boats[b].name:b)} <b>${n}</b></span>`).join(''):'<div class="empty">No boat history yet.</div>'}</div>
@@ -851,7 +856,7 @@ function bindMemberDetail(root,id){
   root.querySelectorAll('[data-member]').forEach(el=>el.onclick=e=>{e.stopPropagation();openMember(el.dataset.member)});
   root.querySelectorAll('[data-boat]').forEach(el=>el.onclick=e=>{e.stopPropagation();openBoat(el.dataset.boat)});
   root.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
-  bindResultButtons(root);
+  bindResultButtons(root);bindC2(root);
   root.querySelectorAll('[data-reslog]').forEach(el=>el.onclick=e=>{e.stopPropagation();resultForm(null)});
   root.querySelectorAll('[data-resall]').forEach(el=>el.onclick=e=>{e.stopPropagation();S.resAll=S.resAll===id?null:id;render()});
   root.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{const a=el.dataset.act;
@@ -1676,7 +1681,7 @@ function resultCard(id,r,compact,inProfile){
   const extra=[sp?`<span><b>${fmtDur(sp,true)}</b> /500m</span>`:'',w?`<span><b>${r.watts?'':'~'}${w}</b> W</span>`:'',r.cals?`<span><b>${r.cals}</b> cal</span>`:'',r.spm?`<span><b>${r.spm}</b> spm</span>`:'',r.hr?`<span><b>${r.hr}</b> bpm</span>`:''].filter(Boolean).join('');
   const lc=likeCount(r);
   const hideWho=compact||inProfile;
-  return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${r.type==='erg'?'Erg':'On water'}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
+  return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${r.type==='erg'?'Erg':'On water'}${r.source==='concept2'?' · <span class="c2tag">Concept2</span>':''}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
     ${(mine||canAdmin())&&!compact?`<button class="btn sm" data-resedit="${esc(id)}">Edit</button>`:''}</div>
    <div class="res-main"><div><span class="big">${fmtKm(r.km)}</span> km</div><div><span class="big">${fmtDur(r.timeSec)}</span> time</div></div>
    ${extra?`<div class="res-x">${extra}</div>`:''}${r.notes&&!compact?`<div class="res-n">${esc(r.notes)}</div>`:''}
@@ -1694,6 +1699,7 @@ function viewResults(){
   return `<div class="page-h"><div><h2>Results</h2><p>Log your erg and on-water training. Kilometres and time come first; add watts, calories and more if you have them. Cheer each other on with a ♥.</p></div>
     <div class="actions" style="margin:0"><a class="btn" href="#leaderboard">🏆 Leaderboard</a>${canLog?`<button class="btn pri" id="logRes">+ Log a result</button>`:''}</div></div>
   ${mineT?`<div class="stats">${[['This week',mineT.w],['This month',mineT.m],['This year',mineT.y]].map(([l,t])=>`<div class="stat nf"><div class="v">${fmtKm(t.km)}<small> km</small></div><div class="l"><span class="dot" style="background:var(--red)"></span>${l} · ${fmtDur(t.sec)} · ${t.n} session${t.n===1?'':'s'}</div></div>`).join('')}</div>`:''}
+  ${me&&canMember()&&!c2Link()?`<a class="callout adm-go" href="#me" style="border-left-color:#2a5d9c">Row on a Concept2 erg? <b>Connect your Concept2 Logbook</b> on My profile and your workouts will appear here automatically ›</a>`:''}
   <div class="toolbar">
     <div class="chips">${[['all','Everyone'],['mine','Mine']].filter(([k])=>k==='all'||me).map(([k,l])=>`<button class="chip ${S.rWho===k?'on':''}" data-rwho="${k}">${l}</button>`).join('')}</div>
     <select class="f" id="rProg"><option value="all">All programs</option>${progs.map(p=>`<option ${S.rProg===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
@@ -2037,6 +2043,54 @@ function jobDoneForm(id){const j=S.mjobs[id];const boat=S.boats[j.boatId]||{};
 }
 function boatJobsHtml(boatId){const jobs=Object.entries(S.mjobs).filter(([,j])=>j.boatId===boatId&&j.status==='scheduled').sort((a,b)=>(a[1].date+a[1].start).localeCompare(b[1].date+b[1].start));
   return `<div class="sec"><h4><span>Scheduled maintenance</span>${canAdmin()?`<button class="btn sm" data-mjnew="${esc(boatId)}">+ Schedule</button>`:''}</h4>${jobs.length?jobs.map(([,j])=>`<div class="item"><b>${dayLabel(j.date)}</b> ${fmtTime(j.start)}–${fmtTime(j.end)} · ${esc(j.task)}<div class="tag">${(j.crew||[]).length?esc(j.crew.map(mName).join(', ')):'No crew yet'}</div></div>`).join(''):'<div class="empty">Nothing scheduled.</div>'}</div>`}
+
+
+/* =================== CONCEPT2 LOGBOOK =================== */
+// Members connect their Concept2 Logbook once; the server function (functions/index.js) imports
+// their results into `results` (id c2_<resultId>, source 'concept2') and keeps them in step via webhooks.
+S.c2={};
+const c2Link=()=>(S.c2||{})[S.me]||null;
+async function c2Connect(){
+  const st=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/-/g,'');
+  if(!(await guarded(()=>S.db.doc('c2States/'+st).set({uid:S.me,at:nowIso()}),'')))return;
+  location.href=CONCEPT2.authorizeUrl+'?'+new URLSearchParams({client_id:CONCEPT2.clientId,scope:CONCEPT2.scope,response_type:'code',redirect_uri:CONCEPT2.redirectUri,state:st}).toString();
+}
+async function c2Call(path,body){
+  const tok=await S.user.token();
+  const r=await fetch('/c2/'+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body||{})});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(j.error||'Concept2 isn’t reachable right now – try again later.');
+  return j;
+}
+function c2Html(){
+  if(!canMember()||!myMemberId())return '';
+  const l=c2Link();const n=Object.values(S.results).filter(r=>r.source==='concept2'&&r.by===S.me).length;
+  return `<div class="sec c2sec"><h4><span>Concept2 Logbook</span>${l?'<span class="pill s-available">Connected</span>':''}</h4>
+   ${l?`<p class="tag" style="margin:0 0 10px">Connected${l.c2Name?` as <b>${esc(l.c2Name)}</b>`:''}. New workouts from ErgData or your PM5 appear in Results automatically. ${n} imported so far${l.lastSync?` · last checked ${fmtDate(l.lastSync.slice(0,10))}`:''}.</p>
+     <div class="actions" style="margin:0"><button class="btn sm pri" id="c2Sync">Import the last 12 months</button><button class="btn sm" id="c2Off">Disconnect</button></div>`
+   :`<p class="tag" style="margin:0 0 10px">Bring your erg workouts in automatically from the Concept2 Logbook (ErgData, PM5). The portal only reads your results – it never changes your Logbook.</p>
+     <button class="btn sm pri" id="c2On">Connect Concept2</button>`}</div>`;
+}
+function bindC2(root){
+  const on_=(s,f)=>{const el=root.querySelector(s);if(el)el.onclick=e=>{e.stopPropagation();f(el)}};
+  on_('#c2On',()=>c2Connect());
+  on_('#c2Sync',async el=>{el.disabled=true;el.textContent='Importing…';
+    try{const r=await c2Call('sync',{days:365});toast(r.added?`${r.added} new workout${r.added===1?'':'s'} imported`:'You’re up to date – no new workouts')}catch(e){toast(e.message)}
+    el.disabled=false;el.textContent='Import the last 12 months'});
+  on_('#c2Off',()=>openModal(`<h3>Disconnect Concept2?</h3><p class="muted">New workouts will stop coming in. Results already imported stay on the Results page – you can edit or delete them there.</p><div class="mfoot"><button class="btn" id="c2No">Cancel</button><button class="btn dan" id="c2Yes">Disconnect</button></div>`,()=>{
+    $('#c2No').onclick=closeModal;
+    $('#c2Yes').onclick=async()=>{try{await c2Call('disconnect');toast('Concept2 disconnected');closeModal()}catch(e){toast(e.message)}}}));
+}
+function c2Return(){
+  const q=new URLSearchParams(location.search);const v=q.get('c2');if(!v)return;
+  const n=+q.get('n')||0;
+  const msg={connected:`Concept2 connected ✓ ${n?`${n} workout${n===1?'':'s'} from the last 90 days imported.`:'New workouts will appear in Results.'}`,
+    cancelled:'Concept2 connection cancelled.',expired:'That Concept2 sign-in took too long – please try again.',
+    notlinked:'Link your member profile first, then connect Concept2.',inuse:'That Concept2 account is already connected to another portal member.',
+    error:'Concept2 didn’t connect – please try again in a moment.'}[v]||'';
+  history.replaceState(null,'',location.pathname+location.hash);
+  if(msg)setTimeout(()=>toast(msg),900);
+}
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
 function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}

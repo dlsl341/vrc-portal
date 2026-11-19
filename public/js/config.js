@@ -17,3 +17,12 @@ export const CLUB = {
   timeZone: 'America/Vancouver',
   location: 'Vancouver Rowing Club, Stanley Park, Vancouver, BC'
 };
+
+// Concept2 Logbook API (read-only). The client ID is public; the client secret lives only in the
+// server function (GitHub secret C2_CLIENT_SECRET → functions/.env at deploy time).
+export const CONCEPT2 = {
+  clientId: 'CyxYSBWvx6QavQRqq1WonK0BvEkWV9s2qjZ91rNN',
+  authorizeUrl: 'https://log.concept2.com/oauth/authorize',
+  redirectUri: 'https://vrc-rower-s-portal.web.app/c2/callback',
+  scope: 'user:read,results:read'
+};
