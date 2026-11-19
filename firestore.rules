@@ -116,6 +116,7 @@ service cloud.firestore {
     match /c2Links/{u} {             // 'connected as …' status, written only by the server
       allow read: if signedIn() && (u == uid() || isAdmin());
     }
+    match /mailLog/{id} { allow read: if isAdmin(); }   // member emails sent by the server (admin page shows status)
     match /c2Tokens/{u} { allow read, write: if false; }
     match /c2Users/{c2id} { allow read, write: if false; }
 

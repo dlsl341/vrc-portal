@@ -423,7 +423,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -1801,7 +1801,7 @@ function memberResultsHtml(id){
 /* =================== ATTENDANCE (coach check-in) =================== */
 // attendance/{sessionId}_{YYYYMMDD}: sessionId, date, marks {memberId: present|late|absent}, updatedAt, by
 // Coaches (members with the Coach role) and admins check people in. Walk-ins = marked but not booked.
-S.attendance={};S.checkin=false;
+S.attendance={};S.checkin=false;S.mailLog=null;
 const attKey=(sid,d)=>sid+'_'+d.replace(/-/g,'');
 const attOf=(sid,d)=>S.attendance[attKey(sid,d)]||null;
 const markOf=(sid,d,mid)=>((attOf(sid,d)||{}).marks||{})[mid]||null;
@@ -2199,6 +2199,10 @@ function bindOpenErg(){
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
+function mailLogHtml(){const L=Object.entries(S.mailLog||{}).sort((a,b)=>String(b[1].at).localeCompare(String(a[1].at))).slice(0,8);
+  if(!L.length)return `<div class="sec"><h4>Member emails</h4><div class="empty">No emails sent yet. Welcome emails go out automatically when you approve a request – once email is set up (see docs/EMAIL.md).</div></div>`;
+  return `<div class="sec"><h4>Member emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('welcome')?'Welcome':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
+    <span class="pill ${m.status==='sent'?'s-available':m.status==='failed'?'s-repair':'s-dnr'}" title="${esc(m.error||'')}">${m.status==='sent'?'Sent':m.status==='failed'?'Failed':'Sending'}</span></div>`).join('')}</div>`}
 function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
 function claimItem(uid,c){
   const who=(S.profiles[uid]&&S.profiles[uid].name)||'A member';
@@ -2225,7 +2229,8 @@ function viewAdmin(){
   </div>
   <div class="sec claims"><h4>Profile requests · ${pend.length} waiting</h4>
     ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
-    <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details. Check the name, email and note match someone you know.</p></div>
+    <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
+  ${mailLogHtml()}
   ${adminRoster()}`;
 }
 

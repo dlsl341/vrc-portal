@@ -7,10 +7,13 @@
 // Tokens live in c2Tokens/{uid} and c2Users/{c2UserId}: the security rules let no browser read them.
 // We only ever READ from Concept2 (scopes user:read,results:read).
 import { onRequest } from 'firebase-functions/v2/https';
+import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import nodemailer from 'nodemailer';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
+import { welcomeEmail, declinedEmail, smtpSettings, validEmail } from './mail.js';
 
 initializeApp();
 const db = getFirestore();
@@ -167,3 +170,50 @@ async function webhook(req, res) {
   if (member) await upsertResults(uid, member, [got.data]);
   res.json({ ok: true });
 }
+
+/* =================== member emails =================== */
+// Welcome email when an admin approves a profile request (accounts/{uid} is created),
+// and a short note when a request is declined (claims/{uid}.status → rejected).
+// mailLog/{key} makes each email go out once, even if a trigger fires twice.
+const REGION = 'northamerica-northeast1';
+async function memberEmail(uid, claim) {
+  try { const u = await getAuth().getUser(uid); if (validEmail(u.email)) return u.email; } catch (e) { /* deleted user */ }
+  const p = await db.doc('memberPrivate/' + uid).get();
+  if (p.exists && validEmail(p.data().email)) return p.data().email;
+  return claim && validEmail(claim.email) ? claim.email : null;
+}
+async function sendOnce(key, to, msg) {
+  const cfg = smtpSettings();
+  if (!cfg) { console.warn('mail: SMTP not configured – skipped', key); return; }
+  const ref = db.doc('mailLog/' + key);
+  try { await ref.create({ to, subject: msg.subject, at: new Date().toISOString(), status: 'sending' }); }
+  catch (e) { console.log('mail: already sent', key); return; }
+  try {
+    const t = nodemailer.createTransport({ host: cfg.host, port: cfg.port, secure: cfg.secure, auth: cfg.auth });
+    const info = await t.sendMail({ from: cfg.from, to, subject: msg.subject, text: msg.text, html: msg.html });
+    await ref.update({ status: 'sent', messageId: info.messageId || null });
+  } catch (e) {
+    console.error('mail: send failed', key, e && e.message);
+    await ref.update({ status: 'failed', error: String(e && e.message || e).slice(0, 300) });
+  }
+}
+export const emailOnApproval = onDocumentCreated({ document: 'accounts/{uid}', region: REGION }, async (event) => {
+  const uid = event.params.uid, acct = event.data && event.data.data();
+  if (!acct || !acct.memberId) return;
+  const [m, c] = await Promise.all([db.doc('members/' + acct.memberId).get(), db.doc('claims/' + uid).get()]);
+  const member = m.exists ? m.data() : {}, claim = c.exists ? c.data() : {};
+  const to = await memberEmail(uid, claim);
+  if (!to) return console.warn('mail: no email for', uid);
+  const firstName = claim.firstName || (member.firstName) || (member.displayName || '').split(' ')[0];
+  await sendOnce(`welcome_${uid}_${acct.memberId}`, to, welcomeEmail({ firstName, memberName: member.displayName, programs: member.programs || [] }));
+});
+export const emailOnDecline = onDocumentUpdated({ document: 'claims/{uid}', region: REGION }, async (event) => {
+  const before = event.data.before.data() || {}, after = event.data.after.data() || {};
+  if (after.status !== 'rejected' || before.status === 'rejected') return;
+  const uid = event.params.uid;
+  const to = await memberEmail(uid, after);
+  if (!to) return;
+  const p = await db.doc('profiles/' + uid).get();
+  const firstName = after.firstName || ((p.exists && p.data().name) || '').split(' ')[0];
+  await sendOnce(`declined_${uid}_${(after.reviewedAt || '').replace(/\W/g, '')}`, to, declinedEmail({ firstName, reason: after.reason }));
+});
