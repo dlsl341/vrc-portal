@@ -50,3 +50,24 @@ export function smtpSettings(env = process.env) {
   return { host, port, secure: port === 465, auth: { user, pass }, from: env.MAIL_FROM || `VRC Rowing Portal <${user}>` };
 }
 export const validEmail = e => typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length < 255;
+
+const SEV = { cosmetic: 'Cosmetic', attention: 'Needs attention', unsafe: 'Unsafe – do not row' };
+export function issueEmail({ boatName, severity, location, description, reporter, photos = [], at }) {
+  const sev = SEV[severity] || severity || 'Reported';
+  const unsafe = severity === 'unsafe';
+  const subject = `${unsafe ? '⚠ UNSAFE: ' : ''}Damage reported – ${boatName || 'a boat'} (${sev})`;
+  const link = SITE + '/#issues';
+  const rows = [['Boat', boatName], ['Severity', sev], ['Where on the boat', location], ['Reported by', reporter], ['When', at ? at.replace('T', ' ').slice(0, 16) + ' UTC' : '']]
+    .filter(([, v]) => v).map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#777;white-space:nowrap">${esc(k)}</td><td style="padding:4px 0"><b>${esc(v)}</b></td></tr>`).join('');
+  const pics = photos.filter(u => /^https:\/\//.test(u)).slice(0, 6)
+    .map((u, i) => `<a href="${esc(u)}" style="display:inline-block;margin:0 8px 8px 0"><img src="${esc(u)}" alt="Photo ${i + 1}" width="160" style="border-radius:6px;border:1px solid #ddd;max-width:160px"></a>`).join('');
+  const html = frame(unsafe ? '⚠ Unsafe boat reported' : 'Damage reported', `
+${unsafe ? '<p style="background:#fde6e6;border-left:4px solid #c42a30;padding:10px 14px;margin-top:0"><b>Marked unsafe – the boat is flagged “do not row” in the portal.</b></p>' : ''}
+<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:15px">${rows}</table>
+${description ? `<p style="background:#f7f6f3;border-left:4px solid #ea3c42;padding:10px 14px">${esc(description)}</p>` : ''}
+${pics ? `<p style="margin:14px 0 4px;color:#777">Photos</p><div>${pics}</div>` : ''}
+${button(link, 'Open Issues in the portal')}
+<p style="color:#777;font-size:13px">You’re getting this because you’re a portal admin.</p>`);
+  const text = `${unsafe ? 'UNSAFE – the boat is flagged do not row.\n\n' : ''}Damage reported\nBoat: ${boatName || ''}\nSeverity: ${sev}\n${location ? 'Where: ' + location + '\n' : ''}${reporter ? 'Reported by: ' + reporter + '\n' : ''}\n${description || ''}\n${photos.length ? '\nPhotos:\n' + photos.join('\n') + '\n' : ''}\nOpen Issues: ${link}`;
+  return { subject, html, text };
+}

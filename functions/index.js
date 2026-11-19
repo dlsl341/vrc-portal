@@ -13,7 +13,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, smtpSettings, validEmail } from './mail.js';
 
 initializeApp();
 const db = getFirestore();
@@ -186,11 +186,13 @@ async function sendOnce(key, to, msg) {
   const cfg = smtpSettings();
   if (!cfg) { console.warn('mail: SMTP not configured – skipped', key); return; }
   const ref = db.doc('mailLog/' + key);
-  try { await ref.create({ to, subject: msg.subject, at: new Date().toISOString(), status: 'sending' }); }
+  const toLabel = typeof to === 'string' ? to : `${to.bcc.length} admin${to.bcc.length === 1 ? '' : 's'}`;
+  try { await ref.create({ to: toLabel, subject: msg.subject, at: new Date().toISOString(), status: 'sending' }); }
   catch (e) { console.log('mail: already sent', key); return; }
   try {
     const t = nodemailer.createTransport({ host: cfg.host, port: cfg.port, secure: cfg.secure, auth: cfg.auth });
-    const info = await t.sendMail({ from: cfg.from, to, subject: msg.subject, text: msg.text, html: msg.html });
+    const rcpt = typeof to === 'string' ? { to } : { to: cfg.from, bcc: to.bcc };
+    const info = await t.sendMail({ from: cfg.from, ...rcpt, subject: msg.subject, text: msg.text, html: msg.html });
     await ref.update({ status: 'sent', messageId: info.messageId || null });
   } catch (e) {
     console.error('mail: send failed', key, e && e.message);
@@ -216,4 +218,30 @@ export const emailOnDecline = onDocumentUpdated({ document: 'claims/{uid}', regi
   const p = await db.doc('profiles/' + uid).get();
   const firstName = after.firstName || ((p.exists && p.data().name) || '').split(' ')[0];
   await sendOnce(`declined_${uid}_${(after.reviewedAt || '').replace(/\W/g, '')}`, to, declinedEmail({ firstName, reason: after.reason }));
+});
+
+// Email every admin (and the owner) when a member reports damage on a boat.
+async function adminEmails() {
+  const uids = new Set((await db.collection('admins').get()).docs.map(d => d.id));
+  const settings = await db.doc('config/settings').get();
+  if (settings.exists && settings.data().ownerUid) uids.add(settings.data().ownerUid);
+  const out = new Set();
+  for (const uid of uids) {
+    const pref = await db.doc('memberPrefs/' + uid).get();
+    if (pref.exists && pref.data().issueEmails === false) continue;   // admin opted out
+    const e = await memberEmail(uid, null); if (e) out.add(e.toLowerCase());
+  }
+  return [...out];
+}
+export const emailAdminsOnIssue = onDocumentCreated({ document: 'issues/{id}', region: REGION }, async (event) => {
+  const id = event.params.id, it = event.data && event.data.data();
+  if (!it) return;
+  const [boat, acct] = await Promise.all([db.doc('boats/' + it.boatId).get(), it.by ? db.doc('accounts/' + it.by).get() : null]);
+  let reporter = '';
+  if (acct && acct.exists) { const m = await db.doc('members/' + acct.data().memberId).get(); reporter = m.exists ? m.data().displayName : ''; }
+  const to = await adminEmails();
+  if (!to.length) return console.warn('mail: no admin emails for issue', id);
+  const msg = issueEmail({ boatName: boat.exists ? boat.data().name : it.boatId, severity: it.severity, location: it.location, description: it.description, reporter, photos: it.photos || [], at: it.at });
+  // one email, admins in BCC so addresses stay private
+  await sendOnce('issue_' + id, { bcc: to }, msg);
 });

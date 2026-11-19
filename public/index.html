@@ -904,6 +904,7 @@ function bindMembers(){
   m.querySelectorAll('[data-mstat]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.mstat;render()});
   m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
   m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
+  {const t=$('#issueMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({issueEmails:t.checked},{merge:true}),t.checked?'You’ll get damage report emails':'Damage report emails off')}
   m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
   m.querySelectorAll('[data-mlayout]').forEach(el=>el.onclick=()=>{S.mlayout=el.dataset.mlayout;try{localStorage.setItem('memberLayout',S.mlayout)}catch(e){};render()});
   m.querySelectorAll('[data-unadmin]').forEach(el=>el.onclick=()=>removeAdminForm(el.dataset.unadmin));
@@ -2199,9 +2200,11 @@ function bindOpenErg(){
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
+function issueEmailToggle(){const on=((S.mprefs||{})[S.me]||{}).issueEmails!==false;
+  return `<label class="tog" style="margin:0 0 12px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="issueMailTog" ${on?'checked':''}> Email me when a member reports damage on a boat</label>`}
 function mailLogHtml(){const L=Object.entries(S.mailLog||{}).sort((a,b)=>String(b[1].at).localeCompare(String(a[1].at))).slice(0,8);
   if(!L.length)return `<div class="sec"><h4>Member emails</h4><div class="empty">No emails sent yet. Welcome emails go out automatically when you approve a request – once email is set up (see docs/EMAIL.md).</div></div>`;
-  return `<div class="sec"><h4>Member emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('welcome')?'Welcome':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
+  return `<div class="sec"><h4>Emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('welcome')?'Welcome':k.startsWith('issue')?'Damage report':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
     <span class="pill ${m.status==='sent'?'s-available':m.status==='failed'?'s-repair':'s-dnr'}" title="${esc(m.error||'')}">${m.status==='sent'?'Sent':m.status==='failed'?'Failed':'Sending'}</span></div>`).join('')}</div>`}
 function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
 function claimItem(uid,c){
@@ -2230,6 +2233,7 @@ function viewAdmin(){
   <div class="sec claims"><h4>Profile requests · ${pend.length} waiting</h4>
     ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
     <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
+  ${issueEmailToggle()}
   ${mailLogHtml()}
   ${adminRoster()}`;
 }
