@@ -215,3 +215,10 @@ test('members book open erg time only for themselves; others cannot cancel it', 
   await assertFails(deleteDoc(doc(as('bob'), 'openErg/o1')));
   await assertSucceeds(deleteDoc(doc(as('alice'), 'openErg/o1')));
 });
+
+// ---- member emails log
+test('only admins can see the email log; nobody can write it from the browser', async () => {
+  await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));
+  await assertFails(getDoc(doc(as('alice'), 'mailLog/welcome_x')));
+  await assertFails(setDoc(doc(as('carol'), 'mailLog/welcome_x'), { to: 'a@b.ca' }));
+});

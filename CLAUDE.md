@@ -58,6 +58,11 @@ language, and keep the "propose → preview link → merge" workflow.
   (`source:'concept2'`) and follows webhooks. Tokens in `c2Tokens`/`c2Users` are server-only. Client
   secret = GitHub secret `C2_CLIENT_SECRET`, written to `functions/.env` at deploy.
 
+- **Member emails** (see `docs/EMAIL.md`): Firestore triggers in `functions/index.js` send a welcome email on
+  approval (`accounts/{uid}` created) and a decline note (`claims/{uid}` → rejected) over SMTP (nodemailer;
+  GitHub secrets SMTP_HOST/PORT/USER/PASS, MAIL_FROM). Once-only via `mailLog/{key}` (admins can read;
+  Admin page lists recent emails). Unconfigured = skipped.
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
@@ -106,6 +111,6 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 
 ## Open items
 - Off-Program (PCOC) sign-out sheet as its own session type (only PCOC-registered members).
-- Emailed calendar invites to the whole crew (Cloud Function + email service; needs Blaze).
+- Emailed calendar invites to the whole crew (email sending now exists – reuse `sendOnce` in functions).
 - Data clean-up after import: possible duplicates (Missy B/Melissa B, Steph C/G, Elena K/Elana K,
   Colin R/T); Rec program has no members assigned.
