@@ -229,7 +229,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .tl-s{opacity:.85}.tl-k{background:var(--red-d);top:16px}.tl-j{background:#2a5d9c}.tl-me{background:transparent;border:2px dashed #111;color:#111;font-weight:700;z-index:2}
 .tl-ticks{position:relative;height:16px;font-size:10.5px;color:var(--ink3)}.tl-ticks span{position:absolute;transform:translateX(-50%)}
 .tl-key{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.tl-key .k{display:inline-block;width:12px;height:10px;border-radius:2px;margin-left:8px}.tl-key .k.tl-s{background:#999}.tl-key .k.tl-me{border:2px dashed #111}
-.c2tag{color:#2a5d9c;font-weight:600}.c2sec{border-left:4px solid #2a5d9c}.c2sec h4{display:flex;justify-content:space-between;align-items:center}
+.xtag{color:#8a5a00;font-weight:600}.c2tag{color:#2a5d9c;font-weight:600}.c2sec{border-left:4px solid #2a5d9c}.c2sec h4{display:flex;justify-content:space-between;align-items:center}
 .oe-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;margin:6px 0 10px}
 .oe-slot{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 4px;font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
 .oe-slot small{font-weight:400;font-size:11px;color:var(--ink2)}.oe-slot:disabled{cursor:default;opacity:.45}.oe-slot.blk{background:#f1efec}
@@ -1676,20 +1676,26 @@ function estWatts(r){const sp=split500(r);return sp?Math.round(2.8/Math.pow(sp/5
 function weekStartOf(d){const x=pd(d);const wd=(x.getDay()+6)%7;return addDays(d,-wd)}
 function periodStart(p){const t=today();return p==='week'?weekStartOf(t):p==='month'?t.slice(0,8)+'01':p==='year'?t.slice(0,5)+'01-01':'0000'}
 const PERIODS=[['week','This week'],['month','This month'],['year','This year'],['all','All time']];
+// Cross-training (BikeErg, SkiErg…) is listed but never added to rowing kilometres, time or leaderboards:
+// a bike kilometre isn't a rowing kilometre. Results with no machine (logged by hand before this) count as rowing.
+const ROW_MACHINES=['rower','dynamic','slides','water'];
+const MACHINE_NAMES={rower:'RowErg',dynamic:'Dynamic RowErg',slides:'RowErg on slides',skierg:'SkiErg',bike:'BikeErg',multierg:'MultiErg',paddle:'Paddle',snow:'Snow',rollerski:'Rollerski'};
+const isCross=r=>!!r.machine&&!ROW_MACHINES.includes(r.machine);
+function typeMatch(r,t){return !t||t==='all'?true:t==='cross'?isCross(r):t==='erg'?r.type==='erg'&&!isCross(r):r.type===t&&!isCross(r)}
 function resultsList(f={}){const from=f.period?periodStart(f.period):'0000';
-  return Object.entries(S.results).filter(([,r])=>r.date>=from&&r.date<=today()&&(!f.member||r.memberId===f.member)&&(!f.prog||f.prog==='all'||r.program===f.prog)&&(!f.type||f.type==='all'||r.type===f.type))
+  return Object.entries(S.results).filter(([,r])=>r.date>=from&&r.date<=today()&&(!f.member||r.memberId===f.member)&&(!f.prog||f.prog==='all'||r.program===f.prog)&&typeMatch(r,f.type))
    .sort((a,b)=>b[1].date.localeCompare(a[1].date)||String(b[1].at).localeCompare(String(a[1].at)))}
-function totals(list){return list.reduce((t,[,r])=>({km:t.km+(+r.km||0),sec:t.sec+(+r.timeSec||0),n:t.n+1}),{km:0,sec:0,n:0})}
+function totals(list){return list.reduce((t,[,r])=>isCross(r)?{...t,xkm:t.xkm+(+r.km||0),xsec:t.xsec+(+r.timeSec||0),xn:t.xn+1}:{...t,km:t.km+(+r.km||0),sec:t.sec+(+r.timeSec||0),n:t.n+1},{km:0,sec:0,n:0,xkm:0,xsec:0,xn:0})}
 const likeCount=r=>Object.keys(r.likes||{}).length;
 const iLiked=r=>!!S.me&&!!(r.likes||{})[S.me];
 function likeNames(r){return Object.keys(r.likes||{}).map(u=>name(u)).join(', ')}
 
 function resultCard(id,r,compact,inProfile){
-  const sp=split500(r),w=r.watts||(r.type==='erg'?estWatts(r):null),mine=!!S.me&&r.by===S.me;
-  const extra=[sp?`<span><b>${fmtDur(sp,true)}</b> /500m</span>`:'',w?`<span><b>${r.watts?'':'~'}${w}</b> W</span>`:'',r.cals?`<span><b>${r.cals}</b> cal</span>`:'',r.spm?`<span><b>${r.spm}</b> spm</span>`:'',r.hr?`<span><b>${r.hr}</b> bpm</span>`:''].filter(Boolean).join('');
+  const bike=r.machine==='bike',sp=split500(r),w=r.watts||(r.type==='erg'&&!isCross(r)?estWatts(r):null),mine=!!S.me&&r.by===S.me;
+  const extra=[sp?(bike?`<span><b>${fmtDur(sp*2,true)}</b> /1000m</span>`:`<span><b>${fmtDur(sp,true)}</b> /500m</span>`):'',w?`<span><b>${r.watts?'':'~'}${w}</b> W</span>`:'',r.cals?`<span><b>${r.cals}</b> cal</span>`:'',r.spm?`<span><b>${r.spm}</b> spm</span>`:'',r.hr?`<span><b>${r.hr}</b> bpm</span>`:''].filter(Boolean).join('');
   const lc=likeCount(r);
   const hideWho=compact||inProfile;
-  return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${r.type==='erg'?'Erg':'On water'}${r.source==='concept2'?' · <span class="c2tag">Concept2</span>':''}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
+  return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${isCross(r)?`<b class="xtag">${esc(MACHINE_NAMES[r.machine]||r.machine)} · cross-training</b>`:r.type==='erg'?'Erg':'On water'}${r.source==='concept2'?' · <span class="c2tag">Concept2</span>':''}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
     ${(mine||canAdmin())&&!compact?`<button class="btn sm" data-resedit="${esc(id)}">Edit</button>`:''}</div>
    <div class="res-main"><div><span class="big">${fmtKm(r.km)}</span> km</div><div><span class="big">${fmtDur(r.timeSec)}</span> time</div></div>
    ${extra?`<div class="res-x">${extra}</div>`:''}${r.notes&&!compact?`<div class="res-n">${esc(r.notes)}</div>`:''}
@@ -1700,18 +1706,19 @@ function viewResults(){
   const me=myMemberId(),f={prog:S.rProg,type:S.rType,period:S.rPeriod,member:S.rWho==='mine'?me:null};
   const list=resultsList(f);
   const mineT=me?{w:totals(resultsList({member:me,period:'week'})),m:totals(resultsList({member:me,period:'month'})),y:totals(resultsList({member:me,period:'year'}))}:null;
-  const board={};resultsList({prog:S.rProg,type:S.rType,period:S.rPeriod}).forEach(([,r])=>{const b=board[r.memberId]||(board[r.memberId]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
+  const board={};resultsList({prog:S.rProg,type:S.rType==='cross'?'all':S.rType,period:S.rPeriod}).filter(([,r])=>!isCross(r)).forEach(([,r])=>{const b=board[r.memberId]||(board[r.memberId]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
   const top=Object.entries(board).sort((a,b)=>b[1].km-a[1].km).slice(0,10);
   const progs=[...new Set([...progNames(),...Object.values(S.results).map(r=>r.program).filter(Boolean)])];
   const canLog=canMember()&&(!!me||canAdmin());
   return `<div class="page-h"><div><h2>Results</h2><p>Log your erg and on-water training. Kilometres and time come first; add watts, calories and more if you have them. Cheer each other on with a ♥.</p></div>
     <div class="actions" style="margin:0"><a class="btn" href="#leaderboard">🏆 Leaderboard</a>${canLog?`<button class="btn pri" id="logRes">+ Log a result</button>`:''}</div></div>
-  ${mineT?`<div class="stats">${[['This week',mineT.w],['This month',mineT.m],['This year',mineT.y]].map(([l,t])=>`<div class="stat nf"><div class="v">${fmtKm(t.km)}<small> km</small></div><div class="l"><span class="dot" style="background:var(--red)"></span>${l} · ${fmtDur(t.sec)} · ${t.n} session${t.n===1?'':'s'}</div></div>`).join('')}</div>`:''}
+  ${mineT?`<div class="stats">${[['This week',mineT.w],['This month',mineT.m],['This year',mineT.y]].map(([l,t])=>`<div class="stat nf"><div class="v">${fmtKm(t.km)}<small> km</small></div><div class="l"><span class="dot" style="background:var(--red)"></span>${l} · ${fmtDur(t.sec)} · ${t.n} session${t.n===1?'':'s'}${t.xn?`<br><span class="xtag">+ ${fmtKm(t.xkm)} km bike/ski cross-training</span>`:''}</div></div>`).join('')}</div>`:''}
+  <p class="tag" style="margin:-4px 0 12px">Kilometres and leaderboards count rowing only (RowErg and on water). BikeErg and SkiErg workouts are listed as cross-training.</p>
   ${me&&canMember()&&!c2Link()?`<a class="callout adm-go" href="#me" style="border-left-color:#2a5d9c">Row on a Concept2 erg? <b>Connect your Concept2 Logbook</b> on My profile and your workouts will appear here automatically ›</a>`:''}
   <div class="toolbar">
     <div class="chips">${[['all','Everyone'],['mine','Mine']].filter(([k])=>k==='all'||me).map(([k,l])=>`<button class="chip ${S.rWho===k?'on':''}" data-rwho="${k}">${l}</button>`).join('')}</div>
     <select class="f" id="rProg"><option value="all">All programs</option>${progs.map(p=>`<option ${S.rProg===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
-    <select class="f" id="rType">${[['all','Erg & water'],['erg','Erg'],['water','On water']].map(([k,l])=>`<option value="${k}" ${S.rType===k?'selected':''}>${l}</option>`).join('')}</select>
+    <select class="f" id="rType">${[['all','Everything'],['erg','Rowing erg'],['water','On water'],['cross','Bike & Ski (cross-training)']].map(([k,l])=>`<option value="${k}" ${S.rType===k?'selected':''}>${l}</option>`).join('')}</select>
     <select class="f" id="rPeriod">${PERIODS.map(([k,l])=>`<option value="${k}" ${S.rPeriod===k?'selected':''}>${l}</option>`).join('')}</select>
   </div>
   <div class="sgrid res-grid"><div>${list.length?list.slice(0,60).map(([id,r])=>resultCard(id,r)).join(''):`<div class="banner">No results yet${S.rPeriod!=='all'?' for this period':''}.${canLog?' Be the first – tap “Log a result”.':''}</div>`}</div>
@@ -1745,6 +1752,7 @@ function resultForm(id,pre={}){
     ${adminPick?fld('Member',`<select name="mid">${Object.entries(S.members).filter(([,x])=>x.status!=='inactive').sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName)).map(([x,o])=>`<option value="${esc(x)}" ${x===mid?'selected':''}>${esc(o.displayName)}</option>`).join('')}</select>`,'full'):''}
     ${fld('Date',`<input name="date" type="date" required max="${today()}" value="${esc(r?r.date:(pre.date||today()))}">`)}
     ${fld('Type',`<select name="type"><option value="erg" ${type==='erg'?'selected':''}>Erg</option><option value="water" ${type==='water'?'selected':''}>On water</option></select>`)}
+    ${fld('Machine',`<select name="machine">${[['','RowErg'],['skierg','SkiErg'],['bike','BikeErg']].map(([k,l])=>`<option value="${k}" ${(isCross(r||{})?r.machine:'')===k?'selected':''}>${l}</option>`).join('')}</select>`,'','For erg results')}
     ${fld('Program',`<select name="program">${progs.map(p=>`<option ${p===prog?'selected':''}>${esc(p)}</option>`).join('')}</select>`)}
     ${fld('Workout',`<input name="workout" value="${esc(r?r.workout||'':(pre.workout||''))}" placeholder="e.g. 2k test, 3×10′ steady">`)}
     ${fld('Distance (km)',`<input name="km" type="number" step="0.001" min="0" required value="${esc(r&&r.km!=null?r.km:'')}" placeholder="e.g. 10">`)}
@@ -1763,7 +1771,9 @@ function resultForm(id,pre={}){
     wireForm({msg:r?'Result saved':'Result logged',
       validate:fd=>{if(!(+fd.km>0))return 'Enter the distance in km.';if(!(parseTime(fd.time)>0))return 'Enter the time, e.g. 45:00.';if(fd.date>today())return 'The date can’t be in the future.';if(!adminPick&&!mid)return 'Link your member profile first.';return null},
       save:async fd=>{const num=v=>v===''||v==null?null:+v;
-        const data={date:fd.date,type:fd.type,program:fd.program,workout:fd.workout.trim(),km:+fd.km,timeSec:parseTime(fd.time),watts:num(fd.watts),cals:num(fd.cals),spm:num(fd.spm),hr:num(fd.hr),notes:fd.notes.trim(),updatedAt:nowIso()};
+        const keepRow=r&&ROW_MACHINES.includes(r.machine)?r.machine:null;
+        const mach=fd.type==='erg'?(fd.machine||(keepRow!=='water'?keepRow:null)):(keepRow==='water'?'water':null);
+        const data={date:fd.date,type:fd.type,machine:mach||null,program:fd.program,workout:fd.workout.trim(),km:+fd.km,timeSec:parseTime(fd.time),watts:num(fd.watts),cals:num(fd.cals),spm:num(fd.spm),hr:num(fd.hr),notes:fd.notes.trim(),updatedAt:nowIso()};
         if(r)await S.db.doc('results/'+id).update(data);
         else await S.db.collection('results').add({...data,memberId:adminPick?fd.mid:mid,by:adminPick&&fd.mid!==me?(S.members[fd.mid]||{}).linkedUser||S.me:S.me,sessionId:pre.sessionId||null,bookingId:pre.bookingId||null,likes:{},at:nowIso()})}});
   });
@@ -1772,11 +1782,12 @@ function memberResultsHtml(id){
   const all=resultsList({member:id});const self=!!S.me&&(S.members[id]||{}).linkedUser===S.me;
   if(!all.length)return self&&canMember()?`<div class="sec"><h4>Results</h4><div class="empty">No results logged yet.</div><button class="btn sm pri" data-reslog="1" style="margin-top:8px">+ Log a result</button></div>`:'';
   const m=totals(resultsList({member:id,period:'month'})),y=totals(resultsList({member:id,period:'year'})),t=totals(all);
-  const byProg={};all.forEach(([,r])=>{const k=(r.program||'Other')+' · '+(r.type==='erg'?'Erg':'On water');const b=byProg[k]||(byProg[k]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
-  const best2k=all.filter(([,r])=>r.type==='erg'&&Math.abs(r.km-2)<0.001&&r.timeSec).sort((a,b)=>a[1].timeSec-b[1].timeSec)[0];
+  const byProg={};all.forEach(([,r])=>{const k=isCross(r)?'Cross-training · '+(MACHINE_NAMES[r.machine]||r.machine):(r.program||'Other')+' · '+(r.type==='erg'?'Erg':'On water');const b=byProg[k]||(byProg[k]={km:0,sec:0,n:0});b.km+=+r.km||0;b.sec+=+r.timeSec||0;b.n++});
+  const best2k=all.filter(([,r])=>r.type==='erg'&&!isCross(r)&&Math.abs(r.km-2)<0.001&&r.timeSec).sort((a,b)=>a[1].timeSec-b[1].timeSec)[0];
   const open=S.resAll===id,shown=open?all:all.slice(0,5);
   return `<div class="sec"><h4><span>Results</span>${self&&canMember()?`<button class="btn sm pri" data-reslog="1">+ Log a result</button>`:''}</h4>
-   <div class="tiles">${tile(fmtKm(m.km)+' km','This month')}${tile(fmtKm(y.km)+' km','This year')}${tile(fmtKm(t.km)+' km','All time')}${tile(fmtDur(t.sec),'Total time',true)}</div>
+   <div class="tiles">${tile(fmtKm(m.km)+' km','This month')}${tile(fmtKm(y.km)+' km','This year')}${tile(fmtKm(t.km)+' km','All time')}${tile(fmtDur(t.sec),'Total time',true)}${t.xn?tile(fmtKm(t.xkm)+' km','Bike/ski cross-training'):''}</div>
+   <p class="tag" style="margin:0 0 6px">Rowing only (RowErg and on water)${t.xn?'; BikeErg/SkiErg listed separately':''}.</p>
    <table class="t" style="margin:4px 0 10px"><thead><tr><th>Program</th><th>Sessions</th><th>Km</th><th>Time</th></tr></thead><tbody>${Object.entries(byProg).sort((a,b)=>b[1].km-a[1].km).map(([k,b])=>`<tr><td>${esc(k)}</td><td>${b.n}</td><td>${fmtKm(b.km)}</td><td>${fmtDur(b.sec)}</td></tr>`).join('')}</tbody></table>
    ${best2k?`<p class="tag" style="margin:0 0 8px">Best 2k erg: <b>${fmtDur(best2k[1].timeSec,true)}</b> (${fmtDate(best2k[1].date)})</p>`:''}
    ${shown.map(([rid,r])=>resultCard(rid,r,false,true)).join('')}
@@ -1848,7 +1859,7 @@ function lbRows(prog,metric,period,type){
       const s=S.sessions[a.sessionId]||{};if(type!=='all'&&(s.type==='erg'?'erg':'water')!==type)continue;
       for(const [mid,mk] of Object.entries(a.marks||{}))if(mk!=='absent')add(mid,1)}
   } else {
-    for(const r of Object.values(S.results)){if(r.date<from||r.date>t||r.program!==prog)continue;
+    for(const r of Object.values(S.results)){if(r.date<from||r.date>t||r.program!==prog||isCross(r))continue;
       if(metric==='best2k'){if(r.type==='erg'&&Math.abs(r.km-2)<0.001&&r.timeSec>0)add(r.memberId,r.timeSec,r.date);continue}
       if(type!=='all'&&r.type!==type)continue;add(r.memberId,metric==='km'?+r.km||0:+r.timeSec||0)}
   }

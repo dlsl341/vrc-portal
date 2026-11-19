@@ -29,7 +29,8 @@ language, and keep the "propose → preview link → merge" workflow.
 - **Results page** (`#results`): members log erg/on-water results (km + time primary; split /500m and
   ~watts computed), filter by program/type/period, a top-km board, and ♥ likes. "Log result" also
   appears on your own booking once a session has started. Rules: own results only; others may only
-  add/remove their own key in `likes`.
+  add/remove their own key in `likes`. **Cross-training** (`machine` bike/skierg/multierg/…, see `isCross`) is
+  listed but excluded from km/time totals, member-card km, the top-km board and leaderboards.
 
 - **Attendance**: coaches (members with the `coach` role, set by an admin under Edit member → Roles)
   and admins get "✓ Check in athletes" on a session sheet from the day of the session. Present / Late /
@@ -75,7 +76,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `sessions` (programId, weekday 0=Mon, start/end "HH:MM", type water|erg, capacity, eligible[] program names, coach, safety, season, active) ·
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
-`results` (memberId, by uid, date, type erg|water, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
+`results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
 `openErg` (memberId, by, date, start, end, erg, notes) ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
