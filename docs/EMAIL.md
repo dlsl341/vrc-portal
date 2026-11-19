@@ -2,7 +2,10 @@
 
 The server function (`functions/index.js`) sends:
 - a **welcome email** when an admin approves a profile request (`accounts/{uid}` created), and
-- a short **"request declined"** note (with the admin's reason) when a request is declined.
+- a short **"request declined"** note (with the admin's reason) when a request is declined, and
+- a **damage report** to every admin (and the owner) when a member reports an issue on a boat – one
+  email with admins in BCC; "⚠ UNSAFE" in the subject for unsafe boats. Admins can switch these off for
+  themselves on the Admin page.
 
 Templates are in `functions/mail.js` (tests: `tests/mail.test.mjs`). Each email is recorded in
 `mailLog` (admins see the latest on the Admin page, with Sent / Failed). Nothing is sent until the

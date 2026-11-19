@@ -61,7 +61,9 @@ language, and keep the "propose → preview link → merge" workflow.
 - **Member emails** (see `docs/EMAIL.md`): Firestore triggers in `functions/index.js` send a welcome email on
   approval (`accounts/{uid}` created) and a decline note (`claims/{uid}` → rejected) over SMTP (nodemailer;
   GitHub secrets SMTP_HOST/PORT/USER/PASS, MAIL_FROM). Once-only via `mailLog/{key}` (admins can read;
-  Admin page lists recent emails). Unconfigured = skipped.
+  Admin page lists recent emails). Unconfigured = skipped. **Damage reports** (`issues/{id}` created) email all
+  admins + owner in one BCC'd message (⚠ UNSAFE in the subject for unsafe boats, photos included); an admin
+  opts out with the Admin-page toggle (`memberPrefs/{uid}.issueEmails = false`).
 
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,

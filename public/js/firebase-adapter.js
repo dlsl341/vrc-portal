@@ -50,7 +50,7 @@ function wrapDoc(r) {
   return {
     id: r.id, path: r.path,
     get: () => wrapP(getDoc(r).then(snapDoc)),
-    set: d => wrapP(setDoc(r, d)),
+    set: (d, opts) => wrapP(opts ? setDoc(r, d, opts) : setDoc(r, d)),   // opts e.g. { merge: true }
     update: d => wrapP(updateDoc(r, d)),
     delete: () => wrapP(deleteDoc(r)),
     onSnapshot: (next, err) => onSnapshot(r, s => next(snapDoc(s)), e => err && err(mapErr(e))),

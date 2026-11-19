@@ -21,3 +21,12 @@ test('SMTP settings: off until configured; 465 = SSL, 587 = STARTTLS', () => {
   assert.equal(smtpSettings({ SMTP_HOST: 'h', SMTP_USER: 'u', SMTP_PASS: 'p', SMTP_PORT: '587' }).secure, false);
   assert.ok(validEmail('a@b.ca')); assert.ok(!validEmail('nope'));
 });
+import { issueEmail } from '../functions/mail.js';
+test('damage email: unsafe boats are flagged in the subject and body, photos included', () => {
+  const m = issueEmail({ boatName: 'Atlanta', severity: 'unsafe', location: 'Bow 2 rigger', description: 'Cracked rigger', reporter: 'James Nichol', photos: ['https://firebasestorage.googleapis.com/x.jpg'], at: '2026-11-19T23:00:00Z' });
+  assert.match(m.subject, /^⚠ UNSAFE: Damage reported – Atlanta/);
+  assert.match(m.html, /do not row/); assert.match(m.html, /Cracked rigger/); assert.match(m.html, /x\.jpg/); assert.match(m.html, /James Nichol/);
+  const c = issueEmail({ boatName: 'Fraser', severity: 'cosmetic', description: 'Scuff' });
+  assert.match(c.subject, /^Damage reported – Fraser \(Cosmetic\)/);
+  assert.doesNotMatch(issueEmail({ boatName: 'x', photos: ['javascript:alert(1)'] }).html, /javascript:/);
+});
