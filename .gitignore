@@ -4,3 +4,5 @@ node_modules/
 *-debug.log
 service-account*.json
 vrc-portal-export-*.json
+functions/.env
+functions/node_modules/

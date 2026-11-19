@@ -2,7 +2,8 @@
 #  • Pull requests: if the tests pass, a private preview copy of the portal is published and
 #    its link is posted on the pull request.
 #  • Merges to main: if the tests pass, the portal, database rules and storage rules go live.
-# Needs one repository secret: FIREBASE_SERVICE_ACCOUNT (see docs/SETUP.md, step 5).
+# Needs repository secrets: FIREBASE_SERVICE_ACCOUNT (docs/SETUP.md, step 5) and
+# C2_CLIENT_SECRET (Concept2 Logbook API, docs/CONCEPT2.md).
 name: Test & deploy
 
 on:
@@ -55,7 +56,14 @@ jobs:
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
-      - name: Deploy portal + rules
+      - name: Install server function packages
+        run: npm install --prefix functions --no-audit --no-fund
+      - name: Write Concept2 settings for the server function
+        env:
+          C2_SECRET: ${{ secrets.C2_CLIENT_SECRET }}
+        run: |
+          printf 'C2_CLIENT_ID=CyxYSBWvx6QavQRqq1WonK0BvEkWV9s2qjZ91rNN\nC2_CLIENT_SECRET=%s\n' "$C2_SECRET" > functions/.env
+      - name: Deploy portal + rules + server function
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
-        run: npx --yes firebase-tools@13 deploy --only hosting,firestore:rules,storage --project "$PROJECT_ID" --non-interactive --force
+        run: npx --yes firebase-tools@13 deploy --only hosting,firestore:rules,storage,functions --project "$PROJECT_ID" --non-interactive --force

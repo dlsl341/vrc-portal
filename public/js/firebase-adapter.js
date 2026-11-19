@@ -83,6 +83,7 @@ const userApi = Object.freeze({
   can: name => name === 'data.write' ? (state.isMember || state.isAdmin)
              : name === 'assets.write' ? state.isAdmin : null,
   id: async () => (state.user ? state.user.uid : null),
+  token: async () => (state.user ? state.user.getIdToken() : null),   // for the portal's own /c2/* server calls
   me: async () => ({ id: state.user && state.user.uid, name: displayNameOf(state.user) }),
   profiles: async ids => {
     const out = {};

@@ -98,6 +98,17 @@ service cloud.firestore {
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
       allow update, delete: if isAdmin();
     }
+    // ---- Concept2 connection: the server function holds the tokens; browsers can't read them ----
+    match /c2States/{state} {        // one-time 'state' for the Concept2 sign-in round trip
+      allow create: if signedIn() && request.resource.data.uid == uid()
+                    && request.resource.data.keys().hasOnly(['uid', 'at']);
+    }
+    match /c2Links/{u} {             // 'connected as …' status, written only by the server
+      allow read: if signedIn() && (u == uid() || isAdmin());
+    }
+    match /c2Tokens/{u} { allow read, write: if false; }
+    match /c2Users/{c2id} { allow read, write: if false; }
+
     // ---- scheduled maintenance: admins schedule; members can join/leave the crew; the crew can mark it done ----
     match /maintJobs/{id} {
       function crewChange() {           // only adds or removes the signed-in member
