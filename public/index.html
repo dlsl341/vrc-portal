@@ -230,6 +230,12 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .tl-ticks{position:relative;height:16px;font-size:10.5px;color:var(--ink3)}.tl-ticks span{position:absolute;transform:translateX(-50%)}
 .tl-key{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.tl-key .k{display:inline-block;width:12px;height:10px;border-radius:2px;margin-left:8px}.tl-key .k.tl-s{background:#999}.tl-key .k.tl-me{border:2px dashed #111}
 .c2tag{color:#2a5d9c;font-weight:600}.c2sec{border-left:4px solid #2a5d9c}.c2sec h4{display:flex;justify-content:space-between;align-items:center}
+.oe-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;margin:6px 0 10px}
+.oe-slot{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 4px;font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.oe-slot small{font-weight:400;font-size:11px;color:var(--ink2)}.oe-slot:disabled{cursor:default;opacity:.45}.oe-slot.blk{background:#f1efec}
+.oe-slot.on{border-color:var(--red);background:#fdeeee;box-shadow:0 0 0 2px var(--red) inset}
+.oe-confirm{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tl-oe{background:#2a5d9c;opacity:.75;top:16px;text-align:center}.oe-mine{border-left:4px solid var(--red)}.oe-mine .item{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -417,7 +423,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -443,13 +449,13 @@ function logEvent(boatId,kind,text){return S.db.collection('events').add({boatId
 /* ---------- routing ---------- */
 function route(){S.checkin=false;const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
-  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard'].includes(h)?h:'programs'}
+  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg'].includes(h)?h:'programs'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
 /* ---------- render ---------- */
 function render(){
-  document.querySelectorAll('nav a,a.melink').forEach(a=>a.classList.toggle('on',a.dataset.v===(S.view==='manage'?'programs':S.view==='leaderboard'?'results':S.view)));
+  document.querySelectorAll('nav a,a.melink').forEach(a=>a.classList.toggle('on',a.dataset.v===(S.view==='manage'?'programs':S.view==='leaderboard'?'results':S.view==='openerg'?'programs':S.view)));
   const role=$('#role');
   if(!S.db&&S.error!=='nodb')role.textContent='Connecting…';
   else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
@@ -463,8 +469,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -1132,6 +1138,7 @@ function allActs(){
   const out=[];for(const a of Object.values(S.activity))out.push(a);
   for(const [bid,b] of Object.entries(S.bookings)){if(!bMembers(b).length)continue;const s=S.sessions[b.sessionId]||{};
     for(const mid of bMembers(b))out.push({memberId:mid,date:b.date,session:s.title||'Session',program:progOf(b.sessionId).name||'',type:s.type==='erg'?'erg':'row',boatId:b.boatId||null,rig:b.rig||'',sessionId:b.sessionId,bookingId:bid})}
+  for(const o of Object.values(S.openErg||{}))out.push({memberId:o.memberId,date:o.date,session:`Open erg · Erg ${o.erg}`,program:'Open erg',type:'erg'});
   for(const a of Object.values(S.attendance||{})){const booked=new Set(sessionPeople(a.sessionId,a.date));const s=S.sessions[a.sessionId]||{};
     for(const [mid,mk] of Object.entries(a.marks||{}))if(!booked.has(mid)&&mk!=='absent')out.push({memberId:mid,date:a.date,session:s.title||'Session',program:progOf(a.sessionId).name||'',type:s.type==='erg'?'erg':'row',sessionId:a.sessionId,walkIn:true})}
   return out;
@@ -1149,6 +1156,7 @@ function viewPrograms(){
   const days=[0,1,2,3,4,5,6].map(i=>addDays(wk,i));
   return `<div class="page-h"><div><h2>Week of ${pd(wk).toLocaleDateString(undefined,{month:'long',day:'numeric'})}</h2><p>${scope==='mine'?'Sessions for your programs.':'All club sessions.'} Tap a session to book a boat, join a crew or sign up for an erg.</p></div>
     <div class="actions" style="margin:0">
+      <a class="btn pri" href="#openerg">+ Open erg</a>
       <a class="btn" href="#leaderboard">🏆 Leaderboard</a>
       <div class="chips"><button class="chip" data-wk="-7" aria-label="Previous week">‹</button><button class="chip ${wk===mondayOf(t)?'on':''}" data-wk="0">This week</button><button class="chip" data-wk="7" aria-label="Next week">›</button></div>
       ${mine.length?`<div class="chips">${[['mine','My programs'],['all','All']].map(([k,l])=>`<button class="chip ${scope===k?'on':''}" data-pscope="${k}">${l}</button>`).join('')}</div>`:''}
@@ -1731,14 +1739,14 @@ function resultForm(id,pre={}){
   const mid=r?r.memberId:(pre.memberId||me);const mprogs=(S.members[mid]||{}).programs||[];
   const prog=r?r.program:(s?progOf(pre.sessionId).name:mprogs[0])||'';
   const progs=[...new Set([prog,...mprogs,...progNames()].filter(Boolean))];
-  const type=r?r.type:(s?s.type==='erg'?'erg':'water':'erg');
+  const type=r?r.type:(s?s.type==='erg'?'erg':'water':(pre.type||'erg'));
   const adminPick=canAdmin()&&!r&&!pre.sessionId;
   openModal(`<h3>${r?'Edit result':'Log a result'}</h3>${s?`<p class="muted" style="margin-top:-6px">${esc(s.title)} · ${fmtDate(pre.date)}</p>`:''}<form id="mform"><div class="fg">
     ${adminPick?fld('Member',`<select name="mid">${Object.entries(S.members).filter(([,x])=>x.status!=='inactive').sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName)).map(([x,o])=>`<option value="${esc(x)}" ${x===mid?'selected':''}>${esc(o.displayName)}</option>`).join('')}</select>`,'full'):''}
     ${fld('Date',`<input name="date" type="date" required max="${today()}" value="${esc(r?r.date:(pre.date||today()))}">`)}
     ${fld('Type',`<select name="type"><option value="erg" ${type==='erg'?'selected':''}>Erg</option><option value="water" ${type==='water'?'selected':''}>On water</option></select>`)}
     ${fld('Program',`<select name="program">${progs.map(p=>`<option ${p===prog?'selected':''}>${esc(p)}</option>`).join('')}</select>`)}
-    ${fld('Workout',`<input name="workout" value="${esc(r?r.workout||'':'')}" placeholder="e.g. 2k test, 3×10′ steady">`)}
+    ${fld('Workout',`<input name="workout" value="${esc(r?r.workout||'':(pre.workout||''))}" placeholder="e.g. 2k test, 3×10′ steady">`)}
     ${fld('Distance (km)',`<input name="km" type="number" step="0.001" min="0" required value="${esc(r&&r.km!=null?r.km:'')}" placeholder="e.g. 10">`)}
     ${fld('Time',`<input name="time" required value="${esc(r&&r.timeSec?fmtDur(r.timeSec,r.timeSec%1!==0):'')}" placeholder="h:mm:ss or mm:ss">`,'','e.g. 45:00 or 1:02:30. A plain number means minutes.')}
     ${fld('Avg watts',`<input name="watts" type="number" min="0" value="${esc(r&&r.watts||'')}">`,'','Optional')}
@@ -2090,6 +2098,90 @@ function c2Return(){
     error:'Concept2 didn’t connect – please try again in a moment.'}[v]||'';
   history.replaceState(null,'',location.pathname+location.hash);
   if(msg)setTimeout(()=>toast(msg),900);
+}
+
+
+/* =================== OPEN ERG (outside programmed erg time) =================== */
+// openErg/{id}: memberId, by (uid), date, start, end ("HH:MM"), erg (1–18), notes, at.
+// Any member may book an erg for a slot that doesn't overlap a scheduled erg session (programs own
+// the erg room then). Erg 18 stays Para-only. Checked in the app; the rules make sure members only
+// book for themselves.
+S.openErg={};S.oeDate=null;S.oeStart=null;S.oeDur=60;
+const OE={ergs:18,paraOnly:[18],hours:['06:00','21:30'],step:30,maxDays:6,durs:[30,45,60,90,120]};
+function ergSessionsOn(d){const wd=(pd(d).getDay()+6)%7;
+  return Object.entries(S.sessions).filter(([sid,s])=>s.active!==false&&s.type==='erg'&&+s.weekday===wd&&s.start&&!occ(sid,d).cancelled)
+    .map(([sid,s])=>({sid,s,p:progOf(sid),a:toMin(s.start),b:toMin(s.end||toHM(toMin(s.start)+75))}))}
+const oeOn=d=>Object.entries(S.openErg).filter(([,o])=>o.date===d);
+function oeBlocked(d,a,b){return ergSessionsOn(d).find(w=>overlaps(a,b,w.a,w.b))||null}
+function oeErgsFree(d,a,b,mid){const used=new Set(oeOn(d).filter(([,o])=>overlaps(a,b,toMin(o.start),toMin(o.end))).map(([,o])=>o.erg));
+  const para=((S.members[mid]||{}).programs||[]).some(p=>/^para$/i.test(p));
+  return [...Array(OE.ergs)].map((_,i)=>i+1).filter(n=>!used.has(n)&&(para||!OE.paraOnly.includes(n)))}
+function oeMine(){const me=myMemberId();return Object.entries(S.openErg).filter(([,o])=>o.memberId===me).sort((a,b)=>(a[1].date+a[1].start).localeCompare(b[1].date+b[1].start))}
+function oeTimeline(d){
+  const lo=toMin(OE.hours[0]),hi=toMin(OE.hours[1]),pct=m=>Math.max(0,Math.min(100,(m-lo)/(hi-lo)*100));
+  const bars=ergSessionsOn(d).map(w=>`<div class="tl-b tl-s" style="left:${pct(w.a)}%;width:${pct(w.b)-pct(w.a)}%;background:${esc(w.p.color||'#888')}" title="${esc(w.s.title)}">${esc(w.s.title)}</div>`);
+  // open erg load per 30 min
+  for(let m=lo;m<hi;m+=OE.step){const n=oeOn(d).filter(([,o])=>overlaps(m,m+OE.step,toMin(o.start),toMin(o.end))).length;
+    if(n)bars.push(`<div class="tl-b tl-oe" style="left:${pct(m)}%;width:${pct(m+OE.step)-pct(m)}%" title="${n} open erg booking${n===1?'':'s'}">${n}</div>`)}
+  if(S.oeStart){const a=toMin(S.oeStart);bars.push(`<div class="tl-b tl-me" style="left:${pct(a)}%;width:${pct(a+S.oeDur)-pct(a)}%">You</div>`)}
+  const ticks=[6,9,12,15,18,21].map(h=>`<span style="left:${pct(h*60)}%">${h<=12?h:h-12}${h<12?'am':'pm'}</span>`).join('');
+  return `<div class="tl"><div class="tl-track">${bars.join('')}</div><div class="tl-ticks">${ticks}</div></div>`;
+}
+function viewOpenErg(){
+  const me=myMemberId(),t=today();
+  if(!S.oeDate||S.oeDate<t)S.oeDate=t;
+  const days=[...Array(OE.maxDays+1)].map((_,i)=>addDays(t,i));const d=S.oeDate;
+  const now=new Date(),nowMin=d===t?now.getHours()*60+now.getMinutes():-1;
+  const slots=[];for(let m=toMin(OE.hours[0]);m+S.oeDur<=toMin(OE.hours[1]);m+=OE.step){
+    const blk=oeBlocked(d,m,m+S.oeDur),past=m+S.oeDur<=nowMin,free=me?oeErgsFree(d,m,m+S.oeDur,me).length:0;
+    slots.push({m,blk,past,free})}
+  const sel=S.oeStart?slots.find(x=>toHM(x.m)===S.oeStart):null;
+  const logged=id=>Object.values(S.results).some(r=>r.bookingId==='oe_'+id);
+  const mine=oeMine().filter(([id,o])=>o.date>=t||(o.date>=addDays(t,-7)&&!logged(id)));  // past week: still waiting for a result
+  const dayList=oeOn(d).sort((a,b)=>(a[1].start+a[1].erg).localeCompare(b[1].start+b[1].erg));
+  return `<div class="page-h"><div><a href="#programs" class="lnk">‹ Programs</a><h2>Open erg</h2><p>Book an erg for your own training at times with no scheduled erg program. Log your result afterwards (or let Concept2 bring it in).</p></div></div>
+  ${!me?`<div class="banner">Link your member profile to book open erg time.</div>`:''}
+  ${mine.length?`<div class="sec oe-mine"><h4>Your open erg bookings</h4>${mine.map(([id,o])=>{const past=o.date<t||(o.date===t&&toMin(o.end)<=now.getHours()*60+now.getMinutes());const started=o.date<t||(o.date===t&&toMin(o.start)<=now.getHours()*60+now.getMinutes());
+    return `<div class="item"><div><b>${esc(dayLabel(o.date))}</b> · ${fmtTime(o.start)}–${fmtTime(o.end)} · <b>Erg ${o.erg}</b>${o.notes?` <span class="tag">· ${esc(o.notes)}</span>`:''}</div><div class="actions" style="margin:0">
+      ${started?(logged(id)?'<span class="tag">✓ Result logged</span>':`<button class="btn sm pri" data-oelog="${esc(id)}">Log result</button>`):`<button class="btn sm" data-oecal="${esc(id)}">📅 Calendar</button>`}
+      ${past?'':`<button class="btn sm" data-oecancel="${esc(id)}">Cancel</button>`}</div></div>`}).join('')}</div>`:''}
+  <div class="sec"><h4>Book an erg</h4>
+   <div class="chips oe-days">${days.map(x=>`<button class="chip ${x===d?'on':''}" data-oeday="${x}">${x===t?'Today':esc(pd(x).toLocaleDateString(undefined,{weekday:'short',day:'numeric'}))}</button>`).join('')}</div>
+   <div class="toolbar" style="margin:10px 0 6px"><label class="tag">How long</label><select class="f" id="oeDur">${OE.durs.map(n=>`<option value="${n}" ${S.oeDur===n?'selected':''}>${n<60?n+' min':n===60?'1 hour':n/60+' hours'}</option>`).join('')}</select></div>
+   ${oeTimeline(d)}
+   <div class="tag tl-key" style="margin-bottom:10px"><span class="k tl-s"></span>Programmed erg session (not available) <span class="k" style="background:#2a5d9c"></span>Open erg bookings</div>
+   <div class="oe-slots">${slots.map(x=>{const lab=fmtTime(toHM(x.m));const dis=!me||x.blk||x.past||!x.free;
+     return `<button class="oe-slot ${S.oeStart===toHM(x.m)?'on':''} ${x.blk?'blk':''}" ${dis?'disabled':''} data-oeslot="${toHM(x.m)}" title="${esc(x.blk?x.blk.s.title:x.past?'Already passed':!x.free?'All ergs taken':x.free+' ergs free')}">${lab}<small>${x.blk?esc(x.blk.p.name||'Program'):x.past?'—':x.free?x.free+' free':'Full'}</small></button>`}).join('')}</div>
+   ${sel&&me?`<div class="oe-confirm"><div><b>${esc(dayLabel(d,true))}</b>, ${fmtTime(S.oeStart)} – ${fmtTime(toHM(sel.m+S.oeDur))}<div class="tag">${sel.free} erg${sel.free===1?'':'s'} free · you’ll get erg ${oeErgsFree(d,sel.m,sel.m+S.oeDur,me)[0]}</div></div>
+     <input class="f" id="oeNotes" placeholder="Workout (optional), e.g. 3×20′ steady" style="flex:1;min-width:200px"><button class="btn pri" id="oeBook">Book erg</button></div>`:''}
+  </div>
+  <div class="sec"><h4>On ${esc(dayLabel(d))} · ${dayList.length} open erg booking${dayList.length===1?'':'s'}</h4>${dayList.length?`<table class="t"><tbody>${dayList.map(([,o])=>`<tr><td class="num">${o.erg}</td><td><span class="lnk" data-member="${esc(o.memberId)}">${esc(mName(o.memberId))}</span></td><td>${fmtTime(o.start)}–${fmtTime(o.end)}</td><td class="tag">${esc(o.notes||'')}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Nobody booked yet.</div>'}
+   <p class="tag" style="margin:8px 0 0">Erg 18 is kept for Para athletes. Programmed erg sessions always come first.</p></div>`;
+}
+function oeEvent(id,o){const link=`${PORTAL_URL}#openerg`;
+  return {uid:`oe-${id}@vrc-rowing-portal`,title:`Open erg · Erg ${o.erg} · VRC`,details:[`Open erg booking at Vancouver Rowing Club.`,`Erg ${o.erg}`,o.notes?`Workout: ${o.notes}`:'',`Details: ${link}`].filter(Boolean).join('\n'),
+    start:clubInstant(o.date,o.start),end:clubInstant(o.date,o.end),allDay:false,date:o.date,link,seq:0}}
+function oeCalendar(id,justBooked){const o=S.openErg[id];if(!o)return;const e=oeEvent(id,o);
+  openModal(`<h3>${justBooked?'Erg booked ✓':'Add to your calendar'}</h3><div class="calcard"><b>Erg ${o.erg}</b><div class="tag">${dayLabel(o.date,true)} · ${fmtTime(o.start)} – ${fmtTime(o.end)}</div></div>
+   <p class="muted" style="margin:12px 0 8px;font-size:13px">Add it to your calendar – it includes a reminder.</p>${calButtons(e,id)}<div class="mfoot"><button class="btn" id="calDone">Done</button></div>`,()=>{
+    $('#calDone').onclick=closeModal;const ci=$('#calIcs');if(ci)ci.onclick=async()=>{if(await saveIcs([e],`vrc-open-erg-${o.date}.ics`))toast('Calendar file ready')}});
+}
+function bindOpenErg(){
+  const m=$('#main');
+  m.querySelectorAll('[data-oeday]').forEach(el=>el.onclick=()=>{S.oeDate=el.dataset.oeday;S.oeStart=null;render()});
+  {const x=$('#oeDur');if(x)x.onchange=()=>{S.oeDur=+x.value;S.oeStart=null;render()}}
+  m.querySelectorAll('[data-oeslot]').forEach(el=>el.onclick=()=>{S.oeStart=S.oeStart===el.dataset.oeslot?null:el.dataset.oeslot;render()});
+  m.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
+  m.querySelectorAll('[data-oecal]').forEach(el=>el.onclick=()=>oeCalendar(el.dataset.oecal));
+  m.querySelectorAll('[data-oelog]').forEach(el=>el.onclick=()=>{const o=S.openErg[el.dataset.oelog];resultForm(null,{date:o.date,bookingId:'oe_'+el.dataset.oelog,type:'erg',workout:o.notes||'Open erg'})});
+  m.querySelectorAll('[data-oecancel]').forEach(el=>el.onclick=()=>guarded(()=>S.db.doc('openErg/'+el.dataset.oecancel).delete(),'Open erg booking cancelled'));
+  {const b=$('#oeBook');if(b)b.onclick=async()=>{const me=myMemberId(),d=S.oeDate,a=toMin(S.oeStart),e=a+S.oeDur;
+    if(oeBlocked(d,a,e))return toast('That time is now programmed – pick another slot');
+    if(oeOn(d).some(([,o])=>o.memberId===me&&overlaps(a,e,toMin(o.start),toMin(o.end))))return toast('You already have an erg booked then');
+    const free=oeErgsFree(d,a,e,me);if(!free.length)return toast('All ergs are taken for that time');
+    b.disabled=true;let newId=null;
+    const ok=await guarded(async()=>{const r=await S.db.collection('openErg').add({memberId:me,by:S.me,date:d,start:S.oeStart,end:toHM(e),erg:free[0],notes:($('#oeNotes').value||'').trim().slice(0,120),at:nowIso()});newId=r.id},'');
+    b.disabled=false;if(ok){S.oeStart=null;render();setTimeout(()=>oeCalendar(newId,true),300)}}}
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */

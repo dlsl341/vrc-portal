@@ -203,3 +203,15 @@ test('members start a Concept2 sign-in only for themselves, and see only their o
   await assertSucceeds(getDoc(doc(as('carol'), 'c2Links/alice')));
   await assertFails(setDoc(doc(as('alice'), 'c2Links/alice'), { connected: true }));
 });
+
+// ---- open erg
+test('members book open erg time only for themselves; others cannot cancel it', async () => {
+  const oe = { memberId: 'm_alice', by: 'alice', date: '2026-11-20', start: '14:00', end: '15:00', erg: 3 };
+  await assertSucceeds(setDoc(doc(as('alice'), 'openErg/o1'), oe));
+  await assertFails(setDoc(doc(as('alice'), 'openErg/o2'), { ...oe, memberId: 'm_bob' }));
+  await assertFails(setDoc(doc(as('alice'), 'openErg/o3'), { ...oe, erg: 25 }));
+  await assertFails(setDoc(doc(as('stranger'), 'openErg/o4'), { ...oe, by: 'stranger' }));
+  await assertSucceeds(getDoc(doc(as('bob'), 'openErg/o1')));
+  await assertFails(deleteDoc(doc(as('bob'), 'openErg/o1')));
+  await assertSucceeds(deleteDoc(doc(as('alice'), 'openErg/o1')));
+});
