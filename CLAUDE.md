@@ -48,6 +48,10 @@ language, and keep the "propose → preview link → merge" workflow.
   to their calendar (reuses the booking calendar helpers) and can mark it done (also writes a `maintenance`
   log). Admins get "Email crew" (mailto with calendar links).
 
+- **Open erg** (`#openerg`, "+ Open erg" on Programs): members book an erg (30 min – 2 h, 06:00–21:30, up to
+  6 days ahead) in slots with no scheduled erg session; lowest free erg, 18 kept for Para. `openErg`
+  (memberId, by, date, start, end, erg, notes). Calendar invite; "Log result" afterwards (result
+  `bookingId: 'oe_<id>'`); counts in member history as "Open erg". Rules: own bookings only.
 - **Concept2 Logbook** (see `docs/CONCEPT2.md`): "Connect Concept2" on My profile → OAuth (read-only) →
   server function `functions/index.js` (`/c2/*` via Hosting rewrite) imports results as `results/c2_<id>`
   (`source:'concept2'`) and follows webhooks. Tokens in `c2Tokens`/`c2Users` are server-only. Client
@@ -72,6 +76,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
+`openErg` (memberId, by, date, start, end, erg, notes) ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).

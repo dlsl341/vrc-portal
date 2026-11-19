@@ -98,6 +98,16 @@ service cloud.firestore {
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
       allow update, delete: if isAdmin();
     }
+    // ---- open erg: members book an erg for themselves outside programmed erg time ----
+    match /openErg/{id} {
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
+                                      && request.resource.data.memberId == myMemberId()
+                                      && request.resource.data.erg is int
+                                      && request.resource.data.erg >= 1 && request.resource.data.erg <= 18);
+      allow update, delete: if isAdmin() || (isMember() && resource.data.by == uid());
+    }
+
     // ---- Concept2 connection: the server function holds the tokens; browsers can't read them ----
     match /c2States/{state} {        // one-time 'state' for the Concept2 sign-in round trip
       allow create: if signedIn() && request.resource.data.uid == uid()
