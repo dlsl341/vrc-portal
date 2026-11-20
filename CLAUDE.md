@@ -42,8 +42,8 @@ language, and keep the "propose → preview link → merge" workflow.
 
 - **Leaderboard** (`#leaderboard`, linked from Results and the Programs schedule): one or more programs
   (`S.lbProgs` = list of names, or 'all'; chips toggle, "All programs" resets), rank by
-  Kilometres / Time (from `results`, by `program`), Sessions attended (from `attendance`, by the session's
-  program) or Best 2k erg (2.000 km erg results); period + erg/water filters; podium for top 3.
+  Kilometres / Time (from `results`, by `program`), Sessions (every session taken part in, from `allActs()`:
+  past bookings not cancelled/no-show, walk-ins, open erg (counted for the member's own programs), imported history) or Best 2k erg (2.000 km erg results); period + erg/water filters; podium for top 3.
 
 - **Scheduled maintenance** (Maintenance tab, `maintJobs`): admins schedule a boat + task + time + crew.
   The form suggests free slots (07:00–21:00, avoiding every on-water session ±30 min, the boat's bookings

@@ -1968,14 +1968,23 @@ function memberAttendanceHtml(id){
 /* =================== LEADERBOARD (per program) =================== */
 // Ranks members within a program by kilometres, time, sessions attended or best 2k erg.
 Object.assign(S,{lbProgs:null,lbMetric:'km',lbPeriod:'month',lbType:'all'});
-const LB_METRICS=[['km','Kilometres'],['time','Time'],['sessions','Sessions attended'],['best2k','Best 2k erg']];
+const LB_METRICS=[['km','Kilometres'],['time','Time'],['sessions','Sessions'],['best2k','Best 2k erg']];
 function lbRows(progs,metric,period,type){const inP=name=>!progs||progs.includes(name);
   const from=periodStart(period),t=today(),rows={};
   const add=(mid,v,extra)=>{const r=rows[mid]||(rows[mid]={v:0,n:0});if(metric==='best2k'){if(!r.v||v<r.v){r.v=v;r.date=extra}}else r.v+=v;r.n++};
   if(metric==='sessions'){
-    for(const a of Object.values(S.attendance||{})){if(a.date<from||a.date>t)continue;if(!inP(progOf(a.sessionId).name))continue;
-      const s=S.sessions[a.sessionId]||{};if(type!=='all'&&(s.type==='erg'?'erg':'water')!==type)continue;
-      for(const [mid,mk] of Object.entries(a.marks||{}))if(mk!=='absent')add(mid,1)}
+    // Every session a member took part in – the same history as their profile: past bookings (not cancelled,
+    // not marked a no-show), coach-recorded walk-ins, open erg time and the history imported from the old sheet.
+    const nowMin=new Date().getHours()*60+new Date().getMinutes(),seen=new Set();
+    for(const a of allActs()){if(!a.memberId||a.date<from||a.date>t)continue;
+      if(a.sessionId){if(occ(a.sessionId,a.date).cancelled||markOf(a.sessionId,a.date,a.memberId)==='absent')continue;
+        const s=S.sessions[a.sessionId]||{};if(a.date===t&&s.start&&toMin(s.start)>nowMin)continue}
+      const isOE=a.program==='Open erg';
+      if(isOE){if(progs&&!((S.members[a.memberId]||{}).programs||[]).some(n=>progs.includes(n)))continue}
+      else if(!inP(a.program))continue;
+      if(type!=='all'&&(a.type==='erg'?'erg':'water')!==type)continue;
+      const k=a.memberId+'|'+a.date+'|'+(a.sessionId||a.session||'');if(seen.has(k))continue;seen.add(k);
+      add(a.memberId,1);const r=rows[a.memberId];if(isOE)r.oe=(r.oe||0)+1}
   } else {
     for(const r of Object.values(S.results)){if(r.date<from||r.date>t||!inP(r.program)||isCross(r))continue;
       if(metric==='best2k'){if(r.type==='erg'&&Math.abs(kmOf(r)-2)<0.001&&r.timeSec>0)add(r.memberId,r.timeSec,r.date);continue}
@@ -1984,13 +1993,13 @@ function lbRows(progs,metric,period,type){const inP=name=>!progs||progs.includes
   return Object.entries(rows).filter(([mid,r])=>S.members[mid]&&r.v>0).sort((a,b)=>metric==='best2k'?a[1].v-b[1].v:b[1].v-a[1].v);
 }
 const lbVal=(metric,r)=>metric==='km'?`${fmtKm(r.v)} <small>km</small>`:metric==='time'?fmtDur(r.v):metric==='sessions'?`${r.v} <small>session${r.v===1?'':'s'}</small>`:fmtDur(r.v,true);
-const lbSub=(metric,r)=>metric==='best2k'?fmtDate(r.date):metric==='sessions'?'':`${r.n} result${r.n===1?'':'s'}`;
+const lbSub=(metric,r)=>metric==='best2k'?fmtDate(r.date):metric==='sessions'?(r.oe?`incl. ${r.oe} open erg`:''):`${r.n} result${r.n===1?'':'s'}`;
 function viewLeaderboard(){
   const progs=Object.entries(S.programs).filter(([,p])=>p.active!==false).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
   const me=myMemberId();
-  if(S.lbProgs!=='all'){const names=progs.map(([,p])=>p.name);S.lbProgs=(S.lbProgs||[]).filter(n=>names.includes(n));
+  if(S.lbProgs!=='all'&&progs.length){const names=progs.map(([,p])=>p.name);S.lbProgs=(S.lbProgs||[]).filter(n=>names.includes(n));
     if(!S.lbProgs.length){const mine=(S.members[me]||{}).programs||[];const f=(progs.find(([,p])=>mine.includes(p.name))||progs[0]||[,{}])[1].name;S.lbProgs=f?[f]:'all'}}
-  const all=S.lbProgs==='all',sel=all?[]:S.lbProgs;
+  const all=S.lbProgs==='all'||!S.lbProgs,sel=all?[]:S.lbProgs;
   const P=sel.length===1?progs.find(([,p])=>p.name===sel[0]):null;const color=P?P[1].color||'#888':'#d6363c';
   const boardName=all?'All programs':sel.join(' + ');
   const rows=lbRows(all?null:sel,S.lbMetric,S.lbPeriod,S.lbType);
@@ -1998,8 +2007,8 @@ function viewLeaderboard(){
   const pod=rows.slice(0,3),rest=rows.slice(3,25);
   const medal=['🥇','🥈','🥉'];
   const podium=pod.length?`<div class="podium">${[1,0,2].filter(i=>pod[i]).map(i=>{const [mid,r]=pod[i];return `<div class="pod pod-${i+1} ${mid===me?'me':''}" data-member="${esc(mid)}"><div class="pod-m">${medal[i]}</div>${avatar(mid,i===0?64:52)}<div class="pod-n">${esc(mName(mid))}</div><div class="pod-v">${lbVal(S.lbMetric,r)}</div><div class="tag">${lbSub(S.lbMetric,r)}</div><div class="pod-b">${i+1}</div></div>`}).join('')}</div>`:'';
-  const empty=S.lbMetric==='sessions'?'No attendance recorded yet for this program. Coaches record it with “Check in athletes” on each session.':'No results logged yet for this program. Log yours on the Results page.';
-  return `<div class="page-h"><div><a href="#results" class="lnk">‹ Results</a><h2>Leaderboard</h2><p>Who’s putting in the work in each program. Kilometres and time come from logged results; sessions come from coach check-ins.</p></div>
+  const empty=S.lbMetric==='sessions'?'No sessions yet for this selection and period.':'No results logged yet for this program. Log yours on the Results page.';
+  return `<div class="page-h"><div><a href="#results" class="lnk">‹ Results</a><h2>Leaderboard</h2><p>Who’s putting in the work in each program. Kilometres and time come from logged results; sessions count every session you took part in (bookings, open erg and walk-ins – no-shows and cancelled sessions don’t count).</p></div>
     <div class="actions" style="margin:0">${canMember()&&me?`<button class="btn pri" id="lbLog">+ Log a result</button>`:''}</div></div>
   <p class="tag" style="margin:0 0 6px">Tap programs to combine them, or choose All programs.</p>
   <div class="chips lb-progs"><button class="chip ${all?'on':''}" data-lball="1">All programs</button>${progs.map(([,p])=>`<button class="chip ${!all&&sel.includes(p.name)?'on':''}" aria-pressed="${!all&&sel.includes(p.name)}" data-lbprog="${esc(p.name)}" style="--pc:${esc(p.color||'#888')}"><span class="dot" style="background:${esc(p.color||'#888')}"></span>${esc(p.name)}</button>`).join('')}</div>
