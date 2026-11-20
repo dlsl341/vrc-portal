@@ -79,7 +79,15 @@ service cloud.firestore {
     match /boats/{id}       { allow read: if canUse(); allow write: if isAdmin(); }
     match /programs/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
     match /sessions/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
-    match /occurrences/{id} { allow read: if canUse(); allow write: if isAdmin(); }
+    match /occurrences/{id} {
+      allow read: if canUse();
+      allow write: if isAdmin();
+      // coaches may cancel or reinstate a date (only the cancellation fields)
+      function cancelKeys() { return ['sessionId', 'date', 'cancelled', 'reasonCode', 'reason', 'cancelNotes', 'cancelledBy',
+                                      'cancelledAt', 'notify', 'notified', 'notifyReinstate', 'reinstateNotes', 'reinstatedAt', 'updatedAt']; }
+      allow create: if isCoach() && request.resource.data.keys().hasOnly(cancelKeys());
+      allow update: if isCoach() && onlyChanges(cancelKeys());
+    }
     match /activity/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
     match /crews/{id}       { allow read: if canUse(); allow write: if isAdmin(); }
 

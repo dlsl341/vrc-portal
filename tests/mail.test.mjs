@@ -36,3 +36,12 @@ test('SMTP user falls back to the MAIL_FROM address', () => {
   assert.equal(a.auth.user, 'vrc.rowing.portal.1@gmail.com');
   assert.equal(smtpSettings({ SMTP_HOST: 'h', SMTP_PASS: 'p', MAIL_FROM: 'no address' }), null);
 });
+import { cancelEmail, dateLabel } from '../functions/mail.js';
+test('cancellation email: reason code, notes and date', () => {
+  const m = cancelEmail({ title: 'Masters · Sat AM', date: '2026-11-21', start: '09:00', end: '11:45', reasonCode: 'wind', notes: 'Gusts to 40 km/h on False Creek', by: 'Coach Sam' });
+  assert.equal(dateLabel('2026-11-21'), 'Saturday, November 21');
+  assert.match(m.subject, /^Cancelled: Masters · Sat AM – Saturday, November 21 \(Wind\)/);
+  assert.match(m.html, /Gusts to 40/); assert.match(m.html, /9 am–11:45 am/); assert.match(m.html, /Coach Sam/);
+  const r = cancelEmail({ title: 'Masters · Sat AM', date: '2026-11-21', reinstated: true });
+  assert.match(r.subject, /^Back on:/);
+});
