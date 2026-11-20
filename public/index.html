@@ -281,6 +281,22 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .coxbar{background:#eef3fa;border:1px solid #d5e1f1;border-radius:8px;padding:8px 12px;margin:0 0 12px;font-size:13px}.coxbar.need{background:#fdeeee;border-color:#f3c6c8}
 .reasons{display:flex;flex-wrap:wrap;gap:8px}.rsn{position:relative}.rsn input{position:absolute;opacity:0}.rsn span{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer;background:#fff}
 .rsn input:checked+span{border-color:var(--red);background:#fdeeee;color:var(--red-d);font-weight:700}.rsn input:focus-visible+span{outline:2px solid var(--red)}
+.home-h{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:6px 0 16px}.home-h h2{font-size:30px}.home-h p{margin:4px 0 0}
+.home-alerts{display:grid;gap:8px;margin-bottom:14px}.home-alerts .callout{margin:0}
+.stat .dl{font-size:12px;margin-top:6px}.dl .dup{color:#1d6b3a;font-weight:700}.dl .ddn{color:var(--red-d);font-weight:700}
+[hidden]{display:none!important}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media (max-width:900px){.home-grid{grid-template-columns:1fr}}
+.sec h4:has(.chips){display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.sec h4 .chips .chip{font-size:11.5px;padding:4px 10px}
+.sec h4:has(> a.lnk){display:flex;justify-content:space-between;align-items:center}.sec h4 > a.lnk{text-transform:none;letter-spacing:0;font-size:12.5px}
+.chart{position:relative}.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart .cg{stroke:#ecebe8;stroke-width:1}.chart .cx0{stroke:#cfccc7;stroke-width:1}
+.chart .ct{font:11px Inter,sans-serif;fill:#6f6a68}.chart .cth{fill:#231f20;font-weight:700}.chart .cv{font:600 11.5px Inter,sans-serif;fill:#231f20}
+.chart .cb{fill:#d6363c;opacity:.55}.chart .cb.hi{opacity:1}.chart .ccol{cursor:default}.chart .ccol:hover .cb{opacity:1}
+.ctip{position:absolute;pointer-events:none;background:#231f20;color:#fff;font-size:12px;padding:5px 9px;border-radius:6px;white-space:nowrap;z-index:5}
+.home-res{margin-top:10px}
+.up-list{display:grid;gap:8px}.up{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:10px;padding:10px 12px}
+.up:hover{border-color:var(--pc)}.up.cx{opacity:.7}.up-d{display:flex;flex-direction:column;align-items:center;min-width:40px}.up-d b{font-family:'Libre Baskerville',serif;font-size:21px;line-height:1}.up-d span{font-size:11px;color:var(--ink3);text-transform:uppercase}
+.up-b{flex:1;min-width:0}.up-k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -363,11 +379,11 @@ ol.steps li{margin-bottom:8px}
 <body>
 <header>
   <div class="wrap">
-    <a class="brand" href="#programs" aria-label="VRC Rowing – home">
+    <a class="brand" href="#home" aria-label="VRC Rowing – home">
       <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="48" height="48">
       <div class="brand-t"><h1><b>VRC</b> Rowing</h1><small>Club portal</small></div>
     </a>
-    <nav class="topnav" aria-label="Main"><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
+    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
     <div class="mods">
       <span class="role" id="role">Connecting…</span>
       <a href="#me" data-v="me" class="melink">My profile</a>
@@ -378,11 +394,11 @@ ol.steps li{margin-bottom:8px}
 <div class="mnav" id="mnav" aria-hidden="true"><div class="mn-scrim" data-close></div>
   <aside class="mn-panel" aria-label="Menu">
     <div class="mn-top"><img src="img/vrc-logo.png" alt="" width="40" height="40"><div><b>VRC Rowing</b><small id="mnRole"></small></div><button type="button" class="mn-x" data-close aria-label="Close menu">×</button></div>
-    <div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
+    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
     <div class="mn-sec mn-acct"><a href="#me" data-v="me">My profile</a><button type="button" id="mnSignOut">Sign out</button></div>
   </aside>
 </div>
-<nav class="tabbar" aria-label="Quick"><a href="#programs" data-tab="programs"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Programs</span></a><a href="#results" data-tab="results"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Training</span></a><a href="#fleet" data-tab="fleet"><svg viewBox="0 0 24 24"><path d="M2 14c4 3 16 3 20 0M6 14l2-6h8l2 6M12 8V4"/></svg><span>Fleet</span><i class="n nb-issues" hidden></i></a><a href="#members" data-tab="members"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.6c1.8.7 3 2.4 3.5 5.4"/></svg><span>Members</span></a><button type="button" data-menu><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span><i class="n nb-claims" hidden></i></button></nav>
+<nav class="tabbar" aria-label="Quick"><a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5h4v5"/></svg><span>Home</span></a><a href="#programs" data-tab="programs"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Programs</span></a><a href="#results" data-tab="results"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Training</span></a><a href="#fleet" data-tab="fleet"><svg viewBox="0 0 24 24"><path d="M2 14c4 3 16 3 20 0M6 14l2-6h8l2 6M12 8V4"/></svg><span>Fleet</span><i class="n nb-issues" hidden></i></a><button type="button" data-menu><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span><i class="n nb-claims" hidden></i></button></nav>
 
 <main class="wrap" id="main"></main>
 <footer>Vancouver Rowing Club · Club portal</footer>
@@ -503,7 +519,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenu(false);document.querySelectorAll('.topnav .grp.open').forEach(g=>g.classList.remove('open'))}});
 function route(){S.checkin=false;setMenu(false);const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
-  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains'].includes(h)?h:'programs'}
+  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home'].includes(h)?h:'home'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
@@ -512,7 +528,7 @@ function render(){
   const curV=S.view==='manage'||S.view==='import'?'programs':S.view;
   document.querySelectorAll('[data-v]').forEach(a=>a.classList.toggle('on',a.dataset.v===curV));
   document.querySelectorAll('.topnav .grp').forEach(g=>g.classList.toggle('on',!!g.querySelector('a.on')));
-  const TAB={programs:'programs',openerg:'programs',coxswains:'programs',manage:'programs',results:'results',leaderboard:'results',fleet:'fleet',issues:'fleet',maintenance:'fleet',members:'members'};
+  const TAB={home:'home',programs:'programs',openerg:'programs',coxswains:'programs',manage:'programs',results:'results',leaderboard:'results',fleet:'fleet',issues:'fleet',maintenance:'fleet',members:'members'};
   document.querySelectorAll('.tabbar [data-tab]').forEach(a=>a.classList.toggle('on',TAB[S.view]===a.dataset.tab));
   const role=$('#role');
   if(!S.db&&S.error!=='nodb')role.textContent='Connecting…';
@@ -528,8 +544,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='home'?viewHome():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='home')bindHome();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -2375,6 +2391,92 @@ function bindCoxswains(){
     const was=coxAvailFor(S.coxWho,sid,d);let nv=v;if((v==='yes'&&was===true)||(v==='no'&&was===false))nv=cur?null:(v==='yes'&&weekly?'no':null);
     setCoxAvail(S.coxWho,{dates:{[k]:nv}})});
   m.querySelectorAll('[data-cxweek]').forEach(el=>el.onchange=()=>setCoxAvail(S.coxWho,{weekly:{[el.dataset.cxweek]:el.checked}}));
+}
+
+
+/* =================== HOME DASHBOARD (landing page after sign-in) =================== */
+// Rowing km only (cross-training excluded, as on Results). Week starts Monday.
+S.homeTrend='week';
+const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function myRowResults(mid){return Object.values(S.results).filter(r=>r.memberId===mid&&!isCross(r)&&r.date<=today())}
+function sumKm(list,from,to){return list.filter(r=>r.date>=from&&r.date<=to).reduce((t,r)=>({km:t.km+kmOf(r),sec:t.sec+(+r.timeSec||0),n:t.n+1}),{km:0,sec:0,n:0})}
+function deltaTxt(now,prev,unit){const d=now-prev;if(!prev&&!now)return '';if(!prev)return `<span class="dup">new this period</span>`;
+  const pct=Math.round(d/prev*100);return d>=0?`<span class="dup">▲ ${fmtKm(Math.abs(d))} ${unit} (${pct}%)</span>`:`<span class="ddn">▼ ${fmtKm(Math.abs(d))} ${unit} (${Math.abs(pct)}%)</span>`}
+// Simple single-series column chart (SVG). cols:[{label,value,sub,hi}] – hi = highlighted (current period)
+function columnChart(cols,{h=180,unit='km',labelTip=true}={}){
+  const narrow=window.innerWidth<700,W=narrow?360:640,pad={l:30,r:6,t:18,b:26},thin=narrow&&cols.length>8,iw=W-pad.l-pad.r,ih=h-pad.t-pad.b,max=Math.max(1,...cols.map(c=>c.value));
+  const step=[1,2,5,10,20,25,50,100,200,250,500].find(s=>max/s<=4)||Math.ceil(max/4),top=Math.ceil(max/step)*step;
+  const y=v=>pad.t+ih-(v/top)*ih,slot=iw/cols.length,bw=Math.min(24,slot*0.62);
+  const grid=[...Array(Math.round(top/step)+1)].map((_,i)=>{const v=i*step;return `<line x1="${pad.l}" x2="${W-pad.r}" y1="${y(v)}" y2="${y(v)}" class="cg"/><text x="${pad.l-6}" y="${y(v)+3.5}" class="ct" text-anchor="end">${v}</text>`}).join('');
+  const maxV=Math.max(...cols.map(c=>c.value));
+  const bars=cols.map((c,i)=>{const cx=pad.l+slot*i+slot/2,x=cx-bw/2,top_=y(c.value),hgt=Math.max(0,pad.t+ih-top_),r=Math.min(4,hgt);
+    const path=hgt>0?`<path d="M${x},${pad.t+ih}V${top_+r}Q${x},${top_} ${x+r},${top_}H${x+bw-r}Q${x+bw},${top_} ${x+bw},${top_+r}V${pad.t+ih}Z" class="cb ${c.hi?'hi':''}"/>`:'';
+    const lab=labelTip&&c.value>0&&(c.hi||c.value===maxV)?`<text x="${cx}" y="${top_-5}" class="cv" text-anchor="middle">${fmtKm(c.value)}</text>`:'';
+    return `<g class="ccol" data-tip="${esc(c.label+(c.sub?' · '+c.sub:'')+': '+fmtKm(c.value)+' '+unit)}">${path}${lab}<rect x="${pad.l+slot*i}" y="${pad.t}" width="${slot}" height="${ih}" fill="transparent"/>${!thin||c.hi||(cols.length-1-i)%2===0?`<text x="${cx}" y="${h-8}" class="ct ${c.hi?'cth':''}" text-anchor="middle">${esc(c.label)}</text>`:''}</g>`}).join('');
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${h}" role="img" aria-label="${esc(cols.map(c=>c.label+' '+fmtKm(c.value)+' '+unit).join(', '))}">${grid}<line x1="${pad.l}" x2="${W-pad.r}" y1="${pad.t+ih}" y2="${pad.t+ih}" class="cx0"/>${bars}</svg><div class="ctip" hidden></div></div>`;
+}
+function homeUpcoming(mid){
+  const t=today(),items=[];
+  for(const [bid,b] of Object.entries(S.bookings)){if(b.date<t||!bMembers(b).includes(mid))continue;const s=S.sessions[b.sessionId];if(!s)continue;const o=occ(b.sessionId,b.date);
+    const what=s.type==='erg'?(b.erg?`Erg ${b.erg}`:'Erg'):(b.boatId&&S.boats[b.boatId]?`${S.boats[b.boatId].name}${b.rig?' · '+b.rig:''}`:'Boat TBC');
+    items.push({d:b.date,t:s.start||'',title:s.title,sub:(b.cox===mid?'Coxing · ':'')+what,href:`#s-${b.sessionId}-${b.date.replace(/-/g,'')}`,kind:s.type==='erg'?'erg':'water',cancelled:o.cancelled?(o.reason||'Cancelled'):null,color:progOf(b.sessionId).color})}
+  for(const [,o] of Object.entries(S.openErg||{}))if(o.memberId===mid&&o.date>=t)items.push({d:o.date,t:o.start,title:'Open erg',sub:`Erg ${o.erg} · ${fmtTime(o.start)}–${fmtTime(o.end)}`,href:'#openerg',kind:'erg'});
+  for(const [,j] of Object.entries(S.mjobs||{}))if(j.status==='scheduled'&&j.date>=t&&(j.crew||[]).includes(mid))items.push({d:j.date,t:j.start,title:'Maintenance · '+j.task,sub:(S.boats[j.boatId]||{}).name||'',href:'#maintenance',kind:'maint'});
+  return items.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
+}
+function viewHome(){
+  const me=myMemberId(),t=today(),m=S.members[me]||{};
+  const hr=new Date().getHours(),hi=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  const first=(m.firstName||(m.displayName||'').split(' ')[0]||'').trim();
+  const head=`<div class="home-h"><div><h2>${hi}${first?', '+esc(first):''}</h2><p class="muted">${esc(pd(t).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))}</p></div>
+    <div class="actions" style="margin:0"><a class="btn pri" href="#programs">Book a session</a><a class="btn" href="#openerg">Open erg</a>${me&&canMember()?'<button class="btn" id="homeLog">+ Log a result</button>':''}</div></div>`;
+  const admin=canAdmin()?(()=>{const pc=pendingClaims().length,oi=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
+    return pc||oi?`<div class="home-alerts">${pc?`<a class="callout adm-go" href="#admin"><b>${pc} profile request${pc===1?'':'s'}</b> waiting for approval ›</a>`:''}${oi?`<a class="callout adm-go" href="#issues" style="border-left-color:var(--warn)"><b>${oi} open issue${oi===1?'':'s'}</b> on the fleet ›</a>`:''}</div>`:''})():'';
+  if(!me)return head+admin+`<div class="banner"><h3>Your dashboard</h3>Link your member profile to see your training, results and bookings here.${canAdmin()?' As an admin you can still use every page from the menu.':''}</div>`;
+  const R=myRowResults(me),ws=weekStartOf(t),we=addDays(ws,6),pws=addDays(ws,-7),pwe=addDays(ws,-1);
+  const ms=t.slice(0,8)+'01',dom=+t.slice(8),pm=(()=>{const x=pd(ms);x.setMonth(x.getMonth()-1);return x})(),pms=`${pm.getFullYear()}-${pad(pm.getMonth()+1)}-01`,pme=addDays(pms,Math.min(dom,new Date(pm.getFullYear(),pm.getMonth()+1,0).getDate())-1);
+  const wk=sumKm(R,ws,we),pwk=sumKm(R,pws,addDays(pws,(pd(t).getDay()+6)%7)),mo=sumKm(R,ms,t),pmo=sumKm(R,pms,pme);
+  const att=memberAttendance?memberAttendance(me).filter(a=>a.date>=ws&&a.date<=t&&a.mark!=='absent').length:0;
+  const days=DOW.map((l,i)=>{const d=addDays(ws,i);return {label:l,sub:fmtDate(d),value:sumKm(R,d,d).km,hi:d===t}});
+  const trend=S.homeTrend==='month'
+    ?[...Array(12)].map((_,i)=>{const x=pd(ms);x.setMonth(x.getMonth()-11+i);const a=`${x.getFullYear()}-${pad(x.getMonth()+1)}-01`,b=addDays(`${x.getMonth()===11?x.getFullYear()+1:x.getFullYear()}-${pad(x.getMonth()===11?1:x.getMonth()+2)}-01`,-1);
+        return {label:x.toLocaleDateString(undefined,{month:'short'}),sub:String(x.getFullYear()),value:sumKm(R,a,b).km,hi:i===11}})
+    :[...Array(12)].map((_,i)=>{const a=addDays(ws,-7*(11-i)),b=addDays(a,6);return {label:pd(a).toLocaleDateString(undefined,{month:'short',day:'numeric'}),sub:'week of',value:sumKm(R,a,b).km,hi:i===11}});
+  const avg=(()=>{const v=trend.slice(0,11).map(x=>x.value);return v.reduce((a,b)=>a+b,0)/v.length})();
+  const thisWeek=Object.entries(S.results).filter(([,r])=>r.memberId===me&&r.date>=ws&&r.date<=t).sort((a,b)=>b[1].date.localeCompare(a[1].date));
+  const up=homeUpcoming(me),cxl=up.filter(x=>x.cancelled);
+  const tile=(v,l,d)=>`<div class="stat nf"><div class="v">${v}</div><div class="l">${l}</div>${d?`<div class="dl">${d}</div>`:''}</div>`;
+  return head+admin+
+  (cxl.length?`<div class="callout bad" style="margin-bottom:14px"><b>Heads up:</b> ${cxl.map(x=>`<a class="lnk" href="${x.href}">${esc(x.title)} on ${esc(dayLabel(x.d))}</a> is cancelled${x.cancelled&&x.cancelled!=='Cancelled'?' ('+esc(x.cancelled)+')':''}`).join('; ')}.</div>`:'')+
+  `<div class="stats">
+    ${tile(`${fmtKm(wk.km)}<small> km</small>`,'Rowed this week',deltaTxt(wk.km,pwk.km,'km')+(pwk.km||wk.km?' <span class="tag">vs same point last week</span>':''))}
+    ${tile(`${wk.n}`,`Session${wk.n===1?'':'s'} logged this week`,att?`<span class="tag">${att} checked in by a coach</span>`:'')}
+    ${tile(`${fmtKm(mo.km)}<small> km</small>`,'This month',deltaTxt(mo.km,pmo.km,'km')+(pmo.km||mo.km?' <span class="tag">vs last month</span>':''))}
+    ${tile(fmtDur(mo.sec),'Time on the water & erg · this month','')}
+  </div>
+  <div class="home-grid">
+   <div class="sec"><h4><span>This week · rowing km by day</span><a class="lnk" href="#results">All results ›</a></h4>
+     ${wk.km?columnChart(days,{h:170}):`<div class="empty">Nothing logged yet this week. ${canMember()?'Log a result after your next session – or connect Concept2 on My profile.':''}</div>`}
+     ${thisWeek.length?`<div class="home-res">${thisWeek.slice(0,3).map(([id,r])=>resultCard(id,r,true)).join('')}</div>`:''}</div>
+   <div class="sec"><h4><span>Your trend</span><span class="chips"><button class="chip ${S.homeTrend==='week'?'on':''}" data-htrend="week">Weekly</button><button class="chip ${S.homeTrend==='month'?'on':''}" data-htrend="month">Monthly</button></span></h4>
+     ${trend.some(x=>x.value)?columnChart(trend,{h:200}):'<div class="empty">Your trend appears once you’ve logged a few results.</div>'}
+     ${trend.some(x=>x.value)?`<p class="tag" style="margin:6px 0 0">Average ${fmtKm(avg)} km per ${S.homeTrend==='month'?'month':'week'} over the previous 11 · this ${S.homeTrend==='month'?'month':'week'} so far ${fmtKm(trend[11].value)} km. Rowing only – bike/ski not included.</p>`:''}</div>
+  </div>
+  <div class="sec"><h4><span>Coming up</span><a class="lnk" href="#programs">Weekly schedule ›</a></h4>
+   ${up.length?`<div class="up-list">${up.slice(0,8).map(x=>`<a class="up ${x.cancelled?'cx':''}" href="${x.href}" style="--pc:${esc(x.color||'#2a5d9c')}"><div class="up-d"><b>${pd(x.d).getDate()}</b><span>${esc(pd(x.d).toLocaleDateString(undefined,{weekday:'short'}))}</span></div>
+      <div class="up-b"><div><b>${esc(x.title)}</b>${x.cancelled?` <span class="pill s-dnr">Cancelled</span>`:''}</div><div class="tag">${x.t?esc(fmtTime(x.t))+' · ':''}${esc(x.sub)}</div></div><span class="up-k">${x.kind==='erg'?'Erg':x.kind==='maint'?'Maintenance':'On water'}</span></a>`).join('')}${up.length>8?`<p class="tag">+ ${up.length-8} more</p>`:''}</div>`
+     :`<div class="empty">Nothing booked yet. <a class="lnk" href="#programs">Book a session</a> or <a class="lnk" href="#openerg">grab an open erg</a>.</div>`}</div>`;
+}
+function bindHome(){
+  const m=$('#main');
+  m.querySelectorAll('[data-htrend]').forEach(el=>el.onclick=()=>{S.homeTrend=el.dataset.htrend;render()});
+  {const b=$('#homeLog');if(b)b.onclick=()=>resultForm(null)}
+  bindResultButtons(m);
+  m.querySelectorAll('.chart').forEach(ch=>{const tip=ch.querySelector('.ctip');
+    ch.querySelectorAll('.ccol').forEach(g=>{g.addEventListener('mouseenter',e=>{tip.textContent=g.dataset.tip;tip.hidden=false});
+      g.addEventListener('mousemove',e=>{const r=ch.getBoundingClientRect();tip.style.left=Math.min(r.width-160,Math.max(0,e.clientX-r.left+10))+'px';tip.style.top=(e.clientY-r.top-34)+'px'});
+      g.addEventListener('mouseleave',()=>{tip.hidden=true});
+      g.addEventListener('click',()=>{tip.textContent=g.dataset.tip;tip.hidden=false;const b=g.getBoundingClientRect(),r=ch.getBoundingClientRect();tip.style.left=Math.min(r.width-160,Math.max(0,b.left-r.left))+'px';tip.style.top='0px'})})});
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */

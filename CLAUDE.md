@@ -76,6 +76,12 @@ language, and keep the "propose → preview link → merge" workflow.
   notifyReinstate, reinstateNotes/At). Trigger `emailOnCancel` BCCs everyone booked (crew + cox). Coaches may
   only write those fields (rules); "Edit this date" no longer cancels and merges instead of overwriting.
 
+- **Home dashboard** (`#home`, the default page; brand link + first nav/tab item): greeting + quick actions,
+  admin alerts, cancelled-booking heads-up, tiles (rowing km this week vs same point last week, sessions,
+  month vs last month, time), "this week by day" + weekly/monthly 12-period trend (`columnChart`, single
+  series SVG with hover tooltips; rowing only via `kmOf`/`isCross`), and Coming up (bookings incl. cox,
+  open erg, maintenance crews). `[hidden]` is forced to display:none globally.
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
@@ -120,9 +126,9 @@ Private/prefs docs are keyed by **member id** until the member links an account,
   any rules change.
 - UI smoke tests in previous sessions served `public/` and swapped the gstatic Firebase modules for
   in-memory fakes via Playwright request routing – a quick way to exercise flows without a project.
-- **Navigation**: desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
+- **Navigation**: Home first; desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
   Training ▾ Results/Leaderboard · Fleet ▾ Boats/Issues/Maintenance · Members · Admin). ≤1020px: ☰ slide-in
-  menu (`#mnav`); ≤700px also a bottom tab bar. Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
+  menu (`#mnav`); ≤700px also a bottom tab bar (Home, Programs, Training, Fleet, Menu). Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
   `.nb-claims`; `[data-admin]` shows for admins. Add a new page to all three places.
 - Style: VRC red `#ea3c42` (`--red`), near-black `#231f20`, Libre Baskerville headings, Inter body.
 
