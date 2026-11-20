@@ -114,6 +114,10 @@ Private/prefs docs are keyed by **member id** until the member links an account,
   any rules change.
 - UI smoke tests in previous sessions served `public/` and swapped the gstatic Firebase modules for
   in-memory fakes via Playwright request routing – a quick way to exercise flows without a project.
+- **Navigation**: desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
+  Training ▾ Results/Leaderboard · Fleet ▾ Boats/Issues/Maintenance · Members · Admin). ≤1020px: ☰ slide-in
+  menu (`#mnav`); ≤700px also a bottom tab bar. Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
+  `.nb-claims`; `[data-admin]` shows for admins. Add a new page to all three places.
 - Style: VRC red `#ea3c42` (`--red`), near-black `#231f20`, Libre Baskerville headings, Inter body.
 
 ## Open items
