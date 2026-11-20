@@ -29,18 +29,65 @@ a{color:var(--water)}
 .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
 
 /* header */
-header{background:#fff;color:var(--ink);position:sticky;top:0;z-index:20;border-bottom:4px solid var(--red);box-shadow:0 1px 0 rgba(0,0,0,.04)}
-header .wrap{display:flex;align-items:center;gap:20px;height:70px}
-.brand{display:flex;align-items:center;gap:10px}
-.brand h1{font-size:20px;color:var(--ink)}
+header{background:#fff;color:var(--ink);position:sticky;top:0;z-index:30;border-bottom:4px solid var(--red);box-shadow:0 1px 0 rgba(0,0,0,.04)}
+header .wrap{display:flex;align-items:center;gap:18px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
+.brand img{display:block;width:48px;height:48px}
+.brand h1{font-size:19px;color:var(--ink);white-space:nowrap;line-height:1.1}
 .brand h1 b{color:var(--red)}
-.brand small{color:var(--ink3);font-size:12px;display:block;font-family:Inter;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
-nav{display:flex;gap:4px;margin-left:12px}
-nav a{color:var(--ink2);text-decoration:none;padding:8px 12px;font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;border-bottom:3px solid transparent}
-nav a:hover{color:var(--red-d)}
-nav a.on{color:var(--red-d);border-bottom-color:var(--red)}
-nav a .n{background:var(--red);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;margin-left:5px}
-.mods{margin-left:auto;display:flex;gap:6px;align-items:center}
+.brand small{color:var(--ink3);font-size:11px;display:block;font-family:Inter;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.topnav{display:flex;align-items:stretch;gap:2px;height:100%}
+.topnav .grp{position:relative;display:flex}
+.topnav .gbtn,.topnav .solo{display:flex;align-items:center;gap:5px;background:none;border:0;border-bottom:3px solid transparent;color:var(--ink2);text-decoration:none;padding:0 12px;font:600 12.5px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.topnav .gbtn i{font-style:normal;font-size:10px;opacity:.6}
+.topnav .gbtn:hover,.topnav .solo:hover,.topnav .grp:focus-within .gbtn{color:var(--red-d)}
+.topnav .grp.on .gbtn,.topnav .solo.on{color:var(--red-d);border-bottom-color:var(--red)}
+.topnav .dd{display:none;position:absolute;top:100%;left:0;min-width:200px;background:#fff;border:1px solid var(--line);border-top:3px solid var(--red);border-radius:0 0 10px 10px;box-shadow:0 12px 28px rgba(0,0,0,.12);padding:6px;z-index:40}
+.topnav .grp:hover .dd,.topnav .grp.open .dd{display:block}
+.topnav .dd a{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:7px;color:var(--ink);text-decoration:none;font-size:14px;font-weight:500}
+.topnav .dd a:hover{background:var(--paper)}.topnav .dd a.on{color:var(--red-d);font-weight:700;background:#fdeeee}
+.n{background:var(--red);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;font-style:normal;font-weight:700;margin-left:5px;line-height:17px;letter-spacing:0}
+.mods{margin-left:auto;display:flex;gap:8px;align-items:center}
+.menubtn{display:none;position:relative;background:none;border:1px solid var(--line);border-radius:10px;width:44px;height:40px;align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}
+.menubtn svg,.tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.menubtn .n{position:absolute;top:-6px;right:-6px;margin:0}
+/* slide-in menu */
+.mnav{position:fixed;inset:0;z-index:60;visibility:hidden}
+.mnav.on{visibility:visible}
+.mn-scrim{position:absolute;inset:0;background:rgba(20,18,18,.45);opacity:0;transition:opacity .2s}
+.mnav.on .mn-scrim{opacity:1}
+.mn-panel{position:absolute;top:0;right:0;bottom:0;width:min(320px,86vw);background:#fff;transform:translateX(100%);transition:transform .22s ease;overflow-y:auto;padding-bottom:30px;border-left:4px solid var(--red)}
+.mnav.on .mn-panel{transform:none}
+.mn-top{display:flex;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.mn-top small{display:block;color:var(--ink3);font-size:12px}.mn-top div{flex:1}
+.mn-x{background:none;border:0;font-size:28px;line-height:1;cursor:pointer;color:var(--ink2);padding:4px 8px}
+.mn-sec{padding:10px 8px;border-bottom:1px solid var(--line)}
+.mn-h{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:4px 10px 6px}
+.mn-sec a,.mn-sec button{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font:500 15.5px Inter,sans-serif;background:none;border:0;cursor:pointer;text-align:left}
+.mn-sec a.on{background:#fdeeee;color:var(--red-d);font-weight:700}
+.mn-acct button{color:var(--ink2)}
+/* bottom tab bar (phones) */
+.tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:35;background:#fff;border-top:1px solid var(--line);box-shadow:0 -2px 10px rgba(0,0,0,.05);padding:4px 4px calc(4px + env(safe-area-inset-bottom))}
+.tabbar a,.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;color:var(--ink3);text-decoration:none;background:none;border:0;font:600 10.5px Inter,sans-serif;letter-spacing:.02em;position:relative;cursor:pointer}
+.tabbar a.on{color:var(--red-d)}
+.tabbar a.on svg{stroke-width:2.3}
+.tabbar .n{position:absolute;top:0;left:calc(50% + 6px);margin:0;font-size:10px;line-height:15px;padding:0 5px}
+@media (max-width:1180px){.role{display:none}}
+@media (max-width:1020px){
+  .topnav,.mods .melink,#signOut{display:none}
+  .menubtn{display:inline-flex}
+}
+@media (max-width:700px){
+  .tabbar{display:flex}
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  header .wrap{height:56px;padding:0 12px}
+  .brand img{width:40px;height:40px}.brand h1{font-size:17px}.brand small{font-size:10px}
+  .toast{bottom:84px}
+  footer{margin-bottom:0}
+}
+html,body{max-width:100%;overflow-x:hidden}
+.oe-days{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;max-width:100%}.oe-days::-webkit-scrollbar{display:none}.oe-days .chip{flex:none}
+body.guest .topnav,body.guest .menubtn,body.guest .tabbar,body.guest .mods .role{display:none}
 .mod-soon{font-size:11.5px;color:var(--ink3);border:1px dashed #c9ced6;text-transform:uppercase;letter-spacing:.06em;padding:4px 9px;border-radius:7px}
 .role{font-size:12px;background:var(--water-l);color:var(--ink2);padding:5px 10px;border-radius:20px;white-space:nowrap}
 .role b{color:var(--ink)}
@@ -165,17 +212,9 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 @media (max-width:860px){
   .stats{grid-template-columns:repeat(3,1fr)}
   .mod-soon{display:none}
-  nav{margin-left:0}
 }
 @media (max-width:560px){
   .stats{grid-template-columns:repeat(2,1fr)}
-  .brand h1{display:none}
-  nav a{padding:6px 7px;font-size:11.5px;letter-spacing:.04em}
-  .brand img{width:44px;height:44px}
-  .brand small{display:none}
-  header .wrap{gap:8px;padding:0 12px}
-  nav a{padding:6px 8px}
-  .role{display:none}
   .fg{grid-template-columns:1fr}
   .t .hide-s{display:none}
 }
@@ -248,10 +287,7 @@ a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:
 .melink{color:var(--ink);text-decoration:none;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;padding:6px 12px;border:1px solid var(--line);border-radius:20px;white-space:nowrap}
 .melink:hover,.melink.on{border-color:var(--red);color:var(--red-d)}
 @media (max-width:560px){
-  header nav{overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
-  header nav::-webkit-scrollbar{display:none}
   .tiles{grid-template-columns:repeat(2,1fr)}
-  .melink{padding:5px 8px;font-size:10.5px}
 }
 
 /* programs */
@@ -319,32 +355,32 @@ tr.inact td{opacity:.55}
 .sec.admins h4{display:flex;justify-content:space-between;align-items:center}
 ol.steps{margin:4px 0 0;padding-left:20px;font-size:13.5px;line-height:1.5}
 ol.steps li{margin-bottom:8px}
-body.guest header nav,body.guest .mods .role{display:none}
+
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
-    <div class="brand">
-      <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="56" height="56" style="display:block">
-      <div><h1><b>VRC</b> Rowing</h1><small>Club portal</small></div>
-    </div>
-    <nav>
-      <a href="#programs" data-v="programs">Programs</a>
-      <a href="#results" data-v="results">Results</a>
-      <a href="#fleet" data-v="fleet">Fleet</a>
-      <a href="#members" data-v="members">Members</a>
-      <a href="#coxswains" data-v="coxswains">Coxswains</a>
-      <a href="#issues" data-v="issues">Issues<span class="n" id="navIssues" hidden></span></a>
-      <a href="#maintenance" data-v="maintenance">Maintenance</a>
-      <a href="#admin" data-v="admin" id="navAdmin" hidden>Admin<span class="n" id="navClaims" hidden></span></a>
-    </nav>
+    <a class="brand" href="#programs" aria-label="VRC Rowing – home">
+      <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="48" height="48">
+      <div class="brand-t"><h1><b>VRC</b> Rowing</h1><small>Club portal</small></div>
+    </a>
+    <nav class="topnav" aria-label="Main"><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
     <div class="mods">
       <span class="role" id="role">Connecting…</span>
       <a href="#me" data-v="me" class="melink">My profile</a>
+      <button type="button" class="menubtn" data-menu aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="n nb-claims" hidden></span></button>
     </div>
   </div>
 </header>
+<div class="mnav" id="mnav" aria-hidden="true"><div class="mn-scrim" data-close></div>
+  <aside class="mn-panel" aria-label="Menu">
+    <div class="mn-top"><img src="img/vrc-logo.png" alt="" width="40" height="40"><div><b>VRC Rowing</b><small id="mnRole"></small></div><button type="button" class="mn-x" data-close aria-label="Close menu">×</button></div>
+    <div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
+    <div class="mn-sec mn-acct"><a href="#me" data-v="me">My profile</a><button type="button" id="mnSignOut">Sign out</button></div>
+  </aside>
+</div>
+<nav class="tabbar" aria-label="Quick"><a href="#programs" data-tab="programs"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Programs</span></a><a href="#results" data-tab="results"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Training</span></a><a href="#fleet" data-tab="fleet"><svg viewBox="0 0 24 24"><path d="M2 14c4 3 16 3 20 0M6 14l2-6h8l2 6M12 8V4"/></svg><span>Fleet</span><i class="n nb-issues" hidden></i></a><a href="#members" data-tab="members"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.6c1.8.7 3 2.4 3.5 5.4"/></svg><span>Members</span></a><button type="button" data-menu><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span><i class="n nb-claims" hidden></i></button></nav>
 
 <main class="wrap" id="main"></main>
 <footer>Vancouver Rowing Club · Club portal</footer>
@@ -452,7 +488,18 @@ async function guarded(fn,okMsg){
 function logEvent(boatId,kind,text){return S.db.collection('events').add({boatId,kind,text,by:S.me||null,at:nowIso()})}
 
 /* ---------- routing ---------- */
-function route(){S.checkin=false;const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
+function setMenu(on){const m=$('#mnav');if(!m)return;m.classList.toggle('on',on);m.setAttribute('aria-hidden',on?'false':'true');document.body.style.overflow=on?'hidden':''}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-menu]')){setMenu(!$('#mnav').classList.contains('on'));return}
+  if(e.target.closest('#mnav [data-close]')||e.target.closest('#mnav a')){setMenu(false)}
+  if(e.target.closest('#mnSignOut')){const so=$('#signOut');if(so)so.click()}
+  const gb=e.target.closest('.topnav .gbtn');
+  document.querySelectorAll('.topnav .grp.open').forEach(g=>{if(!gb||g!==gb.parentElement){g.classList.remove('open');g.querySelector('.gbtn').setAttribute('aria-expanded','false')}});
+  if(gb){const g=gb.parentElement;const o=!g.classList.contains('open');g.classList.toggle('open',o);gb.setAttribute('aria-expanded',o?'true':'false')}
+  if(e.target.closest('.topnav .dd a'))document.querySelectorAll('.topnav .grp.open').forEach(g=>g.classList.remove('open'));
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenu(false);document.querySelectorAll('.topnav .grp.open').forEach(g=>g.classList.remove('open'))}});
+function route(){S.checkin=false;setMenu(false);const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
   else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains'].includes(h)?h:'programs'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
@@ -460,13 +507,18 @@ window.addEventListener('hashchange',route);
 
 /* ---------- render ---------- */
 function render(){
-  document.querySelectorAll('nav a,a.melink').forEach(a=>a.classList.toggle('on',a.dataset.v===(S.view==='manage'?'programs':S.view==='leaderboard'?'results':S.view==='openerg'?'programs':S.view)));
+  const curV=S.view==='manage'||S.view==='import'?'programs':S.view;
+  document.querySelectorAll('[data-v]').forEach(a=>a.classList.toggle('on',a.dataset.v===curV));
+  document.querySelectorAll('.topnav .grp').forEach(g=>g.classList.toggle('on',!!g.querySelector('a.on')));
+  const TAB={programs:'programs',openerg:'programs',coxswains:'programs',manage:'programs',results:'results',leaderboard:'results',fleet:'fleet',issues:'fleet',maintenance:'fleet',members:'members'};
+  document.querySelectorAll('.tabbar [data-tab]').forEach(a=>a.classList.toggle('on',TAB[S.view]===a.dataset.tab));
   const role=$('#role');
   if(!S.db&&S.error!=='nodb')role.textContent='Connecting…';
   else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
   const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
-  const ni=$('#navIssues');ni.hidden=!openIss;ni.textContent=openIss;
-  {const na=$('#navAdmin'),nc=$('#navClaims'),pc=pendingClaims().length;na.hidden=!S.isAdmin;nc.hidden=!pc;nc.textContent=pc}
+  document.querySelectorAll('.nb-issues').forEach(x=>{x.hidden=!openIss;x.textContent=openIss});
+  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
+  {const mr=$('#mnRole');if(mr)mr.textContent=$('#role').textContent}
   const m=$('#main');
   if(S.error==='nodb'){m.innerHTML=`<div class="banner"><h3>Club data isn't available</h3>Please sign in again to see the fleet and members.</div>`;return}
   if(S.error==='revoked'){m.innerHTML=`<div class="banner"><h3>Access has changed</h3>This page can no longer load fleet data.</div>`;return}
