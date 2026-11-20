@@ -40,7 +40,8 @@ language, and keep the "propose → preview link → merge" workflow.
   `{sessionId, date, marks{memberId: present|late|absent}}`. Shown as ✓/⏱/✗ on the sheet and as an
   Attendance section + badges on member profiles; walk-ins count as sessions.
 
-- **Leaderboard** (`#leaderboard`, linked from Results and the Programs schedule): per program, rank by
+- **Leaderboard** (`#leaderboard`, linked from Results and the Programs schedule): one or more programs
+  (`S.lbProgs` = list of names, or 'all'; chips toggle, "All programs" resets), rank by
   Kilometres / Time (from `results`, by `program`), Sessions attended (from `attendance`, by the session's
   program) or Best 2k erg (2.000 km erg results); period + erg/water filters; podium for top 3.
 
