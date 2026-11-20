@@ -236,6 +236,10 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .oe-slot.on{border-color:var(--red);background:#fdeeee;box-shadow:0 0 0 2px var(--red) inset}
 .oe-confirm{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .tl-oe{background:#2a5d9c;opacity:.75;top:16px;text-align:center}.oe-mine{border-left:4px solid var(--red)}.oe-mine .item{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.cx-day{border-top:1px solid var(--line);padding:8px 0}.cx-dl{font-weight:700;font-size:13px;margin-bottom:4px}
+.cx-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:4px 0}.cx-s{flex:1;min-width:220px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cx-wk{font-size:12.5px;display:flex;gap:4px;align-items:center}.cx-need{border-left:4px solid var(--red)}.cx-t tr.need td{background:#fdeeee}
+.coxbar{background:#eef3fa;border:1px solid #d5e1f1;border-radius:8px;padding:8px 12px;margin:0 0 12px;font-size:13px}.coxbar.need{background:#fdeeee;border-color:#f3c6c8}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -330,6 +334,7 @@ body.guest header nav,body.guest .mods .role{display:none}
       <a href="#results" data-v="results">Results</a>
       <a href="#fleet" data-v="fleet">Fleet</a>
       <a href="#members" data-v="members">Members</a>
+      <a href="#coxswains" data-v="coxswains">Coxswains</a>
       <a href="#issues" data-v="issues">Issues<span class="n" id="navIssues" hidden></span></a>
       <a href="#maintenance" data-v="maintenance">Maintenance</a>
       <a href="#admin" data-v="admin" id="navAdmin" hidden>Admin<span class="n" id="navClaims" hidden></span></a>
@@ -423,7 +428,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -449,7 +454,7 @@ function logEvent(boatId,kind,text){return S.db.collection('events').add({boatId
 /* ---------- routing ---------- */
 function route(){S.checkin=false;const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
-  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg'].includes(h)?h:'programs'}
+  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains'].includes(h)?h:'programs'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
@@ -469,8 +474,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -851,6 +856,7 @@ function memberDetail(id,inPage){
      ${canAdmin()&&m.linkedUser?`<dt>Sign-in account</dt><dd>${esc((S.profiles[m.linkedUser]&&S.profiles[m.linkedUser].name)||'Linked')}</dd>`:''}
    </dl></div>`:''}
    ${memberAttendanceHtml(id)}
+   ${coxProfileHtml(id,self)}
    ${self?c2Html():''}
    ${memberResultsHtml(id)}
    <div class="sec"><h4>Sessions</h4>${acts.length?acts.map(([a,up])=>`<div class="item act"><div><b>${fmtDate(a.date)}</b> ${up?'<span class="pill s-dnr" style="background:#ece8f6;color:#5b4b96">Booked</span>':''}${a.sessionId?(mk=>mk?`<span class="pill att-${mk}">${MARKS[mk][0]} ${MARKS[mk][1]}</span>`:'')(markOf(a.sessionId,a.date,id)):''}${a.walkIn?' <span class="tag">walk-in</span>':''}<div class="when">${a.sessionId?`<span class="lnk" data-gosess="${esc(a.sessionId)}|${a.date}">${esc(a.session)}</span>`:esc(a.session||a.program||'')}</div></div><div>${a.boatId&&S.boats[a.boatId]?`<span class="bchip" data-boat="${esc(a.boatId)}">${esc(a.rig||S.boats[a.boatId].currentRig||'')} ${esc(S.boats[a.boatId].name)}</span>`:a.type==='erg'?'<span class="tag">Erg</span>':esc(a.boatText||'')}</div></div>`).join(''):'<div class="empty">No sessions recorded yet.</div>'}</div>
@@ -863,6 +869,8 @@ function bindMemberDetail(root,id){
   root.querySelectorAll('[data-boat]').forEach(el=>el.onclick=e=>{e.stopPropagation();openBoat(el.dataset.boat)});
   root.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
   bindResultButtons(root);bindC2(root);
+  root.querySelectorAll('[data-cxedit]').forEach(el=>el.onclick=e=>{e.stopPropagation();S.coxWho=el.dataset.cxedit;if(S.openM)closeBoat();location.hash='coxswains'});
+  {const o=root.querySelector('#cxOffer');if(o)o.onchange=e=>{e.stopPropagation();const me=myMemberId();if(me)setCoxAvail(me,{offered:o.checked}).then(()=>toast(o.checked?'You’re listed as a coxswain':'Removed from the coxswain list'))}}
   root.querySelectorAll('[data-reslog]').forEach(el=>el.onclick=e=>{e.stopPropagation();resultForm(null)});
   root.querySelectorAll('[data-resall]').forEach(el=>el.onclick=e=>{e.stopPropagation();S.resAll=S.resAll===id?null:id;render()});
   root.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{const a=el.dataset.act;
@@ -1236,6 +1244,7 @@ function viewSession(){
     <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Reserve':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canCheckIn()&&!o.cancelled&&d<=today()&&!S.checkin?`<button class="btn pri" id="ciOpen">✓ Check in athletes</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
   </div>
   ${notice}
+  ${coxSessionHtml(id,d)}
   ${S.checkin&&canCheckIn()?checkinPanel(id,d):(()=>{const a=attSummary(id,d);return a?`<p class="tag att-sum">Attendance: <b>${a.present}</b> present · <b>${a.late}</b> late · <b>${a.absent}</b> no-show</p>`:''})()}
   <div class="${erg?'':'sgrid'}">
    <div>${ergLegend}${bk.length||(erg&&eg.length&&cap)?`<table class="t sheet"><thead><tr><th>${erg?'Erg':'#'}</th><th>${erg?'Rower':'Crew'}</th>${erg?'<th class="hide-s">Notes</th>':'<th>Boat</th><th class="hide-s">Crew mix / notes</th>'}<th></th></tr></thead><tbody>${erg?ergRows:rows}</tbody></table>`:`<div class="banner">${o.cancelled?'No sign-ups.':'No one has signed up yet.'}</div>`}
@@ -1301,7 +1310,7 @@ function bookingForm(sid,d,bid,preBoat){
     let crew=b?[...(b.crew||[])]:[meBusy?'':(me||'')],cox=b?b.cox||'':'';
     const readSeats=()=>{crew=[...seatsEl.querySelectorAll('select[data-seat]')].map(x=>x.value);const c=seatsEl.querySelector('select[data-cox]');cox=c?c.value:cox};
     const drawSeats=()=>{const rig=rigEl.value||'1x';const {rowers,cox:hasCox}=seatsFor(boatEl.value?rig:'1x');
-      seatsEl.innerHTML=Array.from({length:rowers},(_,i)=>`<div class="fld"><label>${rowers===1?'Sculler':i===0?'Bow (1)':i===rowers-1?`Stroke (${i+1})`:`Seat ${i+1}`}</label><select data-seat="${i}">${memberOpts(sid,d,crew[i]||'',bid)}</select></div>`).join('')+(hasCox?`<div class="fld"><label>Cox</label><select data-cox="1">${memberOpts(sid,d,cox,bid)}</select></div>`:'');
+      seatsEl.innerHTML=Array.from({length:rowers},(_,i)=>`<div class="fld"><label>${rowers===1?'Sculler':i===0?'Bow (1)':i===rowers-1?`Stroke (${i+1})`:`Seat ${i+1}`}</label><select data-seat="${i}">${memberOpts(sid,d,crew[i]||'',bid)}</select></div>`).join('')+(hasCox?`<div class="fld"><label>Cox</label><select data-cox="1">${coxOpts(sid,d,cox,bid)}</select><div class="hint">${(c=>c.length?`✓ Available: ${c.map(([,m])=>esc(m.displayName)).join(', ')}`:'No coxswain has marked this session available yet')(coxCoverage(sid,d).avail.filter(([x])=>x!==cox))}</div></div>`:'');
       seatsEl.querySelectorAll('select').forEach(x=>x.onchange=readSeats)};
     const drawRig=()=>{const o=S.boats[boatEl.value];const keep=rigEl.value||(b&&b.boatId===boatEl.value?b.rig:'');
       rigEl.innerHTML=o?(o.rigs||[]).map(r=>`<option ${r===(keep||o.currentRig)?'selected':''}>${esc(r)}</option>`).join(''):'<option value="">—</option>';rigEl.disabled=!o;hint()};
@@ -2197,6 +2206,101 @@ function bindOpenErg(){
     b.disabled=true;let newId=null;
     const ok=await guarded(async()=>{const r=await S.db.collection('openErg').add({memberId:me,by:S.me,date:d,start:S.oeStart,end:toHM(e),erg:free[0],notes:($('#oeNotes').value||'').trim().slice(0,120),at:nowIso()});newId=r.id},'');
     b.disabled=false;if(ok){S.oeStart=null;render();setTimeout(()=>oeCalendar(newId,true),300)}}}
+}
+
+
+/* =================== COXSWAINS (availability + coverage) =================== */
+// coxAvail/{memberId}: weekly {sessionId: true} ("usually available"), dates {"<sid>_<YYYYMMDD>": "yes"|"no"}
+// (a date overrides the weekly default), note, updatedAt. Coxswains = members with the Cox role.
+// Coxswains edit their own; admins can edit anyone's. The booking form lists available coxswains first.
+S.coxAvail={};S.coxWho=null;S.coxDays=14;
+const COX_DAYS=14;
+const isCoxMember=id=>{const m=S.members[id];return !!m&&m.status!=='inactive'&&((m.roles||[]).includes('cox')||!!(S.coxAvail[id]||{}).offered)};
+const coxList=()=>Object.entries(S.members).filter(([id])=>isCoxMember(id)).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+const dKey=(sid,d)=>sid+'_'+d.replace(/-/g,'');
+// true = available, false = not available, null = hasn't said
+function coxAvailFor(mid,sid,d){const a=S.coxAvail[mid];if(!a)return null;const o=(a.dates||{})[dKey(sid,d)];
+  if(o==='yes')return true;if(o==='no')return false;return (a.weekly||{})[sid]?true:null}
+function waterSessionsDay(d){const wd=(pd(d).getDay()+6)%7;
+  return Object.entries(S.sessions).filter(([sid,s])=>s.active!==false&&s.type!=='erg'&&+s.weekday===wd&&!occ(sid,d).cancelled)
+    .sort((a,b)=>String(a[1].start||'').localeCompare(String(b[1].start||'')))}
+function coxBusy(sid,d){const busy=new Set();sessBookings(sid,d).forEach(([,b])=>bMembers(b).forEach(x=>busy.add(x)));return busy}
+function coxCoverage(sid,d){const bk=sessBookings(sid,d).filter(([,b])=>b.boatId&&seatsFor(b.rig||'1x').cox);
+  const need=bk.filter(([,b])=>!b.cox);const busy=coxBusy(sid,d);
+  const avail=coxList().filter(([id])=>coxAvailFor(id,sid,d)===true&&!busy.has(id));
+  return {coxed:bk.length,need:need.length,needBids:need.map(([x])=>x),avail}}
+// <option>s for the booking form's cox seat: available coxswains first
+function coxOpts(sid,d,sel,exclBid){
+  const busy=new Set();sessBookings(sid,d).forEach(([bid,b])=>{if(bid!==exclBid)bMembers(b).forEach(x=>busy.add(x))});
+  const cx=coxList(),grp={yes:[],unk:[],no:[]};cx.forEach(e=>{const v=coxAvailFor(e[0],sid,d);grp[v===true?'yes':v===false?'no':'unk'].push(e)});
+  const others=Object.entries(S.members).filter(([x,m])=>m.status!=='inactive'&&!isCoxMember(x)).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  const o=([x,m],tag)=>{const b=busy.has(x)&&x!==sel;return `<option value="${esc(x)}" ${x===sel?'selected':''} ${b?'disabled':''}>${esc(m.displayName)}${b?' (already booked)':tag?' '+tag:''}</option>`};
+  return `<option value="">— No cox yet —</option>`+
+    (grp.yes.length?`<optgroup label="✓ Available coxswains">${grp.yes.map(e=>o(e)).join('')}</optgroup>`:'<optgroup label="No coxswain has marked this session available"></optgroup>')+
+    (grp.unk.length?`<optgroup label="Coxswains – haven’t said">${grp.unk.map(e=>o(e)).join('')}</optgroup>`:'')+
+    (grp.no.length?`<optgroup label="Coxswains – not available">${grp.no.map(e=>o(e,'(not available)')).join('')}</optgroup>`:'')+
+    `<optgroup label="Other members">${others.map(e=>o(e)).join('')}</optgroup>`;
+}
+function coxSessionHtml(sid,d){const s=S.sessions[sid]||{};if(s.type==='erg')return '';const c=coxCoverage(sid,d);if(!c.coxed&&!c.avail.length)return '';
+  return `<div class="coxbar ${c.need?'need':''}"><b>Coxswains</b> · ${c.need?`<span class="pill s-repair">${c.need} boat${c.need===1?'':'s'} need a cox</span> `:''}${c.avail.length?`available: ${c.avail.map(([id,m])=>`<span class="lnk" data-member="${esc(id)}">${esc(m.displayName)}</span>`).join(', ')}`:'<span class="tag">no coxswain has marked this session available yet</span>'} <a class="lnk" href="#coxswains" style="margin-left:6px">Cox availability ›</a></div>`}
+
+function coxProfileHtml(id,self){
+  const m=S.members[id]||{},role=(m.roles||[]).includes('cox'),a=S.coxAvail[id]||{},isCx=isCoxMember(id);
+  if(!isCx&&!self)return '';
+  const t=today(),up=[];for(let i=0;i<COX_DAYS&&up.length<6;i++){const d=addDays(t,i);waterSessionsDay(d).forEach(([sid,s])=>{if(coxAvailFor(id,sid,d)===true)up.push({d,sid,s})})}
+  const weekly=Object.keys(a.weekly||{}).filter(sid=>S.sessions[sid]).map(sid=>S.sessions[sid].title||sid);
+  const coxing=Object.entries(S.bookings).filter(([,b])=>b.cox===id&&b.date>=t).length;
+  return `<div class="sec"><h4><span>Coxswain</span>${isCx?'<span class="pill s-available">Coxes</span>':''}</h4>
+   ${self&&!role?`<label class="tog" style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="checkbox" id="cxOffer" ${a.offered?'checked':''}> I can cox – show me to crews booking coxed boats</label>`:''}
+   ${isCx?`${weekly.length?`<p class="tag" style="margin:0 0 6px">Usually available: <b>${esc(weekly.join(', '))}</b></p>`:''}
+     <p class="tag" style="margin:0 0 6px">${up.length?'Next available: '+up.map(x=>`<a class="lnk" href="#s-${esc(x.sid)}-${x.d.replace(/-/g,'')}">${esc(dayLabel(x.d))} · ${esc(x.s.title)}</a>`).join(' · '):'No availability marked for the next 2 weeks.'}${coxing?` · Coxing <b>${coxing}</b> upcoming boat${coxing===1?'':'s'}`:''}</p>
+     ${self||canAdmin()?`<button class="btn sm pri" data-cxedit="${esc(id)}">${self?'Set my availability':'Edit availability'}</button>`:''}`:''}</div>`;
+}
+function viewCoxswains(){
+  const me=myMemberId(),t=today(),cx=coxList(),iAmCox=!!me&&isCoxMember(me);
+  if(!S.coxWho||!isCoxMember(S.coxWho))S.coxWho=iAmCox?me:(canAdmin()&&cx[0]?cx[0][0]:null);
+  const who=S.coxWho,canEditWho=!!who&&(canAdmin()||(canMember()&&who===me));
+  const days=[...Array(COX_DAYS)].map((_,i)=>addDays(t,i));
+  const rowsFor=d=>waterSessionsDay(d);
+  // coverage
+  const cov=[];days.forEach(d=>rowsFor(d).forEach(([sid,s])=>{const c=coxCoverage(sid,d);cov.push({d,sid,s,c})}));
+  const short=cov.filter(x=>x.c.need>0);
+  const a=who?S.coxAvail[who]||{}:{};
+  const myGrid=who?days.map(d=>{const r=rowsFor(d);if(!r.length)return '';return `<div class="cx-day"><div class="cx-dl">${esc(dayLabel(d))}</div>${r.map(([sid,s])=>{
+      const v=coxAvailFor(who,sid,d),weekly=!!(a.weekly||{})[sid],p=progOf(sid),booked=sessBookings(sid,d).some(([,b])=>b.cox===who);
+      return `<div class="cx-row"><span class="cx-s"><span class="dot" style="background:${esc(p.color||'#888')}"></span>${esc(s.title||p.name)} <span class="tag">${esc(timeRange(s))}</span>${booked?' <span class="pill s-available">Coxing</span>':''}</span>
+        ${canEditWho?`<span class="ci-seg"><button class="${v===true?'on ci-present':''}" data-cxset="${esc(sid)}|${d}|yes">✓ Available</button><button class="${v===false?'on ci-absent':''}" data-cxset="${esc(sid)}|${d}|no">✗ Not available</button></span>
+        <label class="tog cx-wk"><input type="checkbox" data-cxweek="${esc(sid)}" ${weekly?'checked':''}> Every week</label>`:`<span class="tag">${v===true?'✓ Available':v===false?'✗ Not available':'—'}</span>`}</div>`}).join('')}</div>`}).join(''):'';
+  return `<div class="page-h"><div><h2>Coxswains</h2><p>Coxswains mark which sessions they can cox. Crews booking a coxed boat see who’s available, and everyone can see where a cox is still needed.</p></div></div>
+  <div class="stats">
+    <div class="stat nf"><div class="v">${cx.length}</div><div class="l"><span class="dot" style="background:var(--navy)"></span>Coxswains</div></div>
+    <div class="stat nf"><div class="v">${short.reduce((n,x)=>n+x.c.need,0)}</div><div class="l"><span class="dot" style="background:var(--red)"></span>Boats needing a cox · next 2 weeks</div></div>
+    <div class="stat nf"><div class="v">${cov.filter(x=>x.c.avail.length).length}</div><div class="l"><span class="dot" style="background:var(--ok)"></span>Sessions with a cox available</div></div>
+  </div>
+  ${short.length?`<div class="sec cx-need"><h4>Needs a cox</h4>${short.map(x=>`<div class="item"><div><a class="lnk" href="#s-${esc(x.sid)}-${x.d.replace(/-/g,'')}"><b>${esc(dayLabel(x.d))}</b> · ${esc(x.s.title)} · ${esc(timeRange(x.s))}</a> – <b>${x.c.need}</b> boat${x.c.need===1?'':'s'} without a cox</div>
+      <div class="tag">${x.c.avail.length?'Available: '+x.c.avail.map(([,m])=>esc(m.displayName)).join(', '):'No coxswain has marked this session available'}</div></div>`).join('')}</div>`:''}
+  <div class="sec"><h4><span>${who?(who===me?'My availability':esc(mName(who))+'’s availability'):'Availability'} · next 2 weeks</span>
+    ${canAdmin()&&cx.length?`<select class="f" id="cxWho">${cx.map(([id,m])=>`<option value="${esc(id)}" ${id===who?'selected':''}>${esc(m.displayName)}</option>`).join('')}</select>`:''}</h4>
+   ${!cx.length?`<div class="empty">No coxswains yet. Members tick <b>I can cox</b> on My profile, or an admin adds the Cox role (member profile → Edit member → Roles).</div>`
+    :!who?`<div class="empty">This is where coxswains mark their availability. Are you a coxswain? Open <a class="lnk" href="#me">My profile</a> and tick <b>I can cox</b> (or ask an admin to add the Cox role).</div>`
+    :`<p class="tag" style="margin:0 0 8px">Tap ✓ or ✗ for each session. “Every week” marks you usually available for that session; a ✗ on a single date overrides it. Changes save straight away.</p>${myGrid||'<div class="empty">No on-water sessions in the next 2 weeks.</div>'}`}
+  </div>
+  <div class="sec"><h4>Who’s available · next 2 weeks</h4>${cov.length?`<table class="t cx-t"><thead><tr><th>Session</th><th>Coxed boats</th><th>Available coxswains</th></tr></thead><tbody>${cov.map(x=>`<tr class="${x.c.need?'need':''}"><td><a class="lnk" href="#s-${esc(x.sid)}-${x.d.replace(/-/g,'')}">${esc(dayLabel(x.d))} · ${esc(x.s.title)}</a></td><td>${x.c.coxed?`${x.c.coxed-x.c.need}/${x.c.coxed} coxed`:'—'}</td><td>${x.c.avail.length?x.c.avail.map(([id,m])=>`<span class="lnk" data-member="${esc(id)}">${esc(m.displayName)}</span>`).join(', '):'<span class="tag">none yet</span>'}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No on-water sessions in the next 2 weeks.</div>'}</div>`;
+}
+async function setCoxAvail(who,patch){const cur=S.coxAvail[who]||{};
+  const next={offered:patch.offered!=null?patch.offered:!!cur.offered,weekly:{...(cur.weekly||{}),...(patch.weekly||{})},dates:{...(cur.dates||{}),...(patch.dates||{})},updatedAt:nowIso(),by:S.me||null};
+  Object.keys(next.weekly).forEach(k=>{if(!next.weekly[k])delete next.weekly[k]});Object.keys(next.dates).forEach(k=>{if(!next.dates[k])delete next.dates[k]});
+  await guarded(()=>S.db.doc('coxAvail/'+who).set(next),'');}
+function bindCoxswains(){
+  const m=$('#main');
+  m.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
+  {const s=$('#cxWho');if(s)s.onchange=()=>{S.coxWho=s.value;render()}}
+  m.querySelectorAll('[data-cxset]').forEach(el=>el.onclick=()=>{const [sid,d,v]=el.dataset.cxset.split('|');const k=dKey(sid,d);
+    const cur=((S.coxAvail[S.coxWho]||{}).dates||{})[k];const weekly=!!((S.coxAvail[S.coxWho]||{}).weekly||{})[sid];
+    // tapping the highlighted answer clears it (back to the weekly default)
+    const was=coxAvailFor(S.coxWho,sid,d);let nv=v;if((v==='yes'&&was===true)||(v==='no'&&was===false))nv=cur?null:(v==='yes'&&weekly?'no':null);
+    setCoxAvail(S.coxWho,{dates:{[k]:nv}})});
+  m.querySelectorAll('[data-cxweek]').forEach(el=>el.onchange=()=>setCoxAvail(S.coxWho,{weekly:{[el.dataset.cxweek]:el.checked}}));
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
