@@ -297,6 +297,9 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .up-list{display:grid;gap:8px}.up{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--line);border-left:4px solid var(--pc);border-radius:10px;padding:10px 12px}
 .up:hover{border-color:var(--pc)}.up.cx{opacity:.7}.up-d{display:flex;flex-direction:column;align-items:center;min-width:40px}.up-d b{font-family:'Libre Baskerville',serif;font-size:21px;line-height:1}.up-d span{font-size:11px;color:var(--ink3);text-transform:uppercase}
 .up-b{flex:1;min-width:0}.up-k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.dist-in{display:flex;gap:6px;align-items:stretch}.dist-in input[name=km]{flex:1;min-width:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}.seg button{border:0;background:#fff;padding:0 12px;font:600 13px Inter,sans-serif;cursor:pointer;color:var(--ink2)}
+.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--ink);color:#fff}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -1774,6 +1777,12 @@ const fmtKm=k=>(k==null||isNaN(k))?'—':(+k).toLocaleString(undefined,{maximumF
 // A single session of 100 "km" or more is a distance typed in metres (e.g. 5000 for a 5k): read it as metres.
 const KM_METRES_CUTOFF=100;
 const kmOf=r=>{const k=+r.km||0;return k>=KM_METRES_CUTOFF?k/1000:k};
+// Distances under 2 km read better in metres (500 m, 1000 m); 2 km and up stay in km.
+const fmtDist=km=>km>0&&km<2?{v:Math.round(km*1000).toLocaleString(),u:'m'}:{v:fmtKm(km),u:'km'};
+function distUnitPref(){try{return localStorage.getItem('vrcDistUnit')}catch(e){return null}}
+function setDistUnitPref(u){try{localStorage.setItem('vrcDistUnit',u)}catch(e){}}
+// km from the form's distance box + unit toggle ('m' or 'km'); 100+ typed in km is read as metres
+const formKm=(v,unit)=>{const n=+v||0;return unit==='m'?n/1000:kmOf({km:n})};
 function split500(r){const k=kmOf(r);return k>0&&r.timeSec>0?r.timeSec/(k*2):null}
 function estWatts(r){const sp=split500(r);return sp?Math.round(2.8/Math.pow(sp/500,3)):null}
 function weekStartOf(d){const x=pd(d);const wd=(x.getDay()+6)%7;return addDays(d,-wd)}
@@ -1800,7 +1809,7 @@ function resultCard(id,r,compact,inProfile){
   const hideWho=compact||inProfile;
   return `<div class="res ${compact||inProfile?'compact':''}"><div class="res-h">${hideWho?'':avatar(r.memberId,34)}<div style="flex:1;min-width:0">${hideWho?'':`<span class="lnk" data-member="${esc(r.memberId)}"><b>${esc(mName(r.memberId))}</b></span> · `}<span class="tag">${fmtDate(r.date)} · ${esc(r.program||'')} · ${isCross(r)?`<b class="xtag">${esc(MACHINE_NAMES[r.machine]||r.machine)} · cross-training</b>`:r.type==='erg'?'Erg':'On water'}${r.source==='concept2'?' · <span class="c2tag">Concept2</span>':''}</span>${r.workout?`<div class="res-w">${esc(r.workout)}</div>`:''}</div>
     ${(mine||canAdmin())&&!compact?`<button class="btn sm" data-resedit="${esc(id)}">Edit</button>`:''}</div>
-   <div class="res-main"><div><span class="big">${fmtKm(kmOf(r))}</span> km</div><div><span class="big">${fmtDur(r.timeSec)}</span> time</div></div>
+   <div class="res-main"><div>${(x=>`<span class="big">${x.v}</span> ${x.u}`)(fmtDist(kmOf(r)))}</div><div><span class="big">${fmtDur(r.timeSec,r.timeSec<1200&&r.timeSec%1!==0)}</span> time</div></div>
    ${extra?`<div class="res-x">${extra}</div>`:''}${r.notes&&!compact?`<div class="res-n">${esc(r.notes)}</div>`:''}
    ${compact?'':`<div class="res-f"><button class="like ${iLiked(r)?'on':''}" ${mine||!canMember()?'disabled':''} data-like="${esc(id)}" title="${esc(lc?'Liked by '+likeNames(r):(mine?'Your result':'Like this result'))}">${iLiked(r)?'♥':'♡'} ${lc||''}</button>${lc?`<span class="tag">${esc(likeNames(r))}</span>`:''}</div>`}</div>`;
 }
@@ -1858,7 +1867,8 @@ function resultForm(id,pre={}){
     ${fld('Machine',`<select name="machine">${[['','RowErg'],['skierg','SkiErg'],['bike','BikeErg']].map(([k,l])=>`<option value="${k}" ${(isCross(r||{})?r.machine:'')===k?'selected':''}>${l}</option>`).join('')}</select>`,'','For erg results')}
     ${fld('Program',`<select name="program">${progs.map(p=>`<option ${p===prog?'selected':''}>${esc(p)}</option>`).join('')}</select>`)}
     ${fld('Workout',`<input name="workout" value="${esc(r?r.workout||'':(pre.workout||''))}" placeholder="e.g. 2k test, 3×10′ steady">`)}
-    ${fld('Distance (km)',`<input name="km" type="number" step="0.001" min="0" required value="${esc(r&&r.km!=null?kmOf(r):'')}" placeholder="e.g. 10">`)}
+    ${(()=>{const k=r&&r.km!=null?kmOf(r):null,u=k!=null?(k<2?'m':'km'):(distUnitPref()||'km');
+      return fld('Distance',`<div class="dist-in"><input name="km" type="number" step="${u==='m'?'1':'0.001'}" min="0" required value="${esc(k==null?'':u==='m'?Math.round(k*1000):k)}" placeholder="${u==='m'?'e.g. 2000':'e.g. 10'}"><span class="seg" role="group" aria-label="Distance unit"><button type="button" class="${u==='km'?'on':''}" data-dunit="km">km</button><button type="button" class="${u==='m'?'on':''}" data-dunit="m">m</button></span><input type="hidden" name="dunit" value="${u}"></div>`)})()}
     ${fld('Time',`<input name="time" required value="${esc(r&&r.timeSec?fmtDur(r.timeSec,r.timeSec%1!==0):'')}" placeholder="h:mm:ss or mm:ss">`,'','e.g. 45:00 or 1:02:30. A plain number means minutes.')}
     ${fld('Avg watts',`<input name="watts" type="number" min="0" value="${esc(r&&r.watts||'')}">`,'','Optional')}
     ${fld('Calories',`<input name="cals" type="number" min="0" value="${esc(r&&r.cals||'')}">`,'','Optional')}
@@ -1867,16 +1877,21 @@ function resultForm(id,pre={}){
     ${fld('Notes',`<input name="notes" value="${esc(r?r.notes||'':'')}" placeholder="How did it feel?">`,'full')}
     <div class="full tag" id="resCalc"></div>
   </div>${formFoot(r?'Save':'Log result')}${r?`<div style="margin-top:10px"><button class="btn sm dan" type="button" id="resDel">Delete this result</button></div>`:''}</form>`,()=>{
-    const calc=()=>{const raw=+$('#mform [name=km]').value,km=kmOf({km:raw}),t=parseTime($('#mform [name=time]').value);const x={km,timeSec:t};const sp=split500(x);
-      $('#resCalc').innerHTML=(raw>=KM_METRES_CUTOFF?`<div style="color:var(--warn)">That looks like metres – it will be saved as <b>${fmtKm(km)} km</b>.</div>`:'')+(sp?`Average split <b>${fmtDur(sp,true)}</b> /500m${$('#mform [name=type]').value==='erg'?` · about <b>${estWatts(x)}</b> W`:''}`:'')};
+    const unitEl=$('#mform [name=dunit]'),kmEl=$('#mform [name=km]');
+    $('#mform').querySelectorAll('[data-dunit]').forEach(b=>b.onclick=()=>{const nu=b.dataset.dunit,ou=unitEl.value;if(nu===ou)return;
+      const k=formKm(kmEl.value,ou);unitEl.value=nu;setDistUnitPref(nu);
+      if(kmEl.value!=='')kmEl.value=nu==='m'?Math.round(k*1000):+k.toFixed(3);kmEl.step=nu==='m'?'1':'0.001';kmEl.placeholder=nu==='m'?'e.g. 2000':'e.g. 10';
+      $('#mform').querySelectorAll('[data-dunit]').forEach(x=>x.classList.toggle('on',x.dataset.dunit===nu));calc()});
+    const calc=()=>{const raw=+kmEl.value,km=formKm(raw,unitEl.value),t=parseTime($('#mform [name=time]').value);const x={km,timeSec:t};const sp=split500(x);
+      $('#resCalc').innerHTML=(unitEl.value==='km'&&raw>=KM_METRES_CUTOFF?`<div style="color:var(--warn)">That looks like metres – it will be saved as <b>${fmtKm(km)} km</b>.</div>`:'')+(sp?`Average split <b>${fmtDur(sp,true)}</b> /500m${$('#mform [name=type]').value==='erg'?` · about <b>${estWatts(x)}</b> W`:''}`:'')};
     ['km','time','type'].forEach(n=>$('#mform [name='+n+']').addEventListener('input',calc));calc();
     const del=$('#resDel');if(del)del.onclick=async()=>{if(await guarded(()=>S.db.doc('results/'+id).delete(),'Result deleted'))closeModal()};
     wireForm({msg:r?'Result saved':'Result logged',
-      validate:fd=>{if(!(+fd.km>0))return 'Enter the distance in km.';if(!(parseTime(fd.time)>0))return 'Enter the time, e.g. 45:00.';if(fd.date>today())return 'The date can’t be in the future.';if(!adminPick&&!mid)return 'Link your member profile first.';return null},
+      validate:fd=>{if(!(+fd.km>0))return `Enter the distance in ${fd.dunit==='m'?'metres':'km'}.`;if(!(parseTime(fd.time)>0))return 'Enter the time, e.g. 45:00.';if(fd.date>today())return 'The date can’t be in the future.';if(!adminPick&&!mid)return 'Link your member profile first.';return null},
       save:async fd=>{const num=v=>v===''||v==null?null:+v;
         const keepRow=r&&ROW_MACHINES.includes(r.machine)?r.machine:null;
         const mach=fd.type==='erg'?(fd.machine||(keepRow!=='water'?keepRow:null)):(keepRow==='water'?'water':null);
-        const data={date:fd.date,type:fd.type,machine:mach||null,program:fd.program,workout:fd.workout.trim(),km:kmOf({km:fd.km}),timeSec:parseTime(fd.time),watts:num(fd.watts),cals:num(fd.cals),spm:num(fd.spm),hr:num(fd.hr),notes:fd.notes.trim(),updatedAt:nowIso()};
+        const data={date:fd.date,type:fd.type,machine:mach||null,program:fd.program,workout:fd.workout.trim(),km:formKm(fd.km,fd.dunit),timeSec:parseTime(fd.time),watts:num(fd.watts),cals:num(fd.cals),spm:num(fd.spm),hr:num(fd.hr),notes:fd.notes.trim(),updatedAt:nowIso()};
         if(r)await S.db.doc('results/'+id).update(data);
         else await S.db.collection('results').add({...data,memberId:adminPick?fd.mid:mid,by:adminPick&&fd.mid!==me?(S.members[fd.mid]||{}).linkedUser||S.me:S.me,sessionId:pre.sessionId||null,bookingId:pre.bookingId||null,likes:{},at:nowIso()})}});
   });
