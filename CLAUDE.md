@@ -31,6 +31,8 @@ language, and keep the "propose → preview link → merge" workflow.
   appears on your own booking once a session has started. Rules: own results only; others may only
   add/remove their own key in `likes`. **Cross-training** (`machine` bike/skierg/multierg/…, see `isCross`) is
   listed but excluded from km/time totals, member-card km, the top-km board and leaderboards.
+  Distances are stored in km; cards show < 2 km in metres (`fmtDist`); the log form has a km/m toggle
+  (`formKm`, last choice remembered in localStorage `vrcDistUnit`).
 
 - **Attendance**: coaches (members with the `coach` role, set by an admin under Edit member → Roles)
   and admins get "✓ Check in athletes" on a session sheet from the day of the session. Present / Late /
