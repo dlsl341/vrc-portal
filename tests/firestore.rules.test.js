@@ -222,3 +222,13 @@ test('only admins can see the email log; nobody can write it from the browser', 
   await assertFails(getDoc(doc(as('alice'), 'mailLog/welcome_x')));
   await assertFails(setDoc(doc(as('carol'), 'mailLog/welcome_x'), { to: 'a@b.ca' }));
 });
+
+// ---- coxswain availability
+test('members set only their own cox availability; admins can set anyone\'s', async () => {
+  const av = { offered: true, weekly: { s1: true }, dates: { s1_20261122: 'no' } };
+  await assertSucceeds(setDoc(doc(as('alice'), 'coxAvail/m_alice'), av));
+  await assertFails(setDoc(doc(as('alice'), 'coxAvail/m_bob'), av));
+  await assertSucceeds(setDoc(doc(as('carol'), 'coxAvail/m_bob'), av));
+  await assertSucceeds(getDoc(doc(as('bob'), 'coxAvail/m_alice')));
+  await assertFails(getDoc(doc(as('stranger'), 'coxAvail/m_alice')));
+});

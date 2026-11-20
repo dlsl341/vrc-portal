@@ -98,6 +98,12 @@ service cloud.firestore {
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
       allow update, delete: if isAdmin();
     }
+    // ---- coxswain availability: each member edits their own; admins can edit anyone's ----
+    match /coxAvail/{mid} {
+      allow read: if canUse();
+      allow write: if isAdmin() || (isMember() && mid == myMemberId());
+    }
+
     // ---- open erg: members book an erg for themselves outside programmed erg time ----
     match /openErg/{id} {
       allow read: if canUse();
