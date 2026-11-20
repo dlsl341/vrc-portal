@@ -1952,17 +1952,17 @@ function memberAttendanceHtml(id){
 
 /* =================== LEADERBOARD (per program) =================== */
 // Ranks members within a program by kilometres, time, sessions attended or best 2k erg.
-Object.assign(S,{lbProg:null,lbMetric:'km',lbPeriod:'month',lbType:'all'});
+Object.assign(S,{lbProgs:null,lbMetric:'km',lbPeriod:'month',lbType:'all'});
 const LB_METRICS=[['km','Kilometres'],['time','Time'],['sessions','Sessions attended'],['best2k','Best 2k erg']];
-function lbRows(prog,metric,period,type){
+function lbRows(progs,metric,period,type){const inP=name=>!progs||progs.includes(name);
   const from=periodStart(period),t=today(),rows={};
   const add=(mid,v,extra)=>{const r=rows[mid]||(rows[mid]={v:0,n:0});if(metric==='best2k'){if(!r.v||v<r.v){r.v=v;r.date=extra}}else r.v+=v;r.n++};
   if(metric==='sessions'){
-    for(const a of Object.values(S.attendance||{})){if(a.date<from||a.date>t)continue;if(progOf(a.sessionId).name!==prog)continue;
+    for(const a of Object.values(S.attendance||{})){if(a.date<from||a.date>t)continue;if(!inP(progOf(a.sessionId).name))continue;
       const s=S.sessions[a.sessionId]||{};if(type!=='all'&&(s.type==='erg'?'erg':'water')!==type)continue;
       for(const [mid,mk] of Object.entries(a.marks||{}))if(mk!=='absent')add(mid,1)}
   } else {
-    for(const r of Object.values(S.results)){if(r.date<from||r.date>t||r.program!==prog||isCross(r))continue;
+    for(const r of Object.values(S.results)){if(r.date<from||r.date>t||!inP(r.program)||isCross(r))continue;
       if(metric==='best2k'){if(r.type==='erg'&&Math.abs(kmOf(r)-2)<0.001&&r.timeSec>0)add(r.memberId,r.timeSec,r.date);continue}
       if(type!=='all'&&r.type!==type)continue;add(r.memberId,metric==='km'?kmOf(r):+r.timeSec||0)}
   }
@@ -1973,9 +1973,12 @@ const lbSub=(metric,r)=>metric==='best2k'?fmtDate(r.date):metric==='sessions'?''
 function viewLeaderboard(){
   const progs=Object.entries(S.programs).filter(([,p])=>p.active!==false).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
   const me=myMemberId();
-  if(!S.lbProg||!progs.some(([,p])=>p.name===S.lbProg)){const mine=(S.members[me]||{}).programs||[];S.lbProg=(progs.find(([,p])=>mine.includes(p.name))||progs[0]||[,{}])[1].name||null}
-  const P=progs.find(([,p])=>p.name===S.lbProg);const color=P?P[1].color||'#888':'#888';
-  const rows=S.lbProg?lbRows(S.lbProg,S.lbMetric,S.lbPeriod,S.lbType):[];
+  if(S.lbProgs!=='all'){const names=progs.map(([,p])=>p.name);S.lbProgs=(S.lbProgs||[]).filter(n=>names.includes(n));
+    if(!S.lbProgs.length){const mine=(S.members[me]||{}).programs||[];const f=(progs.find(([,p])=>mine.includes(p.name))||progs[0]||[,{}])[1].name;S.lbProgs=f?[f]:'all'}}
+  const all=S.lbProgs==='all',sel=all?[]:S.lbProgs;
+  const P=sel.length===1?progs.find(([,p])=>p.name===sel[0]):null;const color=P?P[1].color||'#888':'#d6363c';
+  const boardName=all?'All programs':sel.join(' + ');
+  const rows=lbRows(all?null:sel,S.lbMetric,S.lbPeriod,S.lbType);
   const myIdx=rows.findIndex(([mid])=>mid===me);
   const pod=rows.slice(0,3),rest=rows.slice(3,25);
   const medal=['🥇','🥈','🥉'];
@@ -1983,22 +1986,25 @@ function viewLeaderboard(){
   const empty=S.lbMetric==='sessions'?'No attendance recorded yet for this program. Coaches record it with “Check in athletes” on each session.':'No results logged yet for this program. Log yours on the Results page.';
   return `<div class="page-h"><div><a href="#results" class="lnk">‹ Results</a><h2>Leaderboard</h2><p>Who’s putting in the work in each program. Kilometres and time come from logged results; sessions come from coach check-ins.</p></div>
     <div class="actions" style="margin:0">${canMember()&&me?`<button class="btn pri" id="lbLog">+ Log a result</button>`:''}</div></div>
-  <div class="chips lb-progs">${progs.map(([,p])=>`<button class="chip ${S.lbProg===p.name?'on':''}" data-lbprog="${esc(p.name)}" style="--pc:${esc(p.color||'#888')}"><span class="dot" style="background:${esc(p.color||'#888')}"></span>${esc(p.name)}</button>`).join('')}</div>
+  <p class="tag" style="margin:0 0 6px">Tap programs to combine them, or choose All programs.</p>
+  <div class="chips lb-progs"><button class="chip ${all?'on':''}" data-lball="1">All programs</button>${progs.map(([,p])=>`<button class="chip ${!all&&sel.includes(p.name)?'on':''}" aria-pressed="${!all&&sel.includes(p.name)}" data-lbprog="${esc(p.name)}" style="--pc:${esc(p.color||'#888')}"><span class="dot" style="background:${esc(p.color||'#888')}"></span>${esc(p.name)}</button>`).join('')}</div>
   <div class="toolbar">
     <div class="chips">${LB_METRICS.map(([k,l])=>`<button class="chip ${S.lbMetric===k?'on':''}" data-lbmetric="${k}">${l}</button>`).join('')}</div>
     ${S.lbMetric==='best2k'?'':`<select class="f" id="lbType">${[['all','Erg & water'],['erg','Erg'],['water','On water']].map(([k,l])=>`<option value="${k}" ${S.lbType===k?'selected':''}>${l}</option>`).join('')}</select>`}
     <select class="f" id="lbPeriod">${PERIODS.map(([k,l])=>`<option value="${k}" ${S.lbPeriod===k?'selected':''}>${l}</option>`).join('')}</select>
   </div>
-  <div class="sec lb-card" style="--pc:${esc(color)}"><h4>${esc(S.lbProg||'')} · ${esc((LB_METRICS.find(m=>m[0]===S.lbMetric)||[])[1])} · ${esc((PERIODS.find(p=>p[0]===S.lbPeriod)||[])[1])}</h4>
+  <div class="sec lb-card" style="--pc:${esc(color)}"><h4>${esc(boardName)} · ${esc((LB_METRICS.find(m=>m[0]===S.lbMetric)||[])[1])} · ${esc((PERIODS.find(p=>p[0]===S.lbPeriod)||[])[1])}</h4>
    ${rows.length?podium+(rest.length?`<table class="t lb-t"><tbody>${rest.map(([mid,r],i)=>`<tr class="${mid===me?'me':''}" data-member="${esc(mid)}"><td class="num">${i+4}</td><td><span style="display:inline-flex;gap:8px;align-items:center">${avatar(mid,26)}${esc(mName(mid))}</span></td><td class="ra"><b>${lbVal(S.lbMetric,r)}</b> <span class="tag">${lbSub(S.lbMetric,r)}</span></td></tr>`).join('')}</tbody></table>`:'')
      +(myIdx>=25?`<p class="tag" style="margin-top:10px">You’re <b>#${myIdx+1}</b> of ${rows.length} with ${lbVal(S.lbMetric,rows[myIdx][1])}.</p>`:'')
-     +(me&&myIdx<0&&((S.members[me]||{}).programs||[]).includes(S.lbProg)?`<p class="tag" style="margin-top:10px">You’re not on this board yet.</p>`:'')
+     +(me&&myIdx<0&&((S.members[me]||{}).programs||[]).some(n=>all||sel.includes(n))?`<p class="tag" style="margin-top:10px">You’re not on this board yet.</p>`:'')
      :`<div class="empty">${empty}</div>`}</div>`;
 }
 function bindLeaderboard(){
   const m=$('#main');
   m.querySelectorAll('[data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
-  m.querySelectorAll('[data-lbprog]').forEach(el=>el.onclick=()=>{S.lbProg=el.dataset.lbprog;render()});
+  m.querySelectorAll('[data-lbprog]').forEach(el=>el.onclick=()=>{const n=el.dataset.lbprog;let cur=S.lbProgs==='all'?[]:[...(S.lbProgs||[])];
+    cur=cur.includes(n)?cur.filter(x=>x!==n):[...cur,n];S.lbProgs=cur.length?cur:'all';render()});
+  m.querySelectorAll('[data-lball]').forEach(el=>el.onclick=()=>{S.lbProgs='all';render()});
   m.querySelectorAll('[data-lbmetric]').forEach(el=>el.onclick=()=>{S.lbMetric=el.dataset.lbmetric;render()});
   [['#lbType','lbType'],['#lbPeriod','lbPeriod']].forEach(([s,k])=>{const x=$(s);if(x)x.onchange=()=>{S[k]=x.value;render()}});
   {const b=$('#lbLog');if(b)b.onclick=()=>resultForm(null)}
