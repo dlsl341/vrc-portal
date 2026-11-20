@@ -44,12 +44,14 @@ ${button(SITE, 'Open the portal')}`);
   return { subject, html, text };
 }
 export function smtpSettings(env = process.env) {
-  const host = env.SMTP_HOST, user = env.SMTP_USER, pass = env.SMTP_PASS;
+  // SMTP_USER may be left out when it's the same address as MAIL_FROM (e.g. a Gmail account sending as itself)
+  const fromAddr = ((env.MAIL_FROM || '').match(/<([^>]+)>/) || [, env.MAIL_FROM || ''])[1].trim();
+  const host = env.SMTP_HOST, user = (env.SMTP_USER || '').trim() || (validEmail(fromAddr) ? fromAddr : ''), pass = env.SMTP_PASS;
   if (!host || !user || !pass) return null;
   const port = +(env.SMTP_PORT || 465);
   return { host, port, secure: port === 465, auth: { user, pass }, from: env.MAIL_FROM || `VRC Rowing Portal <${user}>` };
 }
-export const validEmail = e => typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length < 255;
+export function validEmail(e) { return typeof e === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length < 255; }
 
 const SEV = { cosmetic: 'Cosmetic', attention: 'Needs attention', unsafe: 'Unsafe – do not row' };
 export function issueEmail({ boatName, severity, location, description, reporter, photos = [], at }) {

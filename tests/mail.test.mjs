@@ -30,3 +30,9 @@ test('damage email: unsafe boats are flagged in the subject and body, photos inc
   assert.match(c.subject, /^Damage reported – Fraser \(Cosmetic\)/);
   assert.doesNotMatch(issueEmail({ boatName: 'x', photos: ['javascript:alert(1)'] }).html, /javascript:/);
 });
+
+test('SMTP user falls back to the MAIL_FROM address', () => {
+  const a = smtpSettings({ SMTP_HOST: 'smtp.gmail.com', SMTP_PASS: 'x', MAIL_FROM: 'VRC Rowing Portal <vrc.rowing.portal.1@gmail.com>' });
+  assert.equal(a.auth.user, 'vrc.rowing.portal.1@gmail.com');
+  assert.equal(smtpSettings({ SMTP_HOST: 'h', SMTP_PASS: 'p', MAIL_FROM: 'no address' }), null);
+});
