@@ -232,3 +232,14 @@ test('members set only their own cox availability; admins can set anyone\'s', as
   await assertSucceeds(getDoc(doc(as('bob'), 'coxAvail/m_alice')));
   await assertFails(getDoc(doc(as('stranger'), 'coxAvail/m_alice')));
 });
+
+// ---- class cancellation by coaches
+test('coaches can cancel and reinstate a date; members cannot; coaches cannot change other settings', async () => {
+  const c = { sessionId: 's1', date: '2026-11-22', cancelled: true, reasonCode: 'wind', reason: 'Wind', cancelNotes: 'Gusts', notify: true };
+  await assertSucceeds(setDoc(doc(as('dan'), 'occurrences/s1_20261122'), c));
+  await assertSucceeds(updateDoc(doc(as('dan'), 'occurrences/s1_20261122'), { cancelled: false, notifyReinstate: true }));
+  await assertFails(updateDoc(doc(as('dan'), 'occurrences/s1_20261122'), { capacity: 2 }));
+  await assertFails(setDoc(doc(as('dan'), 'occurrences/s1_20261123'), { ...c, coach: 'Me' }));
+  await assertFails(setDoc(doc(as('bob'), 'occurrences/s1_20261124'), c));
+  await assertSucceeds(setDoc(doc(as('carol'), 'occurrences/s1_20261125'), { ...c, capacity: 3 }));
+});

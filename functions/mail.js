@@ -73,3 +73,24 @@ ${button(link, 'Open Issues in the portal')}
   const text = `${unsafe ? 'UNSAFE – the boat is flagged do not row.\n\n' : ''}Damage reported\nBoat: ${boatName || ''}\nSeverity: ${sev}\n${location ? 'Where: ' + location + '\n' : ''}${reporter ? 'Reported by: ' + reporter + '\n' : ''}\n${description || ''}\n${photos.length ? '\nPhotos:\n' + photos.join('\n') + '\n' : ''}\nOpen Issues: ${link}`;
   return { subject, html, text };
 }
+
+export const CANCEL_REASONS = { air: 'Air quality', wind: 'Wind', lightning: 'Lightning', holiday: 'Holiday', other: 'Other' };
+const fmtHM = t => { if (!t) return ''; const [h, m] = t.split(':').map(Number); return `${(h % 12) || 12}${m ? ':' + String(m).padStart(2, '0') : ''} ${h < 12 ? 'am' : 'pm'}`; };
+export function dateLabel(d) { const [y, m, dd] = d.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd)).toLocaleDateString('en-CA', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' }); }
+export function cancelEmail({ title, date, start, end, reasonCode, reason, notes, by, reinstated }) {
+  const when = `${dateLabel(date)}${start ? ', ' + fmtHM(start) + (end ? '–' + fmtHM(end) : '') : ''}`;
+  const why = CANCEL_REASONS[reasonCode] || reason || '';
+  if (reinstated) {
+    const subject = `Back on: ${title} – ${dateLabel(date)}`;
+    const html = frame('This session is back on', `<p><b>${esc(title)}</b><br>${esc(when)}</p>
+<p>The cancellation has been lifted, and your booking stands. See you there!</p>${notes ? `<p style="background:#f7f6f3;border-left:4px solid #2f7d4f;padding:10px 14px">${esc(notes)}</p>` : ''}${button(SITE + '/#programs', 'View the schedule')}`);
+    return { subject, html, text: `${title} on ${when} is back on – your booking stands.${notes ? '\n\n' + notes : ''}\n\n${SITE}` };
+  }
+  const subject = `Cancelled: ${title} – ${dateLabel(date)}${why ? ' (' + why + ')' : ''}`;
+  const html = frame('Session cancelled', `<p><b>${esc(title)}</b><br>${esc(when)}</p>
+<p style="background:#fde6e6;border-left:4px solid #c42a30;padding:10px 14px;margin:14px 0"><b>Cancelled${why ? ' – ' + esc(why) : ''}.</b>${notes ? '<br>' + esc(notes) : ''}</p>
+<p>You were signed up for this session, so we wanted to let you know. Your booking has been cancelled with it – there’s nothing you need to do.</p>
+${by ? `<p style="color:#777">Cancelled by ${esc(by)}.</p>` : ''}${button(SITE + '/#programs', 'View the schedule')}`);
+  const text = `${title}\n${when}\n\nCANCELLED${why ? ' – ' + why : ''}.${notes ? '\n' + notes : ''}\n\nYou were signed up for this session. Nothing you need to do.${by ? '\nCancelled by ' + by + '.' : ''}\n\n${SITE}`;
+  return { subject, html, text };
+}

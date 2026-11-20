@@ -279,6 +279,8 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .cx-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:4px 0}.cx-s{flex:1;min-width:220px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .cx-wk{font-size:12.5px;display:flex;gap:4px;align-items:center}.cx-need{border-left:4px solid var(--red)}.cx-t tr.need td{background:#fdeeee}
 .coxbar{background:#eef3fa;border:1px solid #d5e1f1;border-radius:8px;padding:8px 12px;margin:0 0 12px;font-size:13px}.coxbar.need{background:#fdeeee;border-color:#f3c6c8}
+.reasons{display:flex;flex-wrap:wrap;gap:8px}.rsn{position:relative}.rsn input{position:absolute;opacity:0}.rsn span{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer;background:#fff}
+.rsn input:checked+span{border-color:var(--red);background:#fdeeee;color:var(--red-d);font-weight:700}.rsn input:focus-visible+span{outline:2px solid var(--red)}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -1236,7 +1238,7 @@ function sessCard(id,s,d){
   return `<div class="sc ${o.cancelled?'cx':''} ${w.state==='closed'?'past':''}" data-sess="${esc(id)}" data-date="${d}" style="--pc:${esc(p.color||'#888')}">
    <div class="sc-t">${esc(timeRange(s))}</div><div class="sc-n">${esc(s.title)}</div>
    <div class="sc-m">${s.type==='erg'?'Erg':'On water'}${coachOf(id,d)?' · '+esc(coachOf(id,d)):''}</div>
-   <div class="sc-f">${o.cancelled?'<span class="pill s-dnr">Cancelled</span>':mine?'<span class="pill s-available">✓ Booked</span>':w.state==='soon'?`<span class="tag">Opens ${pd(w.at).toLocaleDateString(undefined,{weekday:'short'})}</span>`:''}
+   <div class="sc-f">${o.cancelled?`<span class="pill s-dnr">Cancelled${o.reasonCode?' · '+esc(CANCEL_REASONS[o.reasonCode]):''}</span>`:mine?'<span class="pill s-available">✓ Booked</span>':w.state==='soon'?`<span class="tag">Opens ${pd(w.at).toLocaleDateString(undefined,{weekday:'short'})}</span>`:''}
    ${!o.cancelled&&cap?`<span class="cap"><i style="width:${Math.min(100,bk.length/cap*100)}%"></i></span><span class="tag">${bk.length}/${cap}</span>`:(!o.cancelled&&bk.length?`<span class="tag">${bk.length} booked</span>`:'')}
    ${open&&!o.cancelled?`<span class="pill pv">${open} open seat${open>1?'s':''}</span>`:''}</div></div>`;
 }
@@ -1250,7 +1252,7 @@ function viewSession(){
   const ergNone=erg&&!full&&!!me&&!mine&&!canAdmin()&&ergGroups(id).length&&!nextErg(id,d,me);
   const canBook=!o.cancelled&&(canAdmin()||(w.state==='open'&&!!me&&eligible(me,id)&&canMember()&&!full&&!ergNone));
   let notice='';
-  if(o.cancelled)notice=`<div class="callout bad"><b>Cancelled.</b> ${esc(o.reason||'')}</div>`;
+  if(o.cancelled)notice=`<div class="callout bad cancel-note"><b>Cancelled${o.reasonCode||o.reason?' – '+esc(CANCEL_REASONS[o.reasonCode]||o.reason):''}.</b>${o.cancelNotes?`<div style="margin-top:4px">${esc(o.cancelNotes)}</div>`:''}${o.cancelledBy?`<div class="tag" style="margin-top:4px">Cancelled by ${esc(o.cancelledBy)}${o.notified?` · ${o.notified} signed-up member${o.notified===1?' was':'s were'} emailed`:''}</div>`:''}</div>`;
   else if(w.state==='soon')notice=`<div class="callout">Sign-ups open ${dayLabel(w.at,true)}.</div>`;
   else if(w.state==='closed')notice=`<div class="callout">This session has started or finished. Sign-ups are closed${canAdmin()?' (admins can still edit)':''}.</div>`;
   else if(!S.me)notice='';
@@ -1293,7 +1295,7 @@ function viewSession(){
     <p>${dayLabel(d,true)} · ${esc(timeRange(s))}${coachOf(id,d)?` · Coach ${esc(coachOf(id,d))}`:''}${safetyOf(id,d)?` · Safety boat ${esc(safetyOf(id,d))}`:''}</p></div>
     <div class="sh-cap">${cap?`<b>${bk.length}</b>/${cap}<span>${erg?'ergs':'boats'}</span>`:`<b>${bk.length}</b><span>${erg?'signed up':'boats'}</span>`}</div></div>
     ${o.note||s.notes?`<div class="tag" style="margin-top:6px">${esc(o.note||s.notes)}</div>`:''}
-    <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Reserve':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canCheckIn()&&!o.cancelled&&d<=today()&&!S.checkin?`<button class="btn pri" id="ciOpen">✓ Check in athletes</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
+    <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Reserve':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canCheckIn()&&d>=today()?(o.cancelled?`<button class="btn" id="unCancel">Reinstate class</button>`:`<button class="btn dan" id="cancelCls">Cancel class</button>`):''}${canCheckIn()&&!o.cancelled&&d<=today()&&!S.checkin?`<button class="btn pri" id="ciOpen">✓ Check in athletes</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
   </div>
   ${notice}
   ${coxSessionHtml(id,d)}
@@ -1322,7 +1324,7 @@ function bindPrograms(){
   on('#ciOpen',()=>{S.checkin=true;render()});if(S.checkin)bindCheckin(m,id,d);
   m.querySelectorAll('[data-logres]').forEach(el=>el.onclick=()=>{const b=S.bookings[el.dataset.logres];resultForm(null,{sessionId:b.sessionId,date:b.date,bookingId:el.dataset.logres})});
   m.querySelectorAll('[data-ergres]').forEach(el=>el.onclick=()=>{const n=+el.dataset.ergres,me=myMemberId();if(canAdmin())return ergForm(id,d,null,n);ergSignup(id,d,me,n)});
-  on('#occEdit',()=>occForm(id,d));on('#sessEdit',()=>sessionForm(id));
+  on('#occEdit',()=>occForm(id,d));on('#cancelCls',()=>cancelForm(id,d));on('#unCancel',()=>reinstateForm(id,d));on('#sessEdit',()=>sessionForm(id));
   m.querySelectorAll('[data-bookboat]').forEach(el=>el.onclick=()=>bookingForm(id,d,null,el.dataset.bookboat));
   m.querySelectorAll('[data-bedit]').forEach(el=>el.onclick=()=>{const b=S.bookings[el.dataset.bedit];if(S.sessions[id].type==='erg')return ergForm(id,d,el.dataset.bedit);bookingForm(id,d,el.dataset.bedit,null)});
   m.querySelectorAll('[data-bcancel]').forEach(el=>el.onclick=()=>cancelBooking(el.dataset.bcancel));
@@ -1434,17 +1436,37 @@ async function joinBooking(bid){
 }
 
 /* ---------- admin: per-date overrides ---------- */
+const CANCEL_REASONS={air:'Air quality',wind:'Wind',lightning:'Lightning',holiday:'Holiday',other:'Other'};
+function cancelForm(sid,d){
+  const s=S.sessions[sid],n=new Set();sessBookings(sid,d).forEach(([,b])=>bMembers(b).forEach(x=>n.add(x)));const cnt=n.size;
+  const me=myMemberId(),by=me?mName(me):(S.isAdmin?'an admin':'');
+  openModal(`<h3>Cancel ${esc(s.title)}</h3><p class="muted" style="margin-top:-6px">${esc(dayLabel(d,true))} · ${esc(timeRange(s))}</p><form id="mform"><div class="fg">
+    <div class="fld full"><label>Reason</label><div class="reasons">${Object.entries(CANCEL_REASONS).map(([k,l],i)=>`<label class="rsn"><input type="radio" name="reasonCode" value="${k}" ${i===0?'':''}><span>${l}</span></label>`).join('')}</div></div>
+    ${fld('Notes for members',`<textarea name="notes" rows="3" placeholder="e.g. Wind gusting 40 km/h on False Creek – erg session at 7 instead"></textarea>`,'full','Optional – included in the email and shown on the schedule')}
+    ${fld('Email',`<label class="tog"><input type="checkbox" name="notify" value="1" ${cnt?'checked':''} ${cnt?'':'disabled'}> Email the ${cnt} member${cnt===1?'':'s'} signed up</label>`,'full',cnt?'One email, with everyone in BCC':'Nobody is signed up yet')}
+  </div>${formFoot('Cancel class','dan')}</form>`,()=>{$('#mCancel').textContent='Keep class';wireForm({msg:'Class cancelled',
+    validate:fd=>fd.reasonCode?(fd.reasonCode==='other'&&!fd.notes.trim()?'Add a note explaining the reason.':null):'Pick a reason.',
+    save:fd=>S.db.doc('occurrences/'+occKey(sid,d)).set({sessionId:sid,date:d,cancelled:true,reasonCode:fd.reasonCode,reason:CANCEL_REASONS[fd.reasonCode],cancelNotes:fd.notes.trim(),
+      cancelledBy:by,cancelledAt:nowIso(),notify:!!(fd._c.notify||[]).length&&cnt>0,notified:(fd._c.notify||[]).length?cnt:0,notifyReinstate:false,updatedAt:nowIso()},{merge:true})})});
+}
+function reinstateForm(sid,d){
+  const s=S.sessions[sid],n=new Set();sessBookings(sid,d).forEach(([,b])=>bMembers(b).forEach(x=>n.add(x)));const cnt=n.size;
+  openModal(`<h3>Reinstate ${esc(s.title)}?</h3><p class="muted" style="margin-top:-6px">${esc(dayLabel(d,true))} – the session goes back on the schedule and existing bookings stand.</p><form id="mform"><div class="fg">
+    ${fld('Note',`<input name="notes" placeholder="e.g. Wind has dropped – we’re on!">`,'full','Optional')}
+    ${fld('Email',`<label class="tog"><input type="checkbox" name="notify" value="1" ${cnt?'checked':''} ${cnt?'':'disabled'}> Email the ${cnt} member${cnt===1?'':'s'} signed up that it’s back on</label>`,'full')}
+  </div>${formFoot('Reinstate class')}</form>`,()=>wireForm({msg:'Class reinstated',
+    save:fd=>S.db.doc('occurrences/'+occKey(sid,d)).set({cancelled:false,notifyReinstate:!!(fd._c.notify||[]).length&&cnt>0,reinstateNotes:fd.notes.trim(),reinstatedAt:nowIso(),updatedAt:nowIso()},{merge:true})}));
+}
 function occForm(sid,d){
   const s=S.sessions[sid],o=occ(sid,d);
   openModal(`<h3>${esc(s.title)} · ${dayLabel(d)}</h3><p class="muted" style="margin-top:-6px">Changes for this date only.</p><form id="mform"><div class="fg">
-    ${fld('Cancel this session',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="cancelled" value="1" ${o.cancelled?'checked':''}> Cancelled</label>`)}
-    ${fld('Reason',`<input name="reason" value="${esc(o.reason||'')}" placeholder="e.g. Wind warning">`)}
+    <p class="tag full" style="margin:0">${o.cancelled?'This date is cancelled – use <b>Reinstate class</b> on the session page to bring it back.':'To cancel this date, use <b>Cancel class</b> on the session page – it lets you pick a reason and emails everyone signed up.'}</p>
     ${fld('Coach',`<input name="coach" value="${esc(o.coach||'')}" placeholder="${esc(s.coach||'')}">`)}
     ${fld('Safety boat',`<input name="safety" value="${esc(o.safety||'')}" placeholder="${esc(s.safety||'None')}">`)}
     ${fld(s.type==='erg'?'Ergs available':'Max boats',`<input name="capacity" type="number" min="0" value="${esc(o.capacity||'')}" placeholder="${esc(s.capacity||'')}">`,'','Leave blank to use the usual limit')}
     ${fld('Note for rowers',`<input name="note" value="${esc(o.note||'')}">`)}
   </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Session updated',
-    save:fd=>S.db.doc('occurrences/'+occKey(sid,d)).set({sessionId:sid,date:d,cancelled:!!(fd._c.cancelled||[]).length,reason:fd.reason.trim(),coach:fd.coach.trim(),safety:fd.safety.trim(),capacity:fd.capacity?+fd.capacity:null,note:fd.note.trim(),updatedAt:nowIso()})}));
+    save:fd=>S.db.doc('occurrences/'+occKey(sid,d)).set({sessionId:sid,date:d,coach:fd.coach.trim(),safety:fd.safety.trim(),capacity:fd.capacity?+fd.capacity:null,note:fd.note.trim(),updatedAt:nowIso()},{merge:true})}));
 }
 
 /* ---------- admin: manage programs & sessions ---------- */
@@ -2360,7 +2382,7 @@ function issueEmailToggle(){const on=((S.mprefs||{})[S.me]||{}).issueEmails!==fa
   return `<label class="tog" style="margin:0 0 12px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="issueMailTog" ${on?'checked':''}> Email me when a member reports damage on a boat</label>`}
 function mailLogHtml(){const L=Object.entries(S.mailLog||{}).sort((a,b)=>String(b[1].at).localeCompare(String(a[1].at))).slice(0,8);
   if(!L.length)return `<div class="sec"><h4>Member emails</h4><div class="empty">No emails sent yet. Welcome emails go out automatically when you approve a request – once email is set up (see docs/EMAIL.md).</div></div>`;
-  return `<div class="sec"><h4>Emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('welcome')?'Welcome':k.startsWith('issue')?'Damage report':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
+  return `<div class="sec"><h4>Emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('welcome')?'Welcome':k.startsWith('issue')?'Damage report':k.startsWith('cancel')?'Class cancelled':k.startsWith('reinstate')?'Class back on':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
     <span class="pill ${m.status==='sent'?'s-available':m.status==='failed'?'s-repair':'s-dnr'}" title="${esc(m.error||'')}">${m.status==='sent'?'Sent':m.status==='failed'?'Failed':'Sending'}</span></div>`).join('')}</div>`}
 function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
 function claimItem(uid,c){

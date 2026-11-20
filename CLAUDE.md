@@ -70,6 +70,12 @@ language, and keep the "propose → preview link → merge" workflow.
   admins + owner in one BCC'd message (⚠ UNSAFE in the subject for unsafe boats, photos included); an admin
   opts out with the Admin-page toggle (`memberPrefs/{uid}.issueEmails = false`).
 
+- **Cancelling a class**: coaches + admins get "Cancel class" / "Reinstate class" on a session page (today or later).
+  Reason code (air/wind/lightning/holiday/other → `CANCEL_REASONS`), notes, "email the N signed up". Stored on
+  `occurrences/{sid_YYYYMMDD}` (cancelled, reasonCode, reason, cancelNotes, cancelledBy/At, notify, notified,
+  notifyReinstate, reinstateNotes/At). Trigger `emailOnCancel` BCCs everyone booked (crew + cox). Coaches may
+  only write those fields (rules); "Edit this date" no longer cancels and merges instead of overwriting.
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).

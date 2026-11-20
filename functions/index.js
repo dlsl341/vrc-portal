@@ -7,13 +7,13 @@
 // Tokens live in c2Tokens/{uid} and c2Users/{c2UserId}: the security rules let no browser read them.
 // We only ever READ from Concept2 (scopes user:read,results:read).
 import { onRequest } from 'firebase-functions/v2/https';
-import { onDocumentCreated, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated, onDocumentWritten } from 'firebase-functions/v2/firestore';
 import nodemailer from 'nodemailer';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, smtpSettings, validEmail } from './mail.js';
 
 initializeApp();
 const db = getFirestore();
@@ -186,7 +186,7 @@ async function sendOnce(key, to, msg) {
   const cfg = smtpSettings();
   if (!cfg) { console.warn('mail: SMTP not configured – skipped', key); return; }
   const ref = db.doc('mailLog/' + key);
-  const toLabel = typeof to === 'string' ? to : `${to.bcc.length} admin${to.bcc.length === 1 ? '' : 's'}`;
+  const toLabel = typeof to === 'string' ? to : (to.label || `${to.bcc.length} admin${to.bcc.length === 1 ? '' : 's'}`);
   try { await ref.create({ to: toLabel, subject: msg.subject, at: new Date().toISOString(), status: 'sending' }); }
   catch (e) { console.log('mail: already sent', key); return; }
   try {
@@ -244,4 +244,33 @@ export const emailAdminsOnIssue = onDocumentCreated({ document: 'issues/{id}', r
   const msg = issueEmail({ boatName: boat.exists ? boat.data().name : it.boatId, severity: it.severity, location: it.location, description: it.description, reporter, photos: it.photos || [], at: it.at });
   // one email, admins in BCC so addresses stay private
   await sendOnce('issue_' + id, { bcc: to }, msg);
+});
+
+// Email everyone booked on a session date when a coach/admin cancels it (occurrences/{sid_YYYYMMDD}
+// cancelled → true with notify), and again if it's reinstated with notifyReinstate.
+async function emailForMember(memberId) {
+  const m = await db.doc('members/' + memberId).get();
+  const uid = m.exists ? m.data().linkedUser : null;
+  if (uid) { const e = await memberEmail(uid, null); if (e) return e; }
+  const p = await db.doc('memberPrivate/' + memberId).get();
+  return p.exists && validEmail(p.data().email) ? p.data().email : null;
+}
+export const emailOnCancel = onDocumentWritten({ document: 'occurrences/{id}', region: REGION }, async (event) => {
+  const before = (event.data.before && event.data.before.data()) || {}, after = (event.data.after && event.data.after.data()) || null;
+  if (!after) return;
+  const cancelled = !before.cancelled && after.cancelled && after.notify !== false;
+  const reinstated = before.cancelled && !after.cancelled && after.notifyReinstate === true;
+  if (!cancelled && !reinstated) return;
+  const sid = after.sessionId, date = after.date;
+  if (!sid || !date) return;
+  const [sess, bk] = await Promise.all([db.doc('sessions/' + sid).get(), db.collection('bookings').where('sessionId', '==', sid).where('date', '==', date).get()]);
+  const ids = new Set();
+  bk.docs.forEach(d => { const b = d.data(); (b.crew || []).filter(Boolean).forEach(x => ids.add(x)); if (b.cox) ids.add(b.cox); });
+  const emails = new Set();
+  for (const mid of ids) { const e = await emailForMember(mid); if (e) emails.add(e.toLowerCase()); }
+  if (!emails.size) return console.log('cancel: nobody to email', event.params.id);
+  const s = sess.exists ? sess.data() : {};
+  const msg = cancelEmail({ title: s.title || 'Your session', date, start: s.start, end: s.end, reasonCode: after.reasonCode, reason: after.reason, notes: reinstated ? after.reinstateNotes : after.cancelNotes, by: after.cancelledBy, reinstated });
+  const stamp = String((reinstated ? after.reinstatedAt : after.cancelledAt) || Date.now()).replace(/\W/g, '');
+  await sendOnce(`${reinstated ? 'reinstate' : 'cancel'}_${event.params.id}_${stamp}`, { bcc: [...emails], label: `${emails.size} member${emails.size === 1 ? '' : 's'}` }, msg);
 });
