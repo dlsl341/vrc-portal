@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Vancouver Rowing Club member portal – fleet, members and programs on Firebase",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project demo-vrc-portal \"node --test tests/firestore.rules.test.js tests/c2map.test.mjs tests/mail.test.mjs\"",
+    "test": "firebase emulators:exec --only firestore --project demo-vrc-portal \"node --test tests/firestore.rules.test.js tests/c2map.test.mjs tests/mail.test.mjs tests/waitlist.test.mjs\"",
     "serve": "firebase emulators:start --only hosting,firestore,storage --project demo-vrc-portal"
   },
   "devDependencies": {

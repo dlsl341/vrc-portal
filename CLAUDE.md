@@ -56,6 +56,14 @@ language, and keep the "propose → preview link → merge" workflow.
   6 days ahead) in slots with no scheduled erg session; lowest free erg, 18 kept for Para. `openErg`
   (memberId, by, date, start, end, erg, notes). Calendar invite; "Log result" afterwards (result
   `bookingId: 'oe_<id>'`); counts in member history as "Open erg". Rules: own bookings only.
+- **Erg waitlist** (`waitlist/{sid}_{YYYYMMDD}_{memberId}` {sessionId, date, memberId, group, by, t ms, at}): on an erg session
+  with erg blocks, a member whose block (or the session) is full gets "Join the <group> waitlist" – one line per group
+  (Masters / Intermediate …). Session page shows "You're #N" + a Waitlist panel (admins can remove); Home lists it.
+  Trigger `ergWaitlistPromote` (bookings written: erg booking deleted/emptied before start, class not cancelled) gives the
+  erg to the first in that erg's group (after `ergOpenTime` anyone waiting, never an `only` block), creates the booking
+  (`fromWaitlist:true`), deletes the entry and emails them (`waitlistEmail`). Pure logic in `functions/waitlist.js`
+  (tests/waitlist.test.mjs). Rules: own entry only, `t` within 5 min of server time (can't jump the line), no updates.
+  No automatic promotion at noon itself (would need a scheduler) – after noon waiters can grab any free erg.
 - **Coxswains** (`#coxswains` tab, `coxAvail/{memberId}`: offered, weekly{sessionId:true}, dates{"<sid>_<YYYYMMDD>": yes|no}):
   a coxswain = Cox role OR member ticked "I can cox" on their profile (`offered`). They mark availability per
   on-water session for the next 2 weeks (+ "Every week"). Booking form's cox seat lists available coxswains
@@ -114,7 +122,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
-`openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` ·
+`openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).

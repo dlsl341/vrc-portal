@@ -108,3 +108,15 @@ ${button(SITE + '/#admin', 'Review on the Admin page')}
   const text = `${who} (signed in) ${type === 'existing' ? 'says they are ' + (memberName || 'a member') : 'is new to the portal: ' + [firstName, lastName].filter(Boolean).join(' ')}.\n${email ? 'Email: ' + email + '\n' : ''}${phone ? 'Phone: ' + phone + '\n' : ''}${memberNo ? 'Member number: ' + memberNo + '\n' : ''}${note ? 'Note: ' + note + '\n' : ''}\nReview: ${SITE}/#admin`;
   return { subject, html, text };
 }
+
+export function waitlistEmail({ firstName, title, date, start, end, erg, link }) {
+  const when = `${dateLabel(date)}${start ? ', ' + fmtHM(start) + (end ? '–' + fmtHM(end) : '') : ''}`;
+  const subject = `You’re in: erg ${erg} for ${title} – ${dateLabel(date)}`;
+  const html = frame('An erg opened up for you', `<p>Hi ${esc(firstName || 'there')},</p>
+<p>Good news – someone cancelled, and you were first on the waitlist. You now have <b>erg ${esc(erg)}</b> for:</p>
+<p><b>${esc(title)}</b><br>${esc(when)}</p>
+<p>If you can no longer make it, please cancel in the portal so the next person on the waitlist gets the erg.</p>
+${button(link || SITE + '/#programs', 'View my booking')}`);
+  const text = `Hi ${firstName || 'there'},\n\nSomeone cancelled and you were first on the waitlist. You now have erg ${erg} for ${title}, ${when}.\n\nCan't make it? Please cancel in the portal so the next person gets it.\n${link || SITE}`;
+  return { subject, html, text };
+}

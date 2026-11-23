@@ -13,7 +13,8 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, smtpSettings, validEmail } from './mail.js';
+import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
 
 initializeApp();
 const db = getFirestore();
@@ -286,4 +287,48 @@ export const emailAdminsOnClaim = onDocumentWritten({ document: 'claims/{uid}', 
   const msg = claimAdminEmail({ requester: p.exists ? p.data().name : '', type: after.type, memberName: m && m.exists ? m.data().displayName : '',
     firstName: after.firstName, lastName: after.lastName, programs: after.programs || [], email: after.email, phone: after.phone, memberNo: after.memberNo, note: after.note, at: after.at });
   await sendOnce(`claim_${uid}_${String(after.at || Date.now()).replace(/\W/g, '')}`, { bcc: to }, msg);
+});
+
+// Erg waitlist: when an erg booking is cancelled (deleted) or everyone leaves it before the session
+// starts, give that erg to the first person waiting in the same group (Masters / Intermediate …)
+// and email them. Waitlist entries live in waitlist/{sid}_{YYYYMMDD}_{memberId} {group, t}.
+const people = b => [...(b.crew || []), b.cox].filter(Boolean);
+export const ergWaitlistPromote = onDocumentWritten({ document: 'bookings/{id}', region: REGION }, async (event) => {
+  const before = (event.data.before && event.data.before.data()) || null, after = (event.data.after && event.data.after.data()) || null;
+  if (!before || !before.erg || !before.sessionId || !before.date) return;
+  if (!people(before).length || (after && people(after).length)) return;   // not a seat being freed
+  const sid = before.sessionId, date = before.date, erg = before.erg, ymd = date.replace(/-/g, '');
+  const [sess, occ] = await Promise.all([db.doc('sessions/' + sid).get(), db.doc('occurrences/' + sid + '_' + ymd).get()]);
+  if (!sess.exists) return;
+  const s = sess.data(), o = occ.exists ? occ.data() : {};
+  if (s.type !== 'erg' || o.cancelled) return;
+  if (Date.now() >= bcTime(date, s.start).getTime()) return;               // session already started
+  const groups = parseErgGroups(ergGroupsText(sid, s));
+  const overflow = Date.now() >= bcTime(date, s.ergOpenTime || '12:00').getTime();
+  const cap = o.capacity || s.capacity || 0;
+  const promoted = await db.runTransaction(async (tx) => {
+    const [bk, wl] = await Promise.all([
+      tx.get(db.collection('bookings').where('sessionId', '==', sid).where('date', '==', date)),
+      tx.get(db.collection('waitlist').where('sessionId', '==', sid).where('date', '==', date))]);
+    const live = bk.docs.map(d => d.data()).filter(b => people(b).length);
+    if (live.some(b => b.erg === erg)) return null;                         // someone already took it
+    if (cap && live.length >= cap) return null;
+    const booked = new Set(live.flatMap(people));
+    const entries = wl.docs.map(d => ({ ref: d.ref, ...d.data() }));
+    const pick = pickPromotion({ groups, erg, entries, booked, overflow });
+    if (!pick) return null;
+    const m = await tx.get(db.doc('members/' + pick.memberId));
+    const ref = db.collection('bookings').doc();
+    tx.set(ref, { sessionId: sid, date, boatId: null, rig: '', crew: [pick.memberId], cox: null, open: false, notes: 'From the waitlist',
+      erg, captain: pick.memberId, createdBy: (m.exists && m.data().linkedUser) || pick.by || null, at: new Date().toISOString(), fromWaitlist: true });
+    tx.delete(pick.ref);
+    entries.filter(e => booked.has(e.memberId)).forEach(e => tx.delete(e.ref));   // tidy: already booked
+    return { memberId: pick.memberId, bookingId: ref.id, name: m.exists ? m.data().displayName : '' };
+  });
+  if (!promoted) return;
+  console.log('waitlist: erg', erg, sid, date, '→', promoted.memberId);
+  const to = await emailForMember(promoted.memberId);
+  if (!to) return;
+  await sendOnce(`waitlist_${promoted.bookingId}`, to, waitlistEmail({ firstName: (promoted.name || '').split(' ')[0], title: s.title || 'Erg session', date, start: s.start, end: s.end, erg,
+    link: `https://vrc-rower-s-portal.web.app/#s-${sid}-${ymd}` }));
 });
