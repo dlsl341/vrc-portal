@@ -45,3 +45,10 @@ test('cancellation email: reason code, notes and date', () => {
   const r = cancelEmail({ title: 'Masters · Sat AM', date: '2026-11-21', reinstated: true });
   assert.match(r.subject, /^Back on:/);
 });
+import { claimAdminEmail } from '../functions/mail.js';
+test('join request email to admins', () => {
+  const m = claimAdminEmail({ requester: 'Jamie Lee', type: 'existing', memberName: 'Jamie L', email: 'j@x.ca', memberNo: 'VRC-1042', note: 'Sat Masters' });
+  assert.match(m.subject, /^Join request: Jamie L – please review/);
+  assert.match(m.html, /VRC-1042/); assert.match(m.html, /#admin/); assert.match(m.text, /Member number: VRC-1042/);
+  assert.match(claimAdminEmail({ type: 'new', firstName: 'Sam', lastName: 'Ng', programs: ['Rec'] }).html, /new to the portal: <b>Sam Ng<\/b> · Rec/);
+});

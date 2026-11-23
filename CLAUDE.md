@@ -85,6 +85,16 @@ language, and keep the "propose → preview link → merge" workflow.
   series SVG with hover tooltips; rowing only via `kmOf`/`isCross`), and Coming up (bookings incl. cox,
   open erg, maintenance crews). `[hidden]` is forced to display:none globally.
 
+- **Versions**: each live deploy is `v1.<GitHub run number>`, stamped into `public/version.json` (version, sha,
+  date, title = PR title) by the deploy job and recorded as a GitHub release (tag = version). Shown in the
+  footer and on the Admin page ("Portal version"). Previews show "preview #<PR>". Roll back by
+  redeploying a release tag or Firebase Hosting → Release history.
+- **Member number**: `memberPrivate.memberNo` (self + admins). Admins edit it (duplicate check); members
+  see it read-only; optional on join requests (`claims.memberNo`, copied on approval, ✓/✗ vs file); admins
+  can search the directory by it.
+- **Join-request email**: trigger `emailAdminsOnClaim` (claims → pending) BCCs admins; opt-out
+  `memberPrefs/{uid}.claimEmails = false` (Admin-page toggle).
+
 ## Roles (enforced in firestore.rules)
 - **signed in, not linked**: reads `members` only (to find themselves), writes own `claims/{uid}`,
   `profiles/{uid}`. The app shows only the "Find your member profile" screen (`S.guest`).
