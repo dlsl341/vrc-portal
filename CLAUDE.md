@@ -121,6 +121,9 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 - Sign-ups open `program.opensDays` (default 6) days before and close at session start; admins bypass.
 - Novice: `boatRequired: false` (coach assigns). PCOC off for Intermediate/Novice/Para/Juniors.
 - Calendar invites: `.ics` download + Google/Outlook links, provider chosen from the member's email.
+- Rigs: **sculling** = rig contains `x` (1x 2x 4x 4x+ 8x+), **sweep** = otherwise (2- 2+ 4- 4+ 8+) → `rigStyle`,
+  `styleTag`. Fleet cards colour rig chips (blue sculling / amber sweep) + a tag for the current rig; Fleet has a
+  Sculling/Sweep filter (by current rig); booking rig choices read "4x · Sculling"; re-rig hints name the switch.
 - Photos are resized client-side (damage ≤1600px JPEG, profile 400px square).
 
 ## Working on it
