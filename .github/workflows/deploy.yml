@@ -37,6 +37,10 @@ jobs:
     permissions: { contents: read, pull-requests: write, checks: write }
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp preview version
+        env: { TITLE: "${{ github.event.pull_request.title }}" }
+        run: |
+          node -e 'require("fs").writeFileSync("public/version.json", JSON.stringify({version:"preview #${{ github.event.pull_request.number }}",sha:process.env.GITHUB_SHA.slice(0,7),date:new Date().toISOString(),title:process.env.TITLE}))'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -49,8 +53,17 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
+    permissions: { contents: write }   # to tag each live version as a GitHub release
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp version (v1.<run number>) into the portal
+        id: ver
+        env: { MSG: "${{ github.event.head_commit.message }}" }
+        run: |
+          V="v1.${{ github.run_number }}"
+          echo "v=$V" >> "$GITHUB_OUTPUT"
+          node -e 'const t=(process.env.MSG||"").split("\n").filter(Boolean);const title=(t[0]||"").startsWith("Merge pull request")&&t[1]?t[1]:(t[0]||"");require("fs").writeFileSync("public/version.json", JSON.stringify({version:process.argv[1],sha:process.env.GITHUB_SHA.slice(0,7),date:new Date().toISOString(),title}))' "$V"
+          cat public/version.json
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: Write service account key
@@ -78,3 +91,8 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
         run: npx --yes firebase-tools@14 deploy --only hosting,firestore:rules,storage,functions --project "$PROJECT_ID" --non-interactive --force
+      - name: Record this live version as a GitHub release
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          T=$(node -p 'require("./public/version.json").title || "Update"')
+          gh release create "${{ steps.ver.outputs.v }}" --target "$GITHUB_SHA" --title "${{ steps.ver.outputs.v }} – $T" --generate-notes --latest || echo "Release not created (non-fatal)"

@@ -94,3 +94,17 @@ ${by ? `<p style="color:#777">Cancelled by ${esc(by)}.</p>` : ''}${button(SITE +
   const text = `${title}\n${when}\n\nCANCELLED${why ? ' – ' + why : ''}.${notes ? '\n' + notes : ''}\n\nYou were signed up for this session. Nothing you need to do.${by ? '\nCancelled by ' + by + '.' : ''}\n\n${SITE}`;
   return { subject, html, text };
 }
+
+export function claimAdminEmail({ requester, type, memberName, firstName, lastName, programs = [], email, phone, memberNo, note, at }) {
+  const who = requester || [firstName, lastName].filter(Boolean).join(' ') || 'Someone';
+  const what = type === 'existing' ? `says they are <b>${esc(memberName || 'a member')}</b>` : `is new to the portal: <b>${esc([firstName, lastName].filter(Boolean).join(' '))}</b>${programs.length ? ' · ' + esc(programs.join(', ')) : ''}`;
+  const subject = `Join request: ${type === 'existing' ? (memberName || who) : [firstName, lastName].filter(Boolean).join(' ') || who} – please review`;
+  const rows = [['Email', email], ['Phone', phone], ['Member number', memberNo], ['Note', note], ['Sent', at ? at.replace('T', ' ').slice(0, 16) + ' UTC' : '']]
+    .filter(([, v]) => v).map(([k, v]) => `<tr><td style="padding:3px 12px 3px 0;color:#777;white-space:nowrap">${esc(k)}</td><td style="padding:3px 0">${esc(v)}</td></tr>`).join('');
+  const html = frame('New join request', `<p><b>${esc(who)}</b> (signed in) ${what}.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:15px">${rows}</table>
+${button(SITE + '/#admin', 'Review on the Admin page')}
+<p style="color:#777;font-size:13px">Approving links their sign-in to the member profile and sends them a welcome email. You’re getting this because you’re a portal admin – you can switch these emails off on the Admin page.</p>`);
+  const text = `${who} (signed in) ${type === 'existing' ? 'says they are ' + (memberName || 'a member') : 'is new to the portal: ' + [firstName, lastName].filter(Boolean).join(' ')}.\n${email ? 'Email: ' + email + '\n' : ''}${phone ? 'Phone: ' + phone + '\n' : ''}${memberNo ? 'Member number: ' + memberNo + '\n' : ''}${note ? 'Note: ' + note + '\n' : ''}\nReview: ${SITE}/#admin`;
+  return { subject, html, text };
+}

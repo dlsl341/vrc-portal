@@ -303,6 +303,8 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .rs{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:10px;padding:1px 8px;margin-left:4px;vertical-align:1px;white-space:nowrap}
 .rs-scull{background:#e3eefb;color:#1f4f8a}.rs-sweep{background:#fbeedd;color:#8a4b00}
 .rig.rg-scull{border-color:#b9cfe9}.rig.rg-sweep{border-color:#ebcfa9}.rig.rg-scull.cur{background:#1f4f8a;border-color:#1f4f8a;color:#fff}.rig.rg-sweep.cur{background:#8a4b00;border-color:#8a4b00;color:#fff}
+.ro{padding:8px 0;font-weight:600}
+footer .ver{color:var(--ink3);font-size:11.5px}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
@@ -407,7 +409,7 @@ ol.steps li{margin-bottom:8px}
 <nav class="tabbar" aria-label="Quick"><a href="#home" data-tab="home"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5h4v5"/></svg><span>Home</span></a><a href="#programs" data-tab="programs"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Programs</span></a><a href="#results" data-tab="results"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Training</span></a><a href="#fleet" data-tab="fleet"><svg viewBox="0 0 24 24"><path d="M2 14c4 3 16 3 20 0M6 14l2-6h8l2 6M12 8V4"/></svg><span>Fleet</span><i class="n nb-issues" hidden></i></a><button type="button" data-menu><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menu</span><i class="n nb-claims" hidden></i></button></nav>
 
 <main class="wrap" id="main"></main>
-<footer>Vancouver Rowing Club · Club portal</footer>
+<footer>Vancouver Rowing Club · Club portal <span id="appVer" class="ver"></span></footer>
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-hidden="true"></aside>
@@ -877,13 +879,14 @@ function viewMembers(){
     ['x1','Sessions logged',allActs().filter(a=>a.date<t).length,'var(--red)',0],
     ['x2','Upcoming bookings',allActs().filter(a=>a.date>=t).length,'#6b5ca5',0]];
   const q=S.mq.trim().toLowerCase();
+  const noMatch=id=>canAdmin()&&q&&String((privOf(id)||{}).memberNo||'').toLowerCase().includes(q);
   const list=all.filter(([id,m])=>{
     if(S.mstatus==='current'&&m.status==='inactive')return false;
     if(S.mstatus==='linked'&&!m.linkedUser)return false;
     if(S.mstatus==='admins'&&!m.siteAdmin)return false;
     if(['review','active','inactive'].includes(S.mstatus)&&m.status!==S.mstatus)return false;
     if(S.mprog!=='all'&&!(m.programs||[]).includes(S.mprog))return false;
-    if(q&&!(`${m.displayName} ${m.firstName||''} ${m.lastName||''} ${(m.programs||[]).join(' ')}`.toLowerCase().includes(q)))return false;
+    if(q&&!(`${m.displayName} ${m.firstName||''} ${m.lastName||''} ${(m.programs||[]).join(' ')}`.toLowerCase().includes(q))&&!noMatch(id))return false;
     return true}).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
   const claimsHtml=canAdmin()&&pend.length?`<a class="callout adm-go" href="#admin"><b>${pend.length} profile request${pend.length===1?'':'s'} waiting</b> – review them on the Admin page ›</a>`:'';
   const progs=progNames().filter(p=>all.some(([,m])=>(m.programs||[]).includes(p)));
@@ -934,6 +937,7 @@ function memberDetail(id,inPage){
    </dl></div>
    ${priv?`<div class="sec"><h4>Contact & private details <span class="lock">🔒 ${self?'visible to you and admins only':'visible to admins and this member only'}</span></h4><dl class="kv">
      <dt>Full name</dt><dd>${esc([m.firstName,m.lastName].filter(Boolean).join(' ')||'—')}</dd>
+     <dt>Member number</dt><dd>${pv&&pv.memberNo?`<b>${esc(pv.memberNo)}</b>`:'—'}</dd>
      <dt>Email</dt><dd>${pv&&pv.email?esc(pv.email):'—'}</dd>
      <dt>Phone</dt><dd>${pv&&pv.phone?esc(pv.phone):'—'}</dd>
      <dt>Emergency contact</dt><dd>${pv&&pv.emergencyName?esc(pv.emergencyName)+(pv.emergencyPhone?' · '+esc(pv.emergencyPhone):''):'—'}</dd>
@@ -998,6 +1002,7 @@ function bindMembers(){
   m.querySelectorAll('[data-mstat]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.mstat;render()});
   m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
   m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
+  {const t=$('#claimMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({claimEmails:t.checked},{merge:true}),t.checked?'You’ll get join request emails':'Join request emails off')}
   {const t=$('#issueMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({issueEmails:t.checked},{merge:true}),t.checked?'You’ll get damage report emails':'Damage report emails off')}
   m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
   m.querySelectorAll('[data-mlayout]').forEach(el=>el.onclick=()=>{S.mlayout=el.dataset.mlayout;try{localStorage.setItem('memberLayout',S.mlayout)}catch(e){};render()});
@@ -1019,14 +1024,15 @@ function bindMembers(){
 /* ---------- forms ---------- */
 function weightFields(kg){return `${fld('Weight',`<div style="display:flex;gap:6px"><input name="weight" type="number" step="0.1" min="20" max="200" value="${kg?esc(kg):''}"><select name="wunit" style="width:80px"><option value="kg">kg</option><option value="lb">lb</option></select></div>`,'','Used to match crews to boat weight classes')}`}
 function toKg(fd){if(!fd.weight)return null;const v=+fd.weight;return Math.round((fd.wunit==='lb'?v/2.2046:v)*10)/10}
-function contactFields(pv){pv=pv||{};return `
+function contactFields(pv,opts={}){pv=pv||{};return `
+    ${opts.admin?fld('Member number',`<input name="memberNo" value="${esc(pv.memberNo||'')}" placeholder="e.g. VRC-1042" autocomplete="off">`,'','Club membership number'):fld('Member number',`<div class="ro">${esc(pv.memberNo||'—')}</div>`,'','Set by the club. Ask an admin if it’s missing or wrong.')}
     ${fld('Email',`<input name="email" type="email" value="${esc(pv.email||'')}">`)}
     ${fld('Phone',`<input name="phone" type="tel" value="${esc(pv.phone||'')}">`)}
     ${fld('Emergency contact name',`<input name="emergencyName" value="${esc(pv.emergencyName||'')}">`)}
     ${fld('Emergency contact phone',`<input name="emergencyPhone" type="tel" value="${esc(pv.emergencyPhone||'')}">`)}
     ${weightFields(pv.weightKg)}
     ${fld('Medical notes',`<input name="medical" value="${esc(pv.medical||'')}" placeholder="Anything coaches should know">`)}`}
-function privFrom(fd){return {email:fd.email.trim(),phone:fd.phone.trim(),emergencyName:fd.emergencyName.trim(),emergencyPhone:fd.emergencyPhone.trim(),weightKg:toKg(fd),medical:fd.medical.trim(),updatedAt:nowIso()}}
+function privFrom(fd){return {...(fd.memberNo!==undefined?{memberNo:fd.memberNo.trim()}:{}),email:fd.email.trim(),phone:fd.phone.trim(),emergencyName:fd.emergencyName.trim(),emergencyPhone:fd.emergencyPhone.trim(),weightKg:toKg(fd),medical:fd.medical.trim(),updatedAt:nowIso()}}
 
 function memberForm(id){
   const m=id?S.members[id]:{programs:[],roles:['rower'],status:'active'};const pr=id?prefsOf(id):{};const pv=id?(privOf(id)||{}):{};
@@ -1043,9 +1049,10 @@ function memberForm(id){
     ${fld('PCOC registered',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="pcoc" value="1" ${m.pcoc?'checked':''}> Cleared for off-program rowing</label>`)}
     ${fld('PCOC date',`<input type="date" name="pcocDate" value="${esc(m.pcocDate||'')}">`)}
     <div class="full fsub">Private details · visible to admins and the member only</div>
-    ${contactFields(pv)}
+    ${contactFields(pv,{admin:true})}
   </div>${formFoot(id?'Save changes':'Add member')}</form>`,()=>{let av={file:null,removed:false};if(id)wireAvatarField(id).then(x=>av=x);wireForm({
-    validate:fd=>!fd.firstName.trim()?'First name is required.':null,
+    validate:fd=>{if(!fd.firstName.trim())return 'First name is required.';const no=(fd.memberNo||'').trim().toLowerCase();
+      if(no){const dup=Object.keys(S.members).find(x=>x!==id&&String((privOf(x)||{}).memberNo||'').trim().toLowerCase()===no);if(dup)return `Member number ${fd.memberNo.trim()} is already used by ${mName(dup)}.`}return null},
     msg:id?'Member updated':'Member added',
     save:async fd=>{
       const dn=fd.displayName.trim()||dispName(fd.firstName,fd.lastName);
@@ -1074,7 +1081,7 @@ function selfForm(id){
     save:async fd=>{
       const ph=await savePhoto(av,pr.photo);
       await S.db.doc('memberPrefs/'+S.me).set({...prefsOf(id),sides:fd._c.sides||[],experience:fd.experience,bio:fd.bio.trim(),calPrompt:!!(fd._c.calPrompt||[]).length,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
-      await S.db.doc('memberPrivate/'+S.me).set(privFrom(fd));
+      await S.db.doc('memberPrivate/'+S.me).set({...(privOf(id)||{}),...privFrom(fd)});
     }})});
 }
 function claimForm(mid){
@@ -1084,11 +1091,12 @@ function claimForm(mid){
     ${m?`${fld('Your full last name',`<input name="lastName" placeholder="Helps the admin confirm it's you">`,'full')}`:''}
     ${fld('Email',`<input name="email" type="email">`)}
     ${fld('Phone',`<input name="phone" type="tel">`)}
+    ${fld('Member number',`<input name="memberNo" placeholder="If you know it" autocomplete="off">`,'','Optional – helps the admin confirm it’s you')}
     ${fld('Note for the admin',`<input name="note" placeholder="e.g. I row Saturday Masters">`,'full')}
   </div><p class="muted" style="font-size:12px;margin:10px 0 0">An admin confirms each request before your account is linked. Your email and phone are only visible to admins.</p>${formFoot('Send request')}</form>`,()=>wireForm({msg:'Request sent – an admin will confirm shortly',
     validate:fd=>!m&&!fd.firstName.trim()?'First name is required.':null,
     save:async fd=>{
-      const base={note:fd.note.trim(),email:fd.email.trim(),phone:fd.phone.trim(),lastName:(fd.lastName||'').trim(),status:'pending',at:nowIso()};
+      const base={note:fd.note.trim(),email:fd.email.trim(),phone:fd.phone.trim(),memberNo:(fd.memberNo||'').trim(),lastName:(fd.lastName||'').trim(),status:'pending',at:nowIso()};
       await S.db.doc('claims/'+S.me).set(m?{...base,type:'existing',memberId:mid}:{...base,type:'new',firstName:fd.firstName.trim(),programs:fd._c.programs||[]});
     }}));
 }
@@ -1108,7 +1116,7 @@ async function approveClaim(uid,btn){
       await S.db.doc('members/'+mid).set({displayName:dn,firstName:c.firstName||'',lastName:c.lastName||'',programs:c.programs||[],roles:['rower'],status:'active',pcoc:false,linkedUser:uid,linkedAt:nowIso(),createdAt:nowIso(),source:'Created from a member request'});
     }
     const oldP=S.mpriv[mid],oldPr=S.mprefs[mid];
-    const priv={...(oldP||{})};if(c.email)priv.email=c.email;if(c.phone)priv.phone=c.phone;
+    const priv={...(oldP||{})};if(c.email)priv.email=c.email;if(c.phone)priv.phone=c.phone;if(c.memberNo&&!priv.memberNo)priv.memberNo=c.memberNo;
     if(Object.keys(priv).length)await S.db.doc('memberPrivate/'+uid).set({...priv,updatedAt:nowIso()});
     if(oldP)await S.db.doc('memberPrivate/'+mid).delete();
     if(oldPr){await S.db.doc('memberPrefs/'+uid).set(oldPr);await S.db.doc('memberPrefs/'+mid).delete()}
@@ -2523,18 +2531,28 @@ function bindHome(){
 }
 
 /* =================== ADMIN PAGE (admins + owner only) =================== */
+function claimEmailToggle(){const on=((S.mprefs||{})[S.me]||{}).claimEmails!==false;
+  return `<label class="tog" style="margin:-6px 0 12px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="claimMailTog" ${on?'checked':''}> Email me when someone asks to join or link their profile</label>`}
 function issueEmailToggle(){const on=((S.mprefs||{})[S.me]||{}).issueEmails!==false;
   return `<label class="tog" style="margin:0 0 12px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="issueMailTog" ${on?'checked':''}> Email me when a member reports damage on a boat</label>`}
 function mailLogHtml(){const L=Object.entries(S.mailLog||{}).sort((a,b)=>String(b[1].at).localeCompare(String(a[1].at))).slice(0,8);
   if(!L.length)return `<div class="sec"><h4>Member emails</h4><div class="empty">No emails sent yet. Welcome emails go out automatically when you approve a request – once email is set up (see docs/EMAIL.md).</div></div>`;
-  return `<div class="sec"><h4>Emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('welcome')?'Welcome':k.startsWith('issue')?'Damage report':k.startsWith('cancel')?'Class cancelled':k.startsWith('reinstate')?'Class back on':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
+  return `<div class="sec"><h4>Emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('claim')?'New join request':k.startsWith('welcome')?'Welcome':k.startsWith('issue')?'Damage report':k.startsWith('cancel')?'Class cancelled':k.startsWith('reinstate')?'Class back on':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
     <span class="pill ${m.status==='sent'?'s-available':m.status==='failed'?'s-repair':'s-dnr'}" title="${esc(m.error||'')}">${m.status==='sent'?'Sent':m.status==='failed'?'Failed':'Sending'}</span></div>`).join('')}</div>`}
+// Version stamped at deploy (public/version.json, written by .github/workflows/deploy.yml)
+S.ver=null;
+fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v)return;S.ver=v;const el=$('#appVer');if(el)el.textContent='· '+v.version+(v.date?' · '+new Date(v.date).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'');if(S.view==='admin')render()}).catch(()=>{});
+function versionHtml(){const v=S.ver;if(!v)return '';const rel=/^v\d/.test(v.version)?`https://github.com/dlsl341/vrc-portal/releases/tag/${encodeURIComponent(v.version)}`:'https://github.com/dlsl341/vrc-portal/releases';
+  return `<div class="sec"><h4>Portal version</h4><p style="margin:0"><b style="font-size:18px">${esc(v.version)}</b>${v.date?` <span class="tag">· live since ${esc(new Date(v.date).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}))}</span>`:''}</p>
+   ${v.title?`<p class="tag" style="margin:4px 0 0">Latest change: ${esc(v.title)}${v.sha?` · ${esc(v.sha)}`:''}</p>`:''}
+   <p class="tag" style="margin:8px 0 0"><a class="lnk" href="${rel}" target="_blank" rel="noopener">See what changed in this version</a> · <a class="lnk" href="https://github.com/dlsl341/vrc-portal/releases" target="_blank" rel="noopener">All versions</a>. To go back to an earlier version, ask Claude to “roll back to v1.NN”, or use Firebase → Hosting → Release history → Rollback.</p></div>`}
 function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
 function claimItem(uid,c){
   const who=(S.profiles[uid]&&S.profiles[uid].name)||'A member';
   const what=c.type==='existing'?`says they are <span class="lnk" data-member="${esc(c.memberId)}">${esc(mName(c.memberId))}</span>${c.lastName?` <span class="muted">(last name: ${esc(c.lastName)})</span>`:''}`
     :`is new to the portal: <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b> · ${esc((c.programs||[]).join(', ')||'no program')}`;
-  const contact=[c.email,c.phone].filter(Boolean).map(esc).join(' · ');
+  const known=c.type==='existing'?(privOf(c.memberId)||{}).memberNo:'';
+  const contact=[c.email,c.phone,c.memberNo?`Member # ${c.memberNo}${known?(String(known).toLowerCase()===String(c.memberNo).toLowerCase()?' ✓ matches':` ✗ on file: ${known}`):''}`:''].filter(Boolean).map(esc).join(' · ');
   return `<div class="item claim"><div><b>${esc(who)}</b> <span class="muted">(signed in)</span> ${what}
     ${contact?`<div class="tag" style="margin-top:3px">${contact}</div>`:''}
     ${c.note?`<div class="muted" style="margin-top:3px">“${esc(c.note)}”</div>`:''}<div class="when">Sent ${fmtDate(c.at)}</div></div>
@@ -2556,8 +2574,9 @@ function viewAdmin(){
   <div class="sec claims"><h4>Profile requests · ${pend.length} waiting</h4>
     ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
     <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
-  ${issueEmailToggle()}
+  ${issueEmailToggle()}${claimEmailToggle()}
   ${mailLogHtml()}
+  ${versionHtml()}
   ${adminRoster()}`;
 }
 

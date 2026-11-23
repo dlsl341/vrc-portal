@@ -13,7 +13,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, smtpSettings, validEmail } from './mail.js';
 
 initializeApp();
 const db = getFirestore();
@@ -221,14 +221,14 @@ export const emailOnDecline = onDocumentUpdated({ document: 'claims/{uid}', regi
 });
 
 // Email every admin (and the owner) when a member reports damage on a boat.
-async function adminEmails() {
+async function adminEmails(prefKey = 'issueEmails') {
   const uids = new Set((await db.collection('admins').get()).docs.map(d => d.id));
   const settings = await db.doc('config/settings').get();
   if (settings.exists && settings.data().ownerUid) uids.add(settings.data().ownerUid);
   const out = new Set();
   for (const uid of uids) {
     const pref = await db.doc('memberPrefs/' + uid).get();
-    if (pref.exists && pref.data().issueEmails === false) continue;   // admin opted out
+    if (pref.exists && pref.data()[prefKey] === false) continue;   // admin opted out of this kind of email
     const e = await memberEmail(uid, null); if (e) out.add(e.toLowerCase());
   }
   return [...out];
@@ -273,4 +273,17 @@ export const emailOnCancel = onDocumentWritten({ document: 'occurrences/{id}', r
   const msg = cancelEmail({ title: s.title || 'Your session', date, start: s.start, end: s.end, reasonCode: after.reasonCode, reason: after.reason, notes: reinstated ? after.reinstateNotes : after.cancelNotes, by: after.cancelledBy, reinstated });
   const stamp = String((reinstated ? after.reinstatedAt : after.cancelledAt) || Date.now()).replace(/\W/g, '');
   await sendOnce(`${reinstated ? 'reinstate' : 'cancel'}_${event.params.id}_${stamp}`, { bcc: [...emails], label: `${emails.size} member${emails.size === 1 ? '' : 's'}` }, msg);
+});
+
+// Email admins when someone asks to join / link their profile (claims/{uid} becomes pending).
+export const emailAdminsOnClaim = onDocumentWritten({ document: 'claims/{uid}', region: REGION }, async (event) => {
+  const before = (event.data.before && event.data.before.data()) || null, after = (event.data.after && event.data.after.data()) || null;
+  if (!after || after.status !== 'pending' || (before && before.status === 'pending')) return;
+  const uid = event.params.uid;
+  const [p, m] = await Promise.all([db.doc('profiles/' + uid).get(), after.memberId ? db.doc('members/' + after.memberId).get() : null]);
+  const to = await adminEmails('claimEmails');
+  if (!to.length) return console.warn('mail: no admin emails for claim', uid);
+  const msg = claimAdminEmail({ requester: p.exists ? p.data().name : '', type: after.type, memberName: m && m.exists ? m.data().displayName : '',
+    firstName: after.firstName, lastName: after.lastName, programs: after.programs || [], email: after.email, phone: after.phone, memberNo: after.memberNo, note: after.note, at: after.at });
+  await sendOnce(`claim_${uid}_${String(after.at || Date.now()).replace(/\W/g, '')}`, { bcc: to }, msg);
 });
