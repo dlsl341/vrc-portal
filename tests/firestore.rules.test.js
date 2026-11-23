@@ -216,6 +216,22 @@ test('members book open erg time only for themselves; others cannot cancel it', 
   await assertSucceeds(deleteDoc(doc(as('alice'), 'openErg/o1')));
 });
 
+// ---- erg waitlist
+test('members join an erg waitlist only for themselves, in their own slot; admins can remove anyone', async () => {
+  const w = { sessionId: 'masters-tue-erg', date: '2026-11-24', memberId: 'm_alice', group: 'Masters', by: 'alice', t: Date.now(), at: new Date().toISOString() };
+  await assertSucceeds(setDoc(doc(as('alice'), 'waitlist/masters-tue-erg_20261124_m_alice'), w));
+  await assertFails(setDoc(doc(as('alice'), 'waitlist/masters-tue-erg_20261124_m_bob'), { ...w, memberId: 'm_bob' }));
+  await assertFails(setDoc(doc(as('alice'), 'waitlist/x_20261124_m_alice'), w));                       // id must match
+  await assertFails(setDoc(doc(as('bob'), 'waitlist/masters-tue-erg_20261124_m_bob'), { ...w, memberId: 'm_bob', by: 'bob', t: 1 })); // can't jump the line
+  await assertFails(setDoc(doc(as('stranger'), 'waitlist/masters-tue-erg_20261124_m_alice'), { ...w, by: 'stranger' }));
+  await assertSucceeds(getDoc(doc(as('bob'), 'waitlist/masters-tue-erg_20261124_m_alice')));
+  await assertFails(updateDoc(doc(as('alice'), 'waitlist/masters-tue-erg_20261124_m_alice'), { t: 1 }));
+  await assertFails(deleteDoc(doc(as('bob'), 'waitlist/masters-tue-erg_20261124_m_alice')));
+  await assertSucceeds(deleteDoc(doc(as('alice'), 'waitlist/masters-tue-erg_20261124_m_alice')));
+  await assertSucceeds(setDoc(doc(as('alice'), 'waitlist/masters-tue-erg_20261124_m_alice'), w));
+  await assertSucceeds(deleteDoc(doc(as('carol'), 'waitlist/masters-tue-erg_20261124_m_alice')));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));

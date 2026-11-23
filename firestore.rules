@@ -112,6 +112,20 @@ service cloud.firestore {
       allow write: if isAdmin() || (isMember() && mid == myMemberId());
     }
 
+    // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
+    // The server (functions) gives a freed erg to the first in line and deletes the entry.
+    match /waitlist/{id} {
+      allow read: if canUse();
+      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
+                                      && request.resource.data.memberId == myMemberId()
+                                      && id == request.resource.data.sessionId + '_' + request.resource.data.date.replace('-', '') + '_' + myMemberId()
+                                      && request.resource.data.group is string
+                                      && request.resource.data.t is int        // place in line = time joined (ms)
+                                      && math.abs(request.resource.data.t - request.time.toMillis()) < 300000);
+      allow update: if false;
+      allow delete: if isAdmin() || (isMember() && resource.data.memberId == myMemberId());
+    }
+
     // ---- open erg: members book an erg for themselves outside programmed erg time ----
     match /openErg/{id} {
       allow read: if canUse();

@@ -305,7 +305,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .rig.rg-scull{border-color:#b9cfe9}.rig.rg-sweep{border-color:#ebcfa9}.rig.rg-scull.cur{background:#1f4f8a;border-color:#1f4f8a;color:#fff}.rig.rg-sweep.cur{background:#8a4b00;border-color:#8a4b00;color:#fff}
 .ro{padding:8px 0;font-weight:600}
 footer .ver{color:var(--ink3);font-size:11.5px}
-.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}.wl-g{margin-top:8px}.wl-g ol{margin:4px 0 0;padding-left:22px;font-size:14px;line-height:1.7}.wl-g li.me{font-weight:700}.wl-g .btn.sm{padding:0 7px;line-height:1.4}.callout .btn.sm{margin-left:6px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
 .fsub{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
@@ -497,7 +497,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -1225,6 +1225,33 @@ function ergChoices(sid,d,mid,any){
 function nextErg(sid,d,mid,any){const used=new Set(sessBookings(sid,d).map(([,b])=>b.erg));return ergChoices(sid,d,mid,any).find(n=>!used.has(n))||null}
 function ergFullMsg(sid,d,mid){const g=myErgGroups(sid,mid);const nm=g.length?g.map(x=>x.name).join(' / ')+' ergs are':'ergs for your program are';
   return `The ${esc(nm)} all taken. Any erg still free opens to everyone at ${esc(ergOpenLabel(sid))} on ${esc(dayLabel(d))}.`}
+/* ---------- erg waitlist (per group; the server hands a freed erg to the first in line) ---------- */
+S.waitlist={};
+const wlKey=(sid,d,mid)=>sid+'_'+d.replace(/-/g,'')+'_'+mid;
+const inSession=(sid,d,mid)=>sessBookings(sid,d).some(([,b])=>bMembers(b).includes(mid));
+function waitLine(sid,d,group){return Object.entries(S.waitlist||{}).filter(([,w])=>w.sessionId===sid&&w.date===d&&(!group||String(w.group).toLowerCase()===group.toLowerCase())&&!inSession(sid,d,w.memberId)).sort((a,b)=>(a[1].t||0)-(b[1].t||0))}
+const myWait=(sid,d)=>{const me=myMemberId();return me?(S.waitlist||{})[wlKey(sid,d,me)]||null:null};
+function waitPos(sid,d,mid){const w=(S.waitlist||{})[wlKey(sid,d,mid)];return w?waitLine(sid,d,w.group).findIndex(([,x])=>x.memberId===mid)+1:0}
+// may this member join a waitlist here? → the group to wait for, or null
+function waitGroupFor(sid,d,mid){
+  if(!mid||!ergGroups(sid).length||inSession(sid,d,mid)||nextErg(sid,d,mid)&&!(capacity(sid,d)&&sessBookings(sid,d).length>=capacity(sid,d)))return null;
+  const gs=myErgGroups(sid,mid);return gs.length?gs[0]:null}
+async function joinWait(sid,d){
+  const me=myMemberId(),g=waitGroupFor(sid,d,me);if(!g)return toast('An erg is free – reserve it instead');
+  const t=Date.now();
+  await guarded(()=>S.db.doc('waitlist/'+wlKey(sid,d,me)).set({sessionId:sid,date:d,memberId:me,group:g.name,by:S.me,t,at:new Date(t).toISOString()}),`You’re on the ${g.name} waitlist`);
+}
+async function leaveWait(key,who){
+  if(who&&!confirm(`Take ${who} off the waitlist?`))return;
+  await guarded(()=>S.db.doc('waitlist/'+key).delete(),who?'Removed from the waitlist':'You’ve left the waitlist');
+}
+async function dropWait(sid,d,mid){const k=wlKey(sid,d,mid);if((S.waitlist||{})[k]&&(mid===myMemberId()||canAdmin())){try{await S.db.doc('waitlist/'+k).delete()}catch(e){}}}
+function waitlistHtml(sid,d){
+  const gs=ergGroups(sid);if(!gs.length)return '';
+  const blocks=gs.map(g=>{const line=waitLine(sid,d,g.name);if(!line.length)return '';
+    return `<div class="wl-g"><div class="tag"><b>${esc(g.name)}</b> · ${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to} · ${line.length} waiting</div><ol>${line.map(([k,w])=>`<li class="${w.memberId===myMemberId()?'me':''}"><span class="lnk" data-member="${esc(w.memberId)}">${esc(mName(w.memberId))}</span>${canAdmin()?` <button class="btn sm" data-wlrm="${esc(k)}" title="Remove from the waitlist">×</button>`:''}</li>`).join('')}</ol></div>`}).join('');
+  return blocks?`<div class="sec wl"><h4>Waitlist</h4>${blocks}<p class="tag" style="margin:6px 0 0">When an erg is cancelled, it goes automatically to the first person waiting in that erg’s group, who gets an email.</p></div>`:'';
+}
 const bMembers=b=>[...(b.crew||[]),b.cox].filter(Boolean);
 function windowState(sid,d){
   const s=S.sessions[sid],p=progOf(sid);const days=p.opensDays==null?6:+p.opensDays;
@@ -1300,12 +1327,17 @@ function viewSession(){
   else if(!eligible(me,id))notice=`<div class="callout">This session is for ${esc(eligNames(id).join(', '))}. ${s.guestNote?esc(s.guestNote):'Contact the coach if you’d like to join.'}</div>`;
   else if(full&&!mine)notice=`<div class="callout">This session is full (${cap} ${erg?'ergs':'boats'}).${!erg?' Look for open seats below.':''}</div>`;
   else if(ergNone)notice=`<div class="callout">${ergFullMsg(id,d,me)}</div>`;
+  const myW=erg?myWait(id,d):null,wlLive=erg&&!o.cancelled&&w.state==='open'&&!!me&&!mine&&eligible(me,id)&&canMember();
+  const wlGroup=wlLive&&!myW?waitGroupFor(id,d,me):null;
+  if(myW&&!mine&&!o.cancelled&&w.state!=='closed')notice=`<div class="callout wl-me">You’re <b>#${waitPos(id,d,me)}</b> on the <b>${esc(myW.group)}</b> waitlist. If an erg in your block is cancelled, it’s yours automatically – we’ll email you.${ergOverflow(id,d)?' Ergs left free are now open to everyone – grab one if you see it.':` Any erg still free opens to everyone at ${esc(ergOpenLabel(id))}.`} <button class="btn sm" id="wlLeave">Leave waitlist</button></div>`;
+  else if(wlGroup)notice=`<div class="callout">${full?`This session is full (${cap} ergs).`:ergFullMsg(id,d,me)} <button class="btn sm pri" id="wlJoin">Join the ${esc(wlGroup.name)} waitlist</button>${waitLine(id,d,wlGroup.name).length?` <span class="tag">${waitLine(id,d,wlGroup.name).length} already waiting</span>`:''}</div>`;
   const eg=erg?ergGroups(id):[];
   const days=p.opensDays==null?6:+p.opensDays;
   const ergLegend=eg.length?`<div class="sec policy"><h4>Erg reservation policy</h4><ul>
     <li>Ergs are reserved by program: ${eg.map(g=>`<b>${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to}</b> ${esc(g.name)}`).join(' · ')}.</li>
     <li>Reserve an erg in your own program’s block. You can only hold one erg per session.</li>
     <li>Any reserved erg still free at <b>${esc(ergOpenLabel(id))} on the day</b> opens to everyone${eg.some(g=>g.only)?`, except ${eg.filter(g=>g.only).map(g=>`${g.from===g.to?'erg '+g.from:'ergs '+g.from+'–'+g.to} (${esc(g.name)} only)`).join(', ')}`:''}.${ergOverflow(id,d)?` <b>${eg.some(g=>g.only)?'The other reserved ergs':'Reserved ergs'} are now open to everyone.</b>`:''}</li>
+    <li>Block full? Join your program’s <b>waitlist</b> – Masters and Intermediate each have their own line. A cancelled erg goes automatically to the first person waiting in that erg’s group (by email).</li>
     <li>Reservations open ${days} day${days===1?'':'s'} before and close when the session starts. Cancel if you can’t make it, so someone else can row.</li></ul></div>`:'';
   const used=new Set(bk.map(([,b])=>b.boatId).filter(Boolean));
   const avail=erg?[]:Object.entries(S.boats).filter(([bid,b])=>b.status==='available'&&!used.has(bid)&&!boatInMaint(bid,id,d)).sort((a,b)=>(a[1].seats-b[1].seats)||a[1].name.localeCompare(b[1].name));
@@ -1342,6 +1374,7 @@ function viewSession(){
   ${S.checkin&&canCheckIn()?checkinPanel(id,d):(()=>{const a=attSummary(id,d);return a?`<p class="tag att-sum">Attendance: <b>${a.present}</b> present · <b>${a.late}</b> late · <b>${a.absent}</b> no-show</p>`:''})()}
   <div class="${erg?'':'sgrid'}">
    <div>${ergLegend}${bk.length||(erg&&eg.length&&cap)?`<table class="t sheet"><thead><tr><th>${erg?'Erg':'#'}</th><th>${erg?'Rower':'Crew'}</th>${erg?'<th class="hide-s">Notes</th>':'<th>Boat</th><th class="hide-s">Crew mix / notes</th>'}<th></th></tr></thead><tbody>${erg?ergRows:rows}</tbody></table>`:`<div class="banner">${o.cancelled?'No sign-ups.':'No one has signed up yet.'}</div>`}
+   ${erg?waitlistHtml(id,d):''}
    ${!erg&&p.pcocAllowed===false?`<p class="tag" style="margin-top:10px">PCOC rowing isn’t permitted during this session.</p>`:''}</div>
    ${erg?'':`<aside class="sec avail"><h4>Boats still available · ${avail.length}</h4>${avail.length?CLASSES.map(c=>{const g=avail.filter(([,b])=>b.seats===c.k);return g.length?`<div class="av-g"><div class="tag">${c.t}</div>${g.map(([bid,b])=>`<div class="avb" ${canBook&&(!mine||canAdmin())?`data-bookboat="${esc(bid)}"`:''}><span><b>${esc(b.currentRig)}</b> ${esc(b.name)}${b.ownership==='private'?' <span class="tag">private</span>':''}</span><span class="tag">${b.weight&&b.weight.lbsMax?wtText(b.weight).split(' · ')[0]:''}</span></div>`).join('')}</div>`:''}).join(''):'<div class="empty">Every available boat is booked.</div>'}${canBook&&(!mine||canAdmin())?'<p class="tag" style="margin:8px 0 0">Tap a boat to book it.</p>':''}</aside>`}
   </div>`;
@@ -1361,6 +1394,8 @@ function bindPrograms(){
   on('#bookNew',()=>bookingForm(id,d,null,null));
   on('#ergMe',()=>{const me=myMemberId();if(!me&&canAdmin())return ergForm(id,d);ergSignup(id,d,me)});
   on('#ergOther',()=>ergForm(id,d));
+  on('#wlJoin',()=>joinWait(id,d));on('#wlLeave',()=>leaveWait(wlKey(id,d,myMemberId())));
+  m.querySelectorAll('[data-wlrm]').forEach(el=>el.onclick=()=>{const w=S.waitlist[el.dataset.wlrm];leaveWait(el.dataset.wlrm,w?mName(w.memberId):'this member')});
   on('#ciOpen',()=>{S.checkin=true;render()});if(S.checkin)bindCheckin(m,id,d);
   m.querySelectorAll('[data-logres]').forEach(el=>el.onclick=()=>{const b=S.bookings[el.dataset.logres];resultForm(null,{sessionId:b.sessionId,date:b.date,bookingId:el.dataset.logres})});
   m.querySelectorAll('[data-ergres]').forEach(el=>el.onclick=()=>{const n=+el.dataset.ergres,me=myMemberId();if(canAdmin())return ergForm(id,d,null,n);ergSignup(id,d,me,n)});
@@ -1445,6 +1480,7 @@ async function ergSignup(sid,d,mid,want){
   if(!n)return toast(ergFullMsg(sid,d,mid).replace(/&[^;]+;/g,''));
   const data={sessionId:sid,date:d,boatId:null,rig:'',crew:[mid],cox:null,open:false,notes:'',erg:n,captain:mid,createdBy:S.me||null,at:nowIso()};let ref=null;
   const ok=await guarded(async()=>{ref=await S.db.collection('bookings').add(data)},mid===myMemberId()&&prefsOf(mid).calPrompt===false?'You’re signed up':(mid===myMemberId()?'':'Added'));
+  if(ok)dropWait(sid,d,mid);
   if(ok&&ref&&mid===myMemberId())maybeCalendar(ref.id,data);
 }
 function ergForm(sid,d,bid,n){
@@ -1454,7 +1490,7 @@ function ergForm(sid,d,bid,n){
     ${fld('Notes',`<input name="notes" value="${esc(b?b.notes||'':'')}">`,'full')}
   </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Saved',validate:fd=>!fd.mid?'Choose a member.':null,
     save:async fd=>{if(b)await S.db.doc('bookings/'+bid).update({crew:[fd.mid],notes:fd.notes.trim(),updatedAt:nowIso()});
-      else{await S.db.collection('bookings').add({sessionId:sid,date:d,boatId:null,rig:'',crew:[fd.mid],cox:null,open:false,notes:fd.notes.trim(),erg:n&&!ergTaken(sid,d,n)?n:(nextErg(sid,d,fd.mid)||nextErg(sid,d,fd.mid,true)),captain:fd.mid,createdBy:S.me||null,at:nowIso()})}}}));
+      else{await S.db.collection('bookings').add({sessionId:sid,date:d,boatId:null,rig:'',crew:[fd.mid],cox:null,open:false,notes:fd.notes.trim(),erg:n&&!ergTaken(sid,d,n)?n:(nextErg(sid,d,fd.mid)||nextErg(sid,d,fd.mid,true)),captain:fd.mid,createdBy:S.me||null,at:nowIso()});dropWait(sid,d,fd.mid)}}}));
 }
 function cancelBooking(bid){
   const b=S.bookings[bid];const boat=S.boats[b.boatId];
@@ -2471,6 +2507,8 @@ function homeUpcoming(mid){
   for(const [bid,b] of Object.entries(S.bookings)){if(b.date<t||!bMembers(b).includes(mid))continue;const s=S.sessions[b.sessionId];if(!s)continue;const o=occ(b.sessionId,b.date);
     const what=s.type==='erg'?(b.erg?`Erg ${b.erg}`:'Erg'):(b.boatId&&S.boats[b.boatId]?`${S.boats[b.boatId].name}${b.rig?' · '+b.rig:''}`:'Boat TBC');
     items.push({d:b.date,t:s.start||'',title:s.title,sub:(b.cox===mid?'Coxing · ':'')+what,href:`#s-${b.sessionId}-${b.date.replace(/-/g,'')}`,kind:s.type==='erg'?'erg':'water',cancelled:o.cancelled?(o.reason||'Cancelled'):null,color:progOf(b.sessionId).color})}
+  for(const [,w] of Object.entries(S.waitlist||{})){if(w.memberId!==mid||w.date<t||inSession(w.sessionId,w.date,mid))continue;const s=S.sessions[w.sessionId];if(!s)continue;
+    items.push({d:w.date,t:s.start||'',title:s.title,sub:`Waitlist · #${waitPos(w.sessionId,w.date,mid)} for ${w.group}`,href:`#s-${w.sessionId}-${w.date.replace(/-/g,'')}`,kind:'erg',color:progOf(w.sessionId).color})}
   for(const [,o] of Object.entries(S.openErg||{}))if(o.memberId===mid&&o.date>=t)items.push({d:o.date,t:o.start,title:'Open erg',sub:`Erg ${o.erg} · ${fmtTime(o.start)}–${fmtTime(o.end)}`,href:'#openerg',kind:'erg'});
   for(const [,j] of Object.entries(S.mjobs||{}))if(j.status==='scheduled'&&j.date>=t&&(j.crew||[]).includes(mid))items.push({d:j.date,t:j.start,title:'Maintenance · '+j.task,sub:(S.boats[j.boatId]||{}).name||'',href:'#maintenance',kind:'maint'});
   return items.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
