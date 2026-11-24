@@ -112,6 +112,12 @@ service cloud.firestore {
       allow write: if isAdmin() || (isMember() && mid == myMemberId());
     }
 
+    // ---- Google Sheet copy: admins set the link (config) and ask for a sync (request); the server writes state
+    match /sheetSync/{id} {
+      allow read: if canUse();
+      allow write: if isAdmin() && id in ['config', 'request'];
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {

@@ -232,6 +232,16 @@ test('members join an erg waitlist only for themselves, in their own slot; admin
   await assertSucceeds(deleteDoc(doc(as('carol'), 'waitlist/masters-tue-erg_20261124_m_alice')));
 });
 
+// ---- Google Sheet copy
+test('only admins set the Google Sheet link or ask for a sync; nobody writes the sync status from the browser', async () => {
+  await assertSucceeds(setDoc(doc(as('carol'), 'sheetSync/config'), { sheetId: 'abc' }));
+  await assertSucceeds(setDoc(doc(as('carol'), 'sheetSync/request'), { at: 'now' }));
+  await assertFails(setDoc(doc(as('carol'), 'sheetSync/state'), { ok: true }));
+  await assertFails(setDoc(doc(as('alice'), 'sheetSync/config'), { sheetId: 'x' }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'sheetSync/config')));
+  await assertFails(getDoc(doc(as('stranger'), 'sheetSync/config')));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));

@@ -64,6 +64,16 @@ language, and keep the "propose → preview link → merge" workflow.
   (`fromWaitlist:true`), deletes the entry and emails them (`waitlistEmail`). Pure logic in `functions/waitlist.js`
   (tests/waitlist.test.mjs). Rules: own entry only, `t` within 5 min of server time (can't jump the line), no updates.
   No automatic promotion at noon itself (would need a scheduler) – after noon waiters can grab any free erg.
+- **Google Sheet copy** (read-only mirror for people who like the old spreadsheet): Admin page → "Google Sheet copy" saves
+  `sheetSync/config.sheetId`; the admin shares the sheet with the functions' runtime service account
+  (`<project number>-compute@developer.gserviceaccount.com`, Editor) and enables the Google Sheets API once. Triggers
+  `sheetOn*` (bookings, waitlist, occurrences, sessions, boats, sheetSync/config|request) debounce via `sheetSync/state.gen`
+  (4 s) and rewrite the portal's own tabs (ids in `sheetSync/state.tabs`; a name clash with someone else's tab gets
+  " (portal)") – one tab per weekday/program/type slot like "Mon - Masters ERG" / "Sat AM - Masters" showing the next
+  date (both erg waves on one tab, waitlists, cancellations) + "Boat Status". Layout in `functions/sheet.js`
+  (tests/sheet.test.mjs); Sheets REST via `fetch` + metadata-server token (no extra npm deps). Status/errors show on the
+  Admin page; schedule shows a "📄 Google Sheet" button once linked. One-way only: edits in the sheet are overwritten.
+  Tabs roll to the next date on the next change (or "Sync now"), not exactly when a session ends.
 - **Coxswains** (`#coxswains` tab, `coxAvail/{memberId}`: offered, weekly{sessionId:true}, dates{"<sid>_<YYYYMMDD>": yes|no}):
   a coxswain = Cox role OR member ticked "I can cox" on their profile (`offered`). They mark availability per
   on-water session for the next 2 weeks (+ "Every week"). Booking form's cox seat lists available coxswains
@@ -122,7 +132,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
-`openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` ·
+`openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` · `sheetSync/{config|request|state}` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
