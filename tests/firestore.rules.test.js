@@ -232,6 +232,23 @@ test('members join an erg waitlist only for themselves, in their own slot; admin
   await assertSucceeds(deleteDoc(doc(as('carol'), 'waitlist/masters-tue-erg_20261124_m_alice')));
 });
 
+// ---- no-show / late-cancel fees
+test('only admins set fee rules; members read only their own fees; admins can only waive or re-apply', async () => {
+  await assertSucceeds(setDoc(doc(as('carol'), 'feeRules/masters'), { enabled: true, noShowFee: 15, lateFee: 10, lateHours: 12, closeMin: 10 }));
+  await assertFails(setDoc(doc(as('alice'), 'feeRules/masters'), { enabled: false }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'feeRules/masters')));
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'fees/noshow_s_20261123_m_alice'), { memberId: 'm_alice', type: 'noshow', amount: 15, status: 'charged' }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'fees/noshow_s_20261123_m_alice')));
+  await assertFails(getDoc(doc(as('bob'), 'fees/noshow_s_20261123_m_alice')));
+  await assertFails(updateDoc(doc(as('alice'), 'fees/noshow_s_20261123_m_alice'), { status: 'waived' }));
+  await assertFails(setDoc(doc(as('carol'), 'fees/new'), { memberId: 'm_bob', amount: 99 }));
+  await assertFails(updateDoc(doc(as('carol'), 'fees/noshow_s_20261123_m_alice'), { amount: 1 }));
+  await assertSucceeds(updateDoc(doc(as('carol'), 'fees/noshow_s_20261123_m_alice'), { status: 'waived', waivedBy: 'carol', waivedAt: 'now' }));
+  await assertSucceeds(setDoc(doc(as('carol'), 'feeReports/request'), { at: 'now', by: 'carol' }));
+  await assertFails(setDoc(doc(as('alice'), 'feeReports/request'), { at: 'now' }));
+  await assertFails(getDoc(doc(as('alice'), 'feeRuns/x')));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));

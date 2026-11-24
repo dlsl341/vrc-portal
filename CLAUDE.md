@@ -64,6 +64,19 @@ language, and keep the "propose → preview link → merge" workflow.
   (`fromWaitlist:true`), deletes the entry and emails them (`waitlistEmail`). Pure logic in `functions/waitlist.js`
   (tests/waitlist.test.mjs). Rules: own entry only, `t` within 5 min of server time (can't jump the line), no updates.
   No automatic promotion at noon itself (would need a scheduler) – after noon waiters can grab any free erg.
+- **No-show / late-cancel fees** (Admin page → "No-show & late-cancel fees"; `feeRules/{programId}` {enabled, noShowFee,
+  lateFee, lateHours (default 12), closeMin (default 10)}). Server (`functions/index.js`, pure logic `functions/fees.js`,
+  tests/fees.test.mjs): `feeOnCancel` (bookings, with auth context) – a member removing **themselves** inside the late
+  window gets `fees/late_{sid}_{YYYYMMDD}_{mid}` status `pending` + `snapshot` of who was booked; admins removing people
+  never charge. `feeSweepEvery10` (Cloud Scheduler, every 10 min): once class closes (start + closeMin) settles pending
+  late fees (waived if a newcomer took a place – one newcomer per cancel, earliest first – or they booked back in; all
+  waived if the class was cancelled) and charges no-shows = booked but not marked present/late in `attendance`; no
+  attendance → nobody charged, `feeRuns/{sid}_{YYYYMMDD}.noAttendance` (flagged in report). `feeOnAttendance` waives a
+  no-show when the coach later checks them in. `feeEmails` emails the member on charged / removed. `feeWeeklyReport`
+  Sunday 20:00 UTC-7 (`Etc/GMT+7`) BCCs admins (opt-out `memberPrefs/{uid}.feeReports=false`) with a CSV; "Email me this
+  report now" = `feeReports/request`. Rules: admins write feeRules and may only change fee status (waive / re-apply);
+  members read their own fees. Session page shows the policy line; cancel/leave warn when it would be late.
+  Scheduled functions need the deploy service account to have **Cloud Scheduler Admin**.
 - **Coxswains** (`#coxswains` tab, `coxAvail/{memberId}`: offered, weekly{sessionId:true}, dates{"<sid>_<YYYYMMDD>": yes|no}):
   a coxswain = Cox role OR member ticked "I can cox" on their profile (`offered`). They mark availability per
   on-water session for the next 2 weeks (+ "Every week"). Booking form's cox seat lists available coxswains
@@ -122,7 +135,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
-`openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` ·
+`openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` · `feeRules` · `fees` · `feeRuns` · `feeReports` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
