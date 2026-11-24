@@ -15,6 +15,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
 import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, smtpSettings, validEmail } from './mail.js';
 import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
+import { buildTabs, bcToday, addDays, explainSheetError } from './sheet.js';
 
 initializeApp();
 const db = getFirestore();
@@ -331,4 +332,87 @@ export const ergWaitlistPromote = onDocumentWritten({ document: 'bookings/{id}',
   if (!to) return;
   await sendOnce(`waitlist_${promoted.bookingId}`, to, waitlistEmail({ firstName: (promoted.name || '').split(' ')[0], title: s.title || 'Erg session', date, start: s.start, end: s.end, erg,
     link: `https://vrc-rower-s-portal.web.app/#s-${sid}-${ymd}` }));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Google Sheet copy (read-only mirror of the sign-out sheets). An admin pastes a sheet link on the
+// Admin page (sheetSync/config.sheetId) and shares the sheet with this function's service account.
+// Any change to bookings, waitlists, sessions, class cancellations or boats rewrites the portal's tabs.
+// Changes are bundled: each trigger bumps sheetSync/state.gen, waits a few seconds, and only the last
+// one in a burst does the rewrite. Tabs the portal didn't create are never touched.
+const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets/';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function metadata(path) {
+  const r = await fetch('http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/' + path, { headers: { 'Metadata-Flavor': 'Google' } });
+  if (!r.ok) throw new Error('metadata ' + r.status);
+  return path.startsWith('token') ? (await r.json()).access_token : r.text();
+}
+class SheetError extends Error { constructor(status, text) { super(explainSheetError(status, text)); this.status = status; } }
+async function gs(token, path, method = 'GET', body) {
+  const r = await fetch(SHEETS + path, { method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  if (!r.ok) throw new SheetError(r.status, await r.text());
+  return r.json();
+}
+const asMap = snap => Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+const q = t => `'${t.replace(/'/g, "''")}'`;
+async function writeSheet(sheetId) {
+  const now = Date.now(), from = addDays(bcToday(now), -1);
+  const [sessions, programs, members, boats, bookings, occurrences, waitlist, state] = await Promise.all([
+    db.collection('sessions').get(), db.collection('programs').get(), db.collection('members').get(), db.collection('boats').get(),
+    db.collection('bookings').where('date', '>=', from).get(), db.collection('occurrences').get(),
+    db.collection('waitlist').where('date', '>=', from).get(), db.doc('sheetSync/state').get()]);
+  const tabs = buildTabs({ sessions: asMap(sessions), programs: asMap(programs), members: asMap(members), boats: asMap(boats),
+    bookings: asMap(bookings), occurrences: asMap(occurrences), waitlist: asMap(waitlist) }, now, SITE);
+  const token = await metadata('token?scopes=https://www.googleapis.com/auth/spreadsheets');
+  const meta = await gs(token, `${sheetId}?fields=sheets.properties(sheetId,title)`);
+  const byId = new Map(meta.sheets.map(s => [s.properties.sheetId, s.properties.title]));
+  const titles = new Set(byId.values());
+  const st = state.exists ? state.data() : {};
+  const managed = st.sheetId === sheetId ? { ...(st.tabs || {}) } : {};       // our tab name → Google tab id
+  const add = [];
+  for (const t of tabs) {
+    if (managed[t.title] != null && byId.has(managed[t.title])) { t.gid = managed[t.title]; t.at = byId.get(t.gid); continue; }
+    let title = t.title; while (titles.has(title)) title += ' (portal)';           // never overwrite someone else's tab
+    titles.add(title); t.at = title; add.push(t);
+  }
+  if (add.length) {
+    const r = await gs(token, `${sheetId}:batchUpdate`, 'POST', { requests: add.map(t => ({ addSheet: { properties: { title: t.at, gridProperties: { frozenRowCount: 1 } } } })) });
+    r.replies.forEach((rep, i) => { add[i].gid = rep.addSheet.properties.sheetId; managed[add[i].title] = add[i].gid; });
+  }
+  await gs(token, `${sheetId}/values:batchClear`, 'POST', { ranges: tabs.map(t => `${q(t.at)}!A1:Z2000`) });
+  await gs(token, `${sheetId}/values:batchUpdate`, 'POST', { valueInputOption: 'RAW', data: tabs.map(t => ({ range: `${q(t.at)}!A1`, values: t.rows.map(r => r.length ? r : ['']) })) });
+  const fmt = [];
+  for (const t of tabs) {
+    fmt.push({ repeatCell: { range: { sheetId: t.gid, startRowIndex: 0, endRowIndex: 2000 }, cell: { userEnteredFormat: { textFormat: { bold: false } } }, fields: 'userEnteredFormat.textFormat.bold' } });
+    for (const i of t.bold) fmt.push({ repeatCell: { range: { sheetId: t.gid, startRowIndex: i, endRowIndex: i + 1 }, cell: { userEnteredFormat: { textFormat: { bold: true } } }, fields: 'userEnteredFormat.textFormat.bold' } });
+  }
+  await gs(token, `${sheetId}:batchUpdate`, 'POST', { requests: fmt });
+  return { tabs: managed, count: tabs.length };
+}
+async function queueSheetSync(reason) {
+  const cfg = await db.doc('sheetSync/config').get();
+  const sheetId = cfg.exists ? cfg.data().sheetId : null;
+  if (!sheetId) return;
+  const ref = db.doc('sheetSync/state');
+  const gen = await db.runTransaction(async tx => { const s = await tx.get(ref); const g = ((s.exists && s.data().gen) || 0) + 1; tx.set(ref, { gen: g }, { merge: true }); return g; });
+  await sleep(4000);
+  if (((await ref.get()).data() || {}).gen !== gen) return;                     // a later change will do it
+  let robot = null; try { robot = (await metadata('email')).trim(); } catch (e) { /* local */ }
+  try {
+    const r = await writeSheet(sheetId);
+    await ref.set({ sheetId, tabs: r.tabs, ok: true, error: null, at: new Date().toISOString(), reason, count: r.count, robot }, { merge: true });
+  } catch (e) {
+    console.error('sheet sync failed', e && e.message);
+    await ref.set({ sheetId, ok: false, error: String(e && e.message || e).slice(0, 400), at: new Date().toISOString(), reason, robot }, { merge: true });
+  }
+}
+const sheetTrigger = (doc, reason) => onDocumentWritten({ document: doc, region: REGION, timeoutSeconds: 120 }, () => queueSheetSync(reason));
+export const sheetOnBooking = sheetTrigger('bookings/{id}', 'booking');
+export const sheetOnWaitlist = sheetTrigger('waitlist/{id}', 'waitlist');
+export const sheetOnOccurrence = sheetTrigger('occurrences/{id}', 'class change');
+export const sheetOnSession = sheetTrigger('sessions/{id}', 'schedule change');
+export const sheetOnBoat = sheetTrigger('boats/{id}', 'boat change');
+export const sheetOnRequest = onDocumentWritten({ document: 'sheetSync/{id}', region: REGION, timeoutSeconds: 120 }, (event) => {
+  if (event.params.id === 'state') return;                                      // our own status writes
+  return queueSheetSync(event.params.id === 'request' ? 'Sync now' : 'sheet linked');
 });

@@ -305,7 +305,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .rig.rg-scull{border-color:#b9cfe9}.rig.rg-sweep{border-color:#ebcfa9}.rig.rg-scull.cur{background:#1f4f8a;border-color:#1f4f8a;color:#fff}.rig.rg-sweep.cur{background:#8a4b00;border-color:#8a4b00;color:#fff}
 .ro{padding:8px 0;font-weight:600}
 footer .ver{color:var(--ink3);font-size:11.5px}
-.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}.wl-g{margin-top:8px}.wl-g ol{margin:4px 0 0;padding-left:22px;font-size:14px;line-height:1.7}.wl-g li.me{font-weight:700}.wl-g .btn.sm{padding:0 7px;line-height:1.4}.callout .btn.sm{margin-left:6px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}.sheet-steps{margin:6px 0;padding-left:20px;font-size:14px;line-height:1.6}.sheet-steps li{margin-bottom:4px}.sheetsync code.robot{background:var(--bg2,#f4f2ee);padding:2px 6px;border-radius:4px;font-size:12px;word-break:break-all}.wl-g{margin-top:8px}.wl-g ol{margin:4px 0 0;padding-left:22px;font-size:14px;line-height:1.7}.wl-g li.me{font-weight:700}.wl-g .btn.sm{padding:0 7px;line-height:1.4}.callout .btn.sm{margin-left:6px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
 .fsub{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
@@ -417,7 +417,7 @@ ol.steps li{margin-bottom:8px}
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { CONCEPT2 } from './js/config.js';
+import { CONCEPT2, firebaseConfig } from './js/config.js';
 /* ---------- constants ---------- */
 const RIGS=['1x','2x','2-','2+','4x','4x+','4-','4+','8+','8x+'];
 const STATUS={available:'Available',dnr:'Do Not Row',repair:'Long-Term Repair',retired:'Retired'};
@@ -497,7 +497,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('sheetSync','sheetSync',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -1003,6 +1003,7 @@ function bindMembers(){
   m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
   m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
   {const t=$('#claimMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({claimEmails:t.checked},{merge:true}),t.checked?'You’ll get join request emails':'Join request emails off')}
+  bindSheet();
   {const t=$('#issueMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({issueEmails:t.checked},{merge:true}),t.checked?'You’ll get damage report emails':'Damage report emails off')}
   m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
   m.querySelectorAll('[data-mlayout]').forEach(el=>el.onclick=()=>{S.mlayout=el.dataset.mlayout;try{localStorage.setItem('memberLayout',S.mlayout)}catch(e){};render()});
@@ -1288,6 +1289,7 @@ function viewPrograms(){
     <div class="actions" style="margin:0">
       <a class="btn pri" href="#openerg">+ Open erg</a>
       <a class="btn" href="#leaderboard">🏆 Leaderboard</a>
+      ${sheetUrl()?`<a class="btn" href="${esc(sheetUrl())}" target="_blank" rel="noopener" title="A read-only copy in the old spreadsheet layout, kept up to date by the portal">📄 Google Sheet</a>`:''}
       <div class="chips"><button class="chip" data-wk="-7" aria-label="Previous week">‹</button><button class="chip ${wk===mondayOf(t)?'on':''}" data-wk="0">This week</button><button class="chip" data-wk="7" aria-label="Next week">›</button></div>
       ${mine.length?`<div class="chips">${[['mine','My programs'],['all','All']].map(([k,l])=>`<button class="chip ${scope===k?'on':''}" data-pscope="${k}">${l}</button>`).join('')}</div>`:''}
       ${canAdmin()?`<a class="btn" href="#manage">Manage programs</a>`:''}
@@ -2580,6 +2582,40 @@ function mailLogHtml(){const L=Object.entries(S.mailLog||{}).sort((a,b)=>String(
 // Version stamped at deploy (public/version.json, written by .github/workflows/deploy.yml)
 S.ver=null;
 fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v)return;S.ver=v;const el=$('#appVer');if(el)el.textContent='· '+v.version+(v.date?' · '+new Date(v.date).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'');if(S.view==='admin')render()}).catch(()=>{});
+/* ---------- Google Sheet copy (read-only mirror written by the server; see functions/sheet.js) ---------- */
+S.sheetSync={};
+const sheetCfg=()=>(S.sheetSync||{}).config||{};
+const sheetUrl=()=>sheetCfg().sheetId?`https://docs.google.com/spreadsheets/d/${sheetCfg().sheetId}/edit`:'';
+const sheetIdFrom=v=>{const m=String(v||'').match(/\/d\/([a-zA-Z0-9_-]{20,})/)||String(v||'').trim().match(/^([a-zA-Z0-9_-]{20,})$/);return m?m[1]:null};
+function sheetHtml(){
+  const c=sheetCfg(),st=(S.sheetSync||{}).state||{},robot=st.robot||`${firebaseConfig.messagingSenderId}-compute@developer.gserviceaccount.com`;
+  const linked=!!c.sheetId,fresh=linked&&st.sheetId===c.sheetId&&st.at;
+  const when=st.at?new Date(st.at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+  const status=!linked?'':!fresh?`<p class="callout" style="margin:8px 0">⏳ Waiting for the first update – this takes about a minute after you save. If nothing happens, check steps 2 and 3 and press <b>Sync now</b>.</p>`
+    :st.ok?`<p style="margin:8px 0">✓ <b>Up to date</b> <span class="tag">· last updated ${esc(when)}${st.reason?' after a '+esc(st.reason):''} · ${st.count||0} tabs</span></p>`
+    :`<p class="callout bad" style="margin:8px 0"><b>Couldn’t update the sheet</b> (${esc(when)}): ${esc(st.error||'unknown error')}</p>`;
+  const steps=`<ol class="sheet-steps">
+    <li>Create a <b>new, blank</b> Google Sheet (e.g. “VRC Sign Out – live from the portal”). Use a fresh sheet rather than the old one, so old and new entries don’t get mixed up. The portal never changes tabs it didn’t create.</li>
+    <li>Click <b>Share</b> and add the portal’s robot email as an <b>Editor</b> (untick “Notify people”):<br><code class="robot">${esc(robot)}</code> <button class="btn sm" id="sheetCopy" type="button">Copy</button></li>
+    <li>One time only: <a class="lnk" href="https://console.cloud.google.com/apis/library/sheets.googleapis.com?project=${esc(firebaseConfig.projectId)}" target="_blank" rel="noopener">turn on the Google Sheets API</a> (press <b>Enable</b>).</li>
+    <li>Paste the sheet’s link below and press <b>Save</b>. Tabs appear within a minute.</li>
+    <li>Back in Google Sheets, set <b>General access</b> to “Anyone with the link · <b>Viewer</b>” (or share with members as Viewers). Members see a 📄 Google Sheet button on the schedule.</li></ol>`;
+  return `<div class="sec sheetsync"><h4>Google Sheet copy</h4>
+    <p class="tag" style="margin:0 0 6px">A read-only copy of the sign-out sheets in the old spreadsheet layout: one tab per weekly session showing the next date, erg waitlists and a Boat Status tab. It updates automatically within seconds of every booking, cancellation, waitlist or schedule change. Bookings still happen in the portal – edits typed into the sheet are overwritten.</p>
+    ${status}
+    ${linked&&st.ok&&fresh?'':steps}
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px"><input id="sheetLink" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(sheetUrl())}" style="flex:1;min-width:240px">
+      <button class="btn pri" id="sheetSave">Save</button>${linked?`<button class="btn" id="sheetNow">Sync now</button><a class="btn" href="${esc(sheetUrl())}" target="_blank" rel="noopener">Open sheet ↗</a><button class="btn dan" id="sheetOff">Stop updating</button>`:''}</div>
+    ${linked&&st.ok&&fresh?`<p class="tag" style="margin:8px 0 0">Robot email (already shared): ${esc(robot)}</p>`:''}</div>`;
+}
+function bindSheet(){
+  const on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};
+  on('#sheetCopy',()=>{const t=$('.sheetsync .robot').textContent;navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast('Copied'),()=>toast(t))});
+  on('#sheetSave',()=>{const id=sheetIdFrom($('#sheetLink').value);if(!id)return toast('That doesn’t look like a Google Sheets link');
+    guarded(()=>S.db.doc('sheetSync/config').set({sheetId:id,by:S.me,at:nowIso()}),'Saved – the sheet will update in about a minute')});
+  on('#sheetNow',()=>guarded(()=>S.db.doc('sheetSync/request').set({at:nowIso(),by:S.me}),'Updating the sheet…'));
+  on('#sheetOff',()=>{if(confirm('Stop updating the Google Sheet? The sheet itself is kept as it is.'))guarded(()=>S.db.doc('sheetSync/config').set({sheetId:null,by:S.me,at:nowIso()}),'The sheet will no longer be updated')});
+}
 function versionHtml(){const v=S.ver;if(!v)return '';const rel=/^v\d/.test(v.version)?`https://github.com/dlsl341/vrc-portal/releases/tag/${encodeURIComponent(v.version)}`:'https://github.com/dlsl341/vrc-portal/releases';
   return `<div class="sec"><h4>Portal version</h4><p style="margin:0"><b style="font-size:18px">${esc(v.version)}</b>${v.date?` <span class="tag">· live since ${esc(new Date(v.date).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}))}</span>`:''}</p>
    ${v.title?`<p class="tag" style="margin:4px 0 0">Latest change: ${esc(v.title)}${v.sha?` · ${esc(v.sha)}`:''}</p>`:''}
@@ -2614,6 +2650,7 @@ function viewAdmin(){
     <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
   ${issueEmailToggle()}${claimEmailToggle()}
   ${mailLogHtml()}
+  ${sheetHtml()}
   ${versionHtml()}
   ${adminRoster()}`;
 }
