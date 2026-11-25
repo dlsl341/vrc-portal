@@ -120,3 +120,32 @@ ${button(link || SITE + '/#programs', 'View my booking')}`);
   const text = `Hi ${firstName || 'there'},\n\nSomeone cancelled and you were first on the waitlist. You now have erg ${erg} for ${title}, ${when}.\n\nCan't make it? Please cancel in the portal so the next person gets it.\n${link || SITE}`;
   return { subject, html, text };
 }
+
+const money = n => '$' + (Math.round((+n || 0) * 100) / 100).toFixed(2);
+// A no-show / late-cancel fee was applied to the member
+export function feeEmail({ firstName, type, amount, title, date, start, hoursBefore, lateHours, closeMin }) {
+  const when = `${dateLabel(date)}${start ? ', ' + fmtHM(start) : ''}`;
+  const what = type === 'late' ? 'late-cancellation fee' : 'no-show fee';
+  const why = type === 'late'
+    ? `You cancelled ${hoursBefore != null ? hoursBefore + ' hours' : 'less than ' + lateHours + ' hours'} before the start, and nobody else took the spot. Cancellations less than ${lateHours} hours before class carry this fee.`
+    : `You were booked but weren’t checked in by the coach within ${closeMin} minutes of the start.`;
+  const subject = `VRC ${what}: ${title} – ${dateLabel(date)}`;
+  const html = frame(`A ${what} of ${money(amount)} was applied`, `<p>Hi ${esc(firstName || 'there')},</p>
+<p>A <b>${esc(what)} of ${esc(money(amount))}</b> was applied for:</p>
+<p><b>${esc(title)}</b><br>${esc(when)}</p>
+<p>${esc(why)}</p>
+<p>If you think this is a mistake (for example you were there but weren’t checked in), please speak to your coach or a club admin – they can remove it.</p>
+${button(SITE + '/#programs', 'Open the portal')}`);
+  const text = `Hi ${firstName || 'there'},\n\nA ${what} of ${money(amount)} was applied for ${title}, ${when}.\n${why}\n\nThink this is a mistake? Speak to your coach or a club admin – they can remove it.\n${SITE}`;
+  return { subject, html, text };
+}
+export function feeWaivedEmail({ firstName, type, amount, title, date }) {
+  const what = type === 'late' ? 'late-cancellation fee' : 'no-show fee';
+  const subject = `Fee removed: ${title} – ${dateLabel(date)}`;
+  const html = frame('Fee removed', `<p>Hi ${esc(firstName || 'there')},</p><p>The <b>${esc(what)} of ${esc(money(amount))}</b> for <b>${esc(title)}</b> on ${esc(dateLabel(date))} has been removed. Nothing more to do.</p>`);
+  return { subject, html, text: `Hi ${firstName || 'there'},\n\nThe ${what} of ${money(amount)} for ${title} on ${dateLabel(date)} has been removed. Nothing more to do.` };
+}
+export function feeReportEmail(r) {
+  return { subject: r.title + ` · ${r.count} charged, ${money(r.total)}`, html: frame(r.title, r.html + button(SITE + '/#admin', 'Open the Admin page')), text: r.text + `\n\n${SITE}/#admin`,
+    attachments: [{ filename: r.title.replace(/[^\w\- ]+/g, '').replace(/\s+/g, '_') + '.csv', content: r.csv, contentType: 'text/csv' }] };
+}

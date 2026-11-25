@@ -112,6 +112,28 @@ service cloud.firestore {
       allow write: if isAdmin() || (isMember() && mid == myMemberId());
     }
 
+    // ---- no-show / late-cancel fees. Admins set a rule per program (feeRules/{programId}); the server
+    // (functions) creates fees/{id}, sends the emails and the weekly report. Admins may only waive / re-apply.
+    match /feeRules/{pid} {
+      allow read: if canUse();
+      allow write: if isAdmin();
+    }
+    match /fees/{id} {
+      allow read: if isAdmin() || (isMember() && resource.data.memberId == myMemberId());
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'waivedBy', 'waivedAt', 'waiveNote', 'updatedAt'])
+        && request.resource.data.status in ['charged', 'waived'];
+      allow create, delete: if false;
+    }
+    match /feeRuns/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+    match /feeReports/{id} {                 // "Email me this week's report" – the server answers
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && id == 'request';
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {

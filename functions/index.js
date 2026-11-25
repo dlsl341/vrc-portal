@@ -7,13 +7,15 @@
 // Tokens live in c2Tokens/{uid} and c2Users/{c2UserId}: the security rules let no browser read them.
 // We only ever READ from Concept2 (scopes user:read,results:read).
 import { onRequest } from 'firebase-functions/v2/https';
-import { onDocumentCreated, onDocumentUpdated, onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentUpdated, onDocumentWritten, onDocumentWrittenWithAuthContext } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import nodemailer from 'nodemailer';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, smtpSettings, validEmail } from './mail.js';
+import { ruleOf, lateCancel, noShows, resolveLate, weekOf, weeklyReport, bcToday, addDays, dow, startMs, closeMs } from './fees.js';
 import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
 
 initializeApp();
@@ -193,7 +195,7 @@ async function sendOnce(key, to, msg) {
   try {
     const t = nodemailer.createTransport({ host: cfg.host, port: cfg.port, secure: cfg.secure, auth: cfg.auth });
     const rcpt = typeof to === 'string' ? { to } : { to: cfg.from, bcc: to.bcc };
-    const info = await t.sendMail({ from: cfg.from, ...rcpt, subject: msg.subject, text: msg.text, html: msg.html });
+    const info = await t.sendMail({ from: cfg.from, ...rcpt, subject: msg.subject, text: msg.text, html: msg.html, ...(msg.attachments ? { attachments: msg.attachments } : {}) });
     await ref.update({ status: 'sent', messageId: info.messageId || null });
   } catch (e) {
     console.error('mail: send failed', key, e && e.message);
@@ -331,4 +333,156 @@ export const ergWaitlistPromote = onDocumentWritten({ document: 'bookings/{id}',
   if (!to) return;
   await sendOnce(`waitlist_${promoted.bookingId}`, to, waitlistEmail({ firstName: (promoted.name || '').split(' ')[0], title: s.title || 'Erg session', date, start: s.start, end: s.end, erg,
     link: `https://vrc-rower-s-portal.web.app/#s-${sid}-${ymd}` }));
+});
+
+// ---------------------------------------------------------------------------------------------
+// No-show / late-cancel fees (admins switch them on per program: feeRules/{programId}).
+// See functions/fees.js for the rules. Fees live in fees/{late|noshow}_{sid}_{YYYYMMDD}_{memberId}.
+const docsMap = snap => Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+const ymdOf = d => d.replace(/-/g, '');
+async function memberName(id) { const m = await db.doc('members/' + id).get(); return m.exists ? (m.data().displayName || id) : id; }
+async function programName(id) { const p = await db.doc('programs/' + id).get(); return p.exists ? (p.data().name || id) : id; }
+async function isAdminUid(uid) {
+  if (!uid) return false;
+  if ((await db.doc('admins/' + uid).get()).exists) return true;
+  const st = await db.doc('config/settings').get(); return st.exists && st.data().ownerUid === uid;
+}
+
+// 1) Late cancel: someone takes themselves out of a booking inside the late window.
+//    Only the person who cancelled is charged (not crewmates of a captain who cancels the boat),
+//    never when an admin removes someone. The fee stays "pending" until class time.
+export const feeOnCancel = onDocumentWrittenWithAuthContext({ document: 'bookings/{id}', region: REGION }, async (event) => {
+  const before = (event.data.before && event.data.before.data()) || null, after = (event.data.after && event.data.after.data()) || null;
+  if (!before || !before.sessionId || !before.date) return;
+  const left = people(before).filter(m => !(after ? people(after) : []).includes(m));
+  if (!left.length) return;
+  const now = Date.now();
+  const sess = await db.doc('sessions/' + before.sessionId).get(); if (!sess.exists) return;
+  const s = sess.data();
+  const rules = { [s.programId]: (await db.doc('feeRules/' + s.programId).get()).data() };
+  const rule = ruleOf(rules, s.programId); if (!rule) return;
+  const hrs = lateCancel(rule, before.date, s, now); if (hrs == null) return;
+  const occ = await db.doc('occurrences/' + before.sessionId + '_' + ymdOf(before.date)).get();
+  if (occ.exists && occ.data().cancelled) return;                       // the class itself was cancelled
+  // who did it?
+  const uid = event.authId || null;
+  let actor = null;
+  if (uid) { const a = await db.doc('accounts/' + uid).get(); actor = a.exists ? a.data().memberId : null; }
+  let charge;
+  if (actor) charge = left.filter(m => m === actor);                    // only your own spot
+  else if (uid && await isAdminUid(uid)) charge = [];                   // an admin removed them
+  else if (!uid && event.authType === 'system') charge = [];            // the portal itself
+  else charge = left.length === 1 ? left : [];                          // unknown: single-person cancel
+  if (!charge.length) return;
+  const snap = await db.collection('bookings').where('sessionId', '==', before.sessionId).where('date', '==', before.date).get();
+  const snapshot = [...new Set(snap.docs.flatMap(d => people(d.data())))];
+  const pname = await programName(s.programId);
+  for (const m of charge) {
+    if (snapshot.includes(m)) continue;                                 // still booked (moved boats)
+    const id = `late_${before.sessionId}_${ymdOf(before.date)}_${m}`;
+    try {
+      await db.doc('fees/' + id).create({ memberId: m, memberName: await memberName(m), type: 'late', programId: s.programId, program: pname,
+        sessionId: before.sessionId, sessionTitle: s.title || '', date: before.date, start: s.start || '', amount: rule.lateFee, hoursBefore: hrs,
+        lateHours: rule.lateHours, closeMin: rule.closeMin, status: 'pending', snapshot, at: new Date(now).toISOString(), by: uid });
+    } catch (e) { /* already has one for this class */ }
+  }
+});
+
+// 2) Every 10 minutes: once a class has closed (start + closeMin), settle its pending late cancels and
+//    charge no-shows from the coach's check-in. Each class is handled once (feeRuns/{sid}_{YYYYMMDD}).
+async function feeSweep(now = Date.now()) {
+  const rules = docsMap(await db.collection('feeRules').get());
+  if (!Object.values(rules).some(r => r.enabled)) return { classes: 0 };
+  const sessions = docsMap(await db.collection('sessions').get());
+  const today = bcToday(now), dates = [addDays(today, -2), addDays(today, -1), today];
+  let n = 0;
+  for (const [sid, s] of Object.entries(sessions)) {
+    const rule = ruleOf(rules, s.programId);
+    if (!rule || s.active === false || !s.start) continue;
+    for (const d of dates.filter(x => dow(x) === (s.weekday ?? -1))) {
+      if (now < closeMs(d, s, rule)) continue;
+      const runRef = db.doc(`feeRuns/${sid}_${ymdOf(d)}`), run = (await runRef.get()).data() || {};
+      if (run.done) continue;
+      n++;
+      const occ = (await db.doc(`occurrences/${sid}_${ymdOf(d)}`).get()).data() || {};
+      const pend = await db.collection('fees').where('sessionId', '==', sid).where('date', '==', d).where('status', '==', 'pending').get();
+      if (occ.cancelled) {
+        await Promise.all(pend.docs.map(f => f.ref.update({ status: 'waived', waiveNote: 'Class cancelled', updatedAt: new Date().toISOString() })));
+        await runRef.set({ done: true, cancelled: true, at: new Date().toISOString(), sessionId: sid, date: d }); continue;
+      }
+      const bk = await db.collection('bookings').where('sessionId', '==', sid).where('date', '==', d).get();
+      const booked = [...new Set(bk.docs.flatMap(x => people(x.data())))];
+      if (!run.lateDone) {
+        for (const r of resolveLate(pend.docs.map(f => ({ id: f.id, ...f.data() })), booked))
+          await db.doc('fees/' + r.id).update(r.status === 'waived'
+            ? { status: 'waived', waiveNote: r.rebooked ? 'Booked back in' : 'Spot filled by ' + await memberName(r.filledBy), updatedAt: new Date().toISOString() }
+            : { status: 'charged', updatedAt: new Date().toISOString() });
+        await runRef.set({ lateDone: true, sessionId: sid, date: d }, { merge: true });
+      }
+      if (!(rule.noShowFee > 0)) { await runRef.set({ done: true, at: new Date().toISOString() }, { merge: true }); continue; }
+      const att = await db.doc(`attendance/${sid}_${ymdOf(d)}`).get();
+      const ns = noShows(booked, att.exists ? att.data() : null);
+      if (ns == null) {                                     // no check-in yet: wait until the day is over
+        if (d < today) await runRef.set({ done: true, noAttendance: true, booked: booked.length, programId: s.programId, at: new Date().toISOString() }, { merge: true });
+        continue;
+      }
+      const pname = await programName(s.programId);
+      for (const m of ns) {
+        try {
+          await db.doc(`fees/noshow_${sid}_${ymdOf(d)}_${m}`).create({ memberId: m, memberName: await memberName(m), type: 'noshow', programId: s.programId, program: pname,
+            sessionId: sid, sessionTitle: s.title || '', date: d, start: s.start || '', amount: rule.noShowFee, closeMin: rule.closeMin, lateHours: rule.lateHours,
+            status: 'charged', at: new Date().toISOString() });
+        } catch (e) { /* exists */ }
+      }
+      await runRef.set({ done: true, noShows: ns.length, booked: booked.length, at: new Date().toISOString() }, { merge: true });
+    }
+  }
+  return { classes: n };
+}
+export const feeSweepEvery10 = onSchedule({ schedule: 'every 10 minutes', region: REGION, timeZone: 'Etc/GMT+7' }, () => feeSweep());
+
+// 3) A coach corrects check-in after a no-show fee → remove it.
+export const feeOnAttendance = onDocumentWritten({ document: 'attendance/{id}', region: REGION }, async (event) => {
+  const a = event.data.after && event.data.after.data(); if (!a) return;
+  const fees = await db.collection('fees').where('sessionId', '==', a.sessionId).where('date', '==', a.date).where('type', '==', 'noshow').where('status', '==', 'charged').get();
+  for (const f of fees.docs) {
+    const mk = (a.marks || {})[f.data().memberId];
+    if (mk === 'present' || mk === 'late') await f.ref.update({ status: 'waived', waiveNote: 'Checked in by coach', updatedAt: new Date().toISOString() });
+  }
+});
+
+// 4) Emails to the member: when a fee becomes "charged", and when a charged fee is removed.
+export const feeEmails = onDocumentWritten({ document: 'fees/{id}', region: REGION }, async (event) => {
+  const before = event.data.before && event.data.before.data(), f = event.data.after && event.data.after.data();
+  if (!f || (before && before.status === f.status)) return;
+  const first = String(f.memberName || '').split(' ')[0];
+  const to = await emailForMember(f.memberId); if (!to) return;
+  if (f.status === 'charged')
+    await sendOnce(`fee_${event.params.id}${before && before.status === 'waived' ? '_' + Date.now() : ''}`, to,
+      feeEmail({ firstName: first, type: f.type, amount: f.amount, title: f.sessionTitle, date: f.date, start: f.start, hoursBefore: f.hoursBefore, lateHours: f.lateHours, closeMin: f.closeMin }));
+  else if (f.status === 'waived' && before && before.status === 'charged')
+    await sendOnce(`feewaived_${event.params.id}_${Date.now()}`, to, feeWaivedEmail({ firstName: first, type: f.type, amount: f.amount, title: f.sessionTitle, date: f.date }));
+});
+
+// 5) Weekly report to admins (Sunday 8 PM Vancouver time, Monday–Sunday), or on request to one admin.
+async function buildFeeReport(now = Date.now()) {
+  const { from, to } = weekOf(now);
+  const fees = (await db.collection('fees').where('date', '>=', from).where('date', '<=', to).get()).docs.map(d => d.data());
+  const runs = (await db.collection('feeRuns').where('noAttendance', '==', true).get()).docs.map(d => d.data()).filter(r => r.date >= from && r.date <= to);
+  const sessions = docsMap(await db.collection('sessions').get()), programs = docsMap(await db.collection('programs').get());
+  const missing = runs.map(r => ({ date: r.date, sessionTitle: (sessions[r.sessionId] || {}).title || r.sessionId, program: (programs[r.programId] || {}).name || r.programId || '', booked: r.booked || 0 }));
+  return weeklyReport({ fees, missing, from, to });
+}
+export const feeWeeklyReport = onSchedule({ schedule: '0 20 * * 0', region: REGION, timeZone: 'Etc/GMT+7' }, async () => {
+  const rules = docsMap(await db.collection('feeRules').get());
+  if (!Object.values(rules).some(r => r.enabled)) return;
+  const r = await buildFeeReport();
+  const bcc = await adminEmails('feeReports'); if (!bcc.length) return;
+  await sendOnce(`feereport_${weekOf(Date.now()).from}`, { bcc }, feeReportEmail(r));
+});
+export const feeReportOnRequest = onDocumentWritten({ document: 'feeReports/request', region: REGION }, async (event) => {
+  const q = event.data.after && event.data.after.data(); if (!q || !q.by) return;
+  if (!(await isAdminUid(q.by))) return;
+  const to = await memberEmail(q.by, null); if (!to) return;
+  await sendOnce(`feereport_req_${Date.now()}`, to, feeReportEmail(await buildFeeReport()));
 });

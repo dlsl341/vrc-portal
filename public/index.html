@@ -305,7 +305,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .rig.rg-scull{border-color:#b9cfe9}.rig.rg-sweep{border-color:#ebcfa9}.rig.rg-scull.cur{background:#1f4f8a;border-color:#1f4f8a;color:#fff}.rig.rg-sweep.cur{background:#8a4b00;border-color:#8a4b00;color:#fff}
 .ro{padding:8px 0;font-weight:600}
 footer .ver{color:var(--ink3);font-size:11.5px}
-.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}.wl-g{margin-top:8px}.wl-g ol{margin:4px 0 0;padding-left:22px;font-size:14px;line-height:1.7}.wl-g li.me{font-weight:700}.wl-g .btn.sm{padding:0 7px;line-height:1.4}.callout .btn.sm{margin-left:6px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
+.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}.feetbl{border-collapse:collapse;width:100%;font-size:14px}.feetbl th{text-align:left;font-size:12px;font-weight:600;color:var(--muted,#666);padding:4px 6px;vertical-align:bottom}.feetbl td{padding:4px 6px;border-top:1px solid var(--line,#eee)}.feetbl input[type=number]{width:90px}.tblwrap{overflow-x:auto}.fee-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 8px}.feepol{margin:0 0 10px}.sec.fees .item{display:flex;justify-content:space-between;align-items:center;gap:10px}.sec.fees .item .actions{align-items:center}.wl-g{margin-top:8px}.wl-g ol{margin:4px 0 0;padding-left:22px;font-size:14px;line-height:1.7}.wl-g li.me{font-weight:700}.wl-g .btn.sm{padding:0 7px;line-height:1.4}.callout .btn.sm{margin-left:6px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
 tr.free td{color:var(--ink2)}
 a.callout.adm-go{display:block;text-decoration:none;color:inherit;margin-bottom:14px;border-left:4px solid var(--red)}a.callout.adm-go:hover{background:#fdeeee}
 .fsub{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:700;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
@@ -497,7 +497,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -1002,6 +1002,7 @@ function bindMembers(){
   m.querySelectorAll('[data-mstat]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.mstat;render()});
   m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
   m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
+  bindFees();
   {const t=$('#claimMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({claimEmails:t.checked},{merge:true}),t.checked?'You’ll get join request emails':'Join request emails off')}
   {const t=$('#issueMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({issueEmails:t.checked},{merge:true}),t.checked?'You’ll get damage report emails':'Damage report emails off')}
   m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
@@ -1370,6 +1371,7 @@ function viewSession(){
     <div class="actions">${canBook&&!mine?(erg?`<button class="btn pri" id="ergMe">${canAdmin()&&!me?'Reserve':'Sign me up'}</button>`:`<button class="btn pri" id="bookNew">Book a boat</button>`):''}${canAdmin()&&erg&&me&&canBook&&!mine?`<button class="btn" id="ergOther">Add someone else</button>`:''}${canCheckIn()&&d>=today()?(o.cancelled?`<button class="btn" id="unCancel">Reinstate class</button>`:`<button class="btn dan" id="cancelCls">Cancel class</button>`):''}${canCheckIn()&&!o.cancelled&&d<=today()&&!S.checkin?`<button class="btn pri" id="ciOpen">✓ Check in athletes</button>`:''}${canAdmin()?`<button class="btn" id="occEdit">Edit this date</button><button class="btn" id="sessEdit">Edit session</button>`:''}</div>
   </div>
   ${notice}
+  ${feePolicyLine(id)}
   ${coxSessionHtml(id,d)}
   ${S.checkin&&canCheckIn()?checkinPanel(id,d):(()=>{const a=attSummary(id,d);return a?`<p class="tag att-sum">Attendance: <b>${a.present}</b> present · <b>${a.late}</b> late · <b>${a.absent}</b> no-show</p>`:''})()}
   <div class="${erg?'':'sgrid'}">
@@ -1494,12 +1496,13 @@ function ergForm(sid,d,bid,n){
 }
 function cancelBooking(bid){
   const b=S.bookings[bid];const boat=S.boats[b.boatId];
-  openModal(`<h3>Cancel this booking?</h3><p class="muted" style="margin-top:-6px">${boat?esc(boat.name)+' · ':''}${esc(bMembers(b).map(mName).join(', '))}. Everyone in the crew is removed from the session.</p><form id="mform">${formFoot('Cancel booking',true)}</form>`,
+  openModal(`<h3>Cancel this booking?</h3><p class="muted" style="margin-top:-6px">${boat?esc(boat.name)+' · ':''}${esc(bMembers(b).map(mName).join(', '))}. Everyone in the crew is removed from the session.</p>${bMembers(b).includes(myMemberId())?lateWarn(b.sessionId,b.date):''}<form id="mform">${formFoot('Cancel booking',true)}</form>`,
     ()=>wireForm({msg:'Booking cancelled',save:()=>S.db.doc('bookings/'+bid).delete(),after:()=>{const me=myMemberId();if(me&&prefsOf(me).calPrompt!==false)cancelledDialog(bid,b)}}));
 }
 async function leaveBooking(bid){
   const b=S.bookings[bid],me=myMemberId();if(!b||!me)return;
   const crew=(b.crew||[]).map(x=>x===me?null:x),cox=b.cox===me?null:b.cox;
+  const lr=lateNow(b.sessionId,b.date);if(lr&&!confirm(`This is a late cancellation (less than ${lr.lateHours} h before the start). A ${money(lr.lateFee)} fee applies unless someone else takes your spot. Leave anyway?`))return;
   const ok=await guarded(()=>S.db.doc('bookings/'+bid).update({crew,cox,open:true,updatedAt:nowIso()}),'You’ve left the crew');
   if(ok&&prefsOf(me).calPrompt!==false)cancelledDialog(bid,b);
 }
@@ -2577,6 +2580,63 @@ function mailLogHtml(){const L=Object.entries(S.mailLog||{}).sort((a,b)=>String(
   if(!L.length)return `<div class="sec"><h4>Member emails</h4><div class="empty">No emails sent yet. Welcome emails go out automatically when you approve a request – once email is set up (see docs/EMAIL.md).</div></div>`;
   return `<div class="sec"><h4>Emails · recent</h4>${L.map(([k,m])=>`<div class="item"><div><b>${k.startsWith('claim')?'New join request':k.startsWith('welcome')?'Welcome':k.startsWith('issue')?'Damage report':k.startsWith('cancel')?'Class cancelled':k.startsWith('reinstate')?'Class back on':'Request declined'}</b> → ${esc(m.to||'')} <span class="tag">· ${fmtDate(String(m.at||'').slice(0,10))}</span></div>
     <span class="pill ${m.status==='sent'?'s-available':m.status==='failed'?'s-repair':'s-dnr'}" title="${esc(m.error||'')}">${m.status==='sent'?'Sent':m.status==='failed'?'Failed':'Sending'}</span></div>`).join('')}</div>`}
+/* ---------- No-show / late-cancel fees (admins set per program; the server charges & emails – functions/fees.js) ---------- */
+S.feeRules={};S.fees={};S.feeRuns={};
+const FEE_DEF={lateHours:12,closeMin:10};
+const money=n=>'$'+(Math.round((+n||0)*100)/100).toFixed(2);
+function feeRuleOf(sid){const s=S.sessions[sid];const r=s&&(S.feeRules||{})[s.programId];if(!r||!r.enabled)return null;
+  const n=(v,d)=>v===''||v==null||isNaN(+v)?d:+v;return {noShowFee:n(r.noShowFee,0),lateFee:n(r.lateFee,0),lateHours:n(r.lateHours,FEE_DEF.lateHours),closeMin:n(r.closeMin,FEE_DEF.closeMin)}}
+const bcStartMs=(sid,d)=>{const s=S.sessions[sid];return s&&s.start?Date.parse(`${d}T${s.start}:00-07:00`):null};
+// a cancellation right now would be late → the fee rule, else null
+function lateNow(sid,d){const r=feeRuleOf(sid),st=bcStartMs(sid,d);if(!r||!(r.lateFee>0)||st==null)return null;const now=Date.now();return now>=st-r.lateHours*3600e3&&now<st+r.closeMin*60e3?r:null}
+function feePolicyLine(sid){const r=feeRuleOf(sid);if(!r||!(r.lateFee>0||r.noShowFee>0))return '';
+  const parts=[r.lateFee>0?`<b>${money(r.lateFee)}</b> late-cancel fee if you cancel less than ${r.lateHours} h before the start (waived if someone else takes your spot)`:'',
+    r.noShowFee>0?`<b>${money(r.noShowFee)}</b> no-show fee if the coach hasn’t checked you in within ${r.closeMin} min of the start`:''].filter(Boolean);
+  return `<p class="tag feepol">💲 ${parts.join(' · ')}.</p>`}
+const lateWarn=(sid,d)=>{const r=lateNow(sid,d);return r?`<div class="callout bad" style="margin:0 0 10px">⚠ This is a <b>late cancellation</b> (less than ${r.lateHours} h before the start): a <b>${money(r.lateFee)}</b> fee applies to you, unless someone else takes the spot before class.</div>`:''};
+S.feeWeek=0;
+function feesAdminHtml(){
+  const progs=Object.entries(S.programs).filter(([,p])=>p.active!==false).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+  const rows=progs.map(([pid,p])=>{const r=(S.feeRules||{})[pid]||{};return `<tr data-feeprog="${esc(pid)}"><td><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="enabled" ${r.enabled?'checked':''}> <b>${esc(p.name)}</b></label></td>
+    <td><input name="noShowFee" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(r.noShowFee??'')}" placeholder="0"></td>
+    <td><input name="lateFee" type="number" min="0" step="0.5" inputmode="decimal" value="${esc(r.lateFee??'')}" placeholder="0"></td>
+    <td><input name="lateHours" type="number" min="0" step="0.5" value="${esc(r.lateHours??'')}" placeholder="${FEE_DEF.lateHours}"></td>
+    <td><input name="closeMin" type="number" min="0" step="1" value="${esc(r.closeMin??'')}" placeholder="${FEE_DEF.closeMin}"></td></tr>`}).join('');
+  const t=today(),mon=addDays(mondayOf(t),-7*S.feeWeek),sun=addDays(mon,6);
+  const L=Object.entries(S.fees||{}).map(([k,f])=>[k,f]).filter(([,f])=>f.date>=mon&&f.date<=sun).sort((a,b)=>(b[1].date+b[1].start).localeCompare(a[1].date+a[1].start)||String(a[1].memberName).localeCompare(String(b[1].memberName)));
+  const charged=L.filter(([,f])=>f.status==='charged'),total=charged.reduce((a,[,f])=>a+(+f.amount||0),0);
+  const miss=Object.values(S.feeRuns||{}).filter(r=>r.noAttendance&&r.date>=mon&&r.date<=sun);
+  const pill={charged:['s-repair','Charged'],waived:['s-retired','Waived'],pending:['s-available','Pending – waits for class time']};
+  const list=L.length?L.map(([k,f])=>`<div class="item"><div><b class="lnk" data-member="${esc(f.memberId)}">${esc(f.memberName||mName(f.memberId))}</b> · ${f.type==='late'?'Late cancel':'No-show'} · <b>${money(f.amount)}</b>
+      <div class="tag">${fmtDate(f.date)} ${esc(f.start||'')} · ${esc(f.sessionTitle||'')}${f.type==='late'&&f.hoursBefore!=null?` · cancelled ${f.hoursBefore} h before`:''}${f.waiveNote?' · '+esc(f.waiveNote):''}</div></div>
+      <div class="actions" style="margin:0;flex:none"><span class="pill ${pill[f.status]?pill[f.status][0]:''}">${pill[f.status]?pill[f.status][1]:esc(f.status)}</span>
+      ${f.status==='charged'?`<button class="btn sm" data-feewaive="${esc(k)}">Waive</button>`:f.status==='waived'?`<button class="btn sm" data-feecharge="${esc(k)}">Re-apply</button>`:''}</div></div>`).join('')
+    :`<div class="empty">No fees ${S.feeWeek?'that week':'so far this week'}.</div>`;
+  const on=((S.mprefs||{})[S.me]||{}).feeReports!==false;
+  return `<div class="sec fees"><h4>No-show & late-cancel fees</h4>
+    <p class="tag" style="margin:0 0 8px">Tick the programs that charge fees. <b>Late cancel</b>: a member cancels less than the set hours before the start – the fee is waived if someone else takes the spot. <b>No-show</b>: booked but not checked in (Present or Late) by the coach when the class closes; if no attendance was taken, nobody is charged. Members get an email when a fee is applied (and if it’s removed). Leave a fee at 0 to turn that part off.</p>
+    <div class="tblwrap"><table class="feetbl"><tr><th>Program</th><th>No-show fee ($)</th><th>Late-cancel fee ($)</th><th>Late cancel = less than … hours before start</th><th>Class closes … min after start</th></tr>${rows}</table></div>
+    <div class="actions" style="margin:8px 0 14px"><button class="btn pri" id="feeSave">Save fee settings</button></div>
+    <label class="tog" style="display:flex;gap:8px;align-items:center;margin:0 0 10px"><input type="checkbox" id="feeMailTog" ${on?'checked':''}> Email me the weekly fee report (Sundays 8 PM, with a spreadsheet attached)</label>
+    <div class="fee-h"><div class="chips"><button class="chip" data-feewk="1" aria-label="Previous week">‹</button><button class="chip ${S.feeWeek===0?'on':''}" data-feewk="0">This week</button><button class="chip" data-feewk="-1" ${S.feeWeek===0?'disabled':''} aria-label="Next week">›</button></div>
+      <span><b>${fmtDate(mon)} – ${fmtDate(sun)}</b> · ${charged.length} charged · <b>${money(total)}</b></span>
+      <button class="btn sm" id="feeReportNow">✉ Email me this report now</button></div>
+    ${list}
+    ${miss.length?`<p class="tag" style="margin:10px 0 0">⚠ Attendance not taken (no no-show fees): ${miss.map(r=>`${fmtDate(r.date)} · ${esc((S.sessions[r.sessionId]||{}).title||r.sessionId)}`).join('; ')}</p>`:''}</div>`;
+}
+function bindFees(){
+  const m=$('#main');if(!m||!$('.sec.fees'))return;
+  const on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};
+  on('#feeSave',()=>guarded(async()=>{for(const tr of m.querySelectorAll('[data-feeprog]')){const pid=tr.dataset.feeprog,v=n=>{const x=tr.querySelector(`[name=${n}]`).value.trim();return x===''?null:Math.max(0,+x)};
+    await S.db.doc('feeRules/'+pid).set({enabled:tr.querySelector('[name=enabled]').checked,programName:(S.programs[pid]||{}).name||pid,noShowFee:v('noShowFee'),lateFee:v('lateFee'),lateHours:v('lateHours'),closeMin:v('closeMin'),updatedBy:S.me,updatedAt:nowIso()})}},'Fee settings saved'));
+  {const t=$('#feeMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({feeReports:t.checked},{merge:true}),t.checked?'You’ll get the weekly fee report':'Weekly fee report off')}
+  on('#feeReportNow',()=>guarded(()=>S.db.doc('feeReports/request').set({at:nowIso(),by:S.me}),'Report on its way to your inbox (this week so far)'));
+  m.querySelectorAll('[data-feewk]').forEach(el=>el.onclick=()=>{const v=+el.dataset.feewk;S.feeWeek=v===0?0:Math.max(0,S.feeWeek+v);render()});
+  m.querySelectorAll('[data-feewaive]').forEach(el=>el.onclick=()=>{const f=S.fees[el.dataset.feewaive];const note=prompt(`Waive ${money(f.amount)} for ${f.memberName}? Optional reason:`,'');if(note===null)return;
+    guarded(()=>S.db.doc('fees/'+el.dataset.feewaive).update({status:'waived',waivedBy:S.me,waivedAt:nowIso(),waiveNote:note.trim()||'Waived by an admin',updatedAt:nowIso()}),'Fee waived – the member gets an email')});
+  m.querySelectorAll('[data-feecharge]').forEach(el=>el.onclick=()=>{const f=S.fees[el.dataset.feecharge];if(!confirm(`Re-apply ${money(f.amount)} to ${f.memberName}? They’ll get an email.`))return;
+    guarded(()=>S.db.doc('fees/'+el.dataset.feecharge).update({status:'charged',waivedBy:null,waivedAt:null,waiveNote:'',updatedAt:nowIso()}),'Fee re-applied')});
+}
 // Version stamped at deploy (public/version.json, written by .github/workflows/deploy.yml)
 S.ver=null;
 fetch('version.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(v=>{if(!v)return;S.ver=v;const el=$('#appVer');if(el)el.textContent='· '+v.version+(v.date?' · '+new Date(v.date).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'');if(S.view==='admin')render()}).catch(()=>{});
@@ -2613,6 +2673,7 @@ function viewAdmin(){
     ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
     <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
   ${issueEmailToggle()}${claimEmailToggle()}
+  ${feesAdminHtml()}
   ${mailLogHtml()}
   ${versionHtml()}
   ${adminRoster()}`;
