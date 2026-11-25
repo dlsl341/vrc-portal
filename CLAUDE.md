@@ -113,6 +113,16 @@ language, and keep the "propose → preview link → merge" workflow.
 - **Member number**: `memberPrivate.memberNo` (self + admins). Admins edit it (duplicate check); members
   see it read-only; optional on join requests (`claims.memberNo`, copied on approval, ✓/✗ vs file); admins
   can search the directory by it.
+- **Invitations** (`invites/{token}` {memberId, email, by, byName, at, expiresAt (+14 d), status pending|used, usedBy/At,
+  mailError}; admin-only): "+ Add member" has "Email an invitation" (ticked by default, needs the email field); unlinked
+  member profiles get "✉ Invite to the portal / Resend invitation" + status line. Trigger `inviteOnCreate` emails
+  `SITE/?invite=<token>` (`inviteEmail`). An inline script in `<head>` moves `?invite=` into localStorage `vrcInvite`
+  (the sign-in screen then says "You've been invited"); once signed in, the guest app writes its own
+  `claims/{uid}` {type:'invite', invite, status:'pending'} and `inviteRedeem` links the account exactly like
+  `approveClaim` (members.linkedUser, accounts {via:'invite'}, moves memberPrivate/Prefs, admins if siteAdmin), marks the
+  invite used and deletes the claim; problems → claim `status:'invite_failed'` + `inviteError` (guest sees it, falls back
+  to "Find your profile"). Fallback: a normal "This is me" request for a member with a pending invite to the same
+  sign-in email is linked automatically. No admin "new request" email or welcome email for invite links.
 - **Join-request email**: trigger `emailAdminsOnClaim` (claims → pending) BCCs admins; opt-out
   `memberPrefs/{uid}.claimEmails = false` (Admin-page toggle).
 
@@ -129,7 +139,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `boats` · `members` (displayName, programs[], status active|review|inactive, linkedUser, siteAdmin…) ·
 `memberPrefs/{uid or memberId}` (sides, experience, bio, photo, calPrompt – public to members) ·
 `memberPrivate/{uid or memberId}` (email, phone, emergency, weightKg, medical – self + admins) ·
-`claims/{uid}` · `accounts/{uid}` · `admins/{uid}` · `profiles/{uid}` · `config/settings` ·
+`claims/{uid}` · `accounts/{uid}` · `invites/{token}` · `admins/{uid}` · `profiles/{uid}` · `config/settings` ·
 `programs` (name, color, opensDays, boatRequired, pcocAllowed) ·
 `sessions` (programId, weekday 0=Mon, start/end "HH:MM", type water|erg, capacity, eligible[] program names, coach, safety, season, active) ·
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·

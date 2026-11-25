@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>/* invitation links: keep the token through sign-in */try{var q=new URLSearchParams(location.search),t=q.get('invite');if(t&&/^[A-Za-z0-9_-]{20,80}$/.test(t)){localStorage.setItem('vrcInvite',t);q.delete('invite');history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash)}}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VRC Rowing Portal</title>
@@ -490,14 +491,14 @@ async function init(){
   if(S.guest){ // signed in but not yet linked to a member: only the profile-request screen
     document.body.classList.add('guest');
     for(const k in S.loaded)S.loaded[k]=true;
-    sub('members','members');subDoc('claims/'+S.me,'claims');
+    sub('members','members');subDoc('claims/'+S.me,'claims',snap=>redeemInvite(snap));
     subDoc('accounts/'+S.me,'acct',snap=>{if(snap.exists)location.reload()});
     route();return}
   assetsNs().then(()=>render());
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -952,7 +953,8 @@ function memberDetail(id,inPage){
    <div class="sec"><h4>Sessions</h4>${acts.length?acts.map(([a,up])=>`<div class="item act"><div><b>${fmtDate(a.date)}</b> ${up?'<span class="pill s-dnr" style="background:#ece8f6;color:#5b4b96">Booked</span>':''}${a.sessionId?(mk=>mk?`<span class="pill att-${mk}">${MARKS[mk][0]} ${MARKS[mk][1]}</span>`:'')(markOf(a.sessionId,a.date,id)):''}${a.walkIn?' <span class="tag">walk-in</span>':''}<div class="when">${a.sessionId?`<span class="lnk" data-gosess="${esc(a.sessionId)}|${a.date}">${esc(a.session)}</span>`:esc(a.session||a.program||'')}</div></div><div>${a.boatId&&S.boats[a.boatId]?`<span class="bchip" data-boat="${esc(a.boatId)}">${esc(a.rig||S.boats[a.boatId].currentRig||'')} ${esc(S.boats[a.boatId].name)}</span>`:a.type==='erg'?'<span class="tag">Erg</span>':esc(a.boatText||'')}</div></div>`).join(''):'<div class="empty">No sessions recorded yet.</div>'}</div>
    <div class="sec"><h4>Boats rowed</h4>${st.topBoats.length?st.topBoats.map(([b,n])=>`<span class="bchip" data-boat="${esc(b)}">${esc(S.boats[b]?S.boats[b].name:b)} <b>${n}</b></span>`).join(''):'<div class="empty">No boat history yet.</div>'}</div>
    ${reported.length?`<div class="sec"><h4>Damage reports filed</h4>${reported.map(([,i])=>`<div class="item"><span class="bchip" data-boat="${esc(i.boatId)}">${esc(S.boats[i.boatId]?S.boats[i.boatId].name:'Boat')}</span> ${esc(i.description)}<div class="when">${fmtDate(i.at)} · ${i.status==='resolved'?'resolved':'open'}</div></div>`).join('')}</div>`:''}
-   <div class="actions">${self?`<button class="btn pri" data-act="editSelf">Edit my details</button>`:''}${canAdmin()?`<button class="btn" data-act="edit">Edit member</button>${m.status!=='inactive'?`<button class="btn" data-act="inactive">Mark inactive</button>`:`<button class="btn" data-act="active">Reactivate</button>`}${m.siteAdmin?(S.me&&m.linkedUser===S.me?'':`<button class="btn" data-act="unadmin">Remove admin</button>`):`<button class="btn" data-act="admin">Make admin</button>`}<button class="btn" data-act="merge">Merge duplicate…</button>${m.linkedUser?`<button class="btn dan" data-act="unlink">Unlink account</button>`:''}`:''}</div>`;
+   <div class="actions">${self?`<button class="btn pri" data-act="editSelf">Edit my details</button>`:''}${canAdmin()?`<button class="btn" data-act="edit">Edit member</button>${m.status!=='inactive'?`<button class="btn" data-act="inactive">Mark inactive</button>`:`<button class="btn" data-act="active">Reactivate</button>`}${m.siteAdmin?(S.me&&m.linkedUser===S.me?'':`<button class="btn" data-act="unadmin">Remove admin</button>`):`<button class="btn" data-act="admin">Make admin</button>`}<button class="btn" data-act="merge">Merge duplicate…</button>${m.linkedUser?`<button class="btn dan" data-act="unlink">Unlink account</button>`:`<button class="btn" data-act="invite">✉ ${lastInvite(id)?'Resend invitation':'Invite to the portal'}</button>`}`:''}</div>
+   ${canAdmin()&&!m.linkedUser?inviteStatus(id):''}`;
 }
 function bindMemberDetail(root,id){
   root.querySelectorAll('[data-member]').forEach(el=>el.onclick=e=>{e.stopPropagation();openMember(el.dataset.member)});
@@ -964,7 +966,7 @@ function bindMemberDetail(root,id){
   root.querySelectorAll('[data-reslog]').forEach(el=>el.onclick=e=>{e.stopPropagation();resultForm(null)});
   root.querySelectorAll('[data-resall]').forEach(el=>el.onclick=e=>{e.stopPropagation();S.resAll=S.resAll===id?null:id;render()});
   root.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{const a=el.dataset.act;
-    if(a==='admin')makeAdminForm(id);else if(a==='unadmin')removeAdminForm(id);else if(a==='editSelf')selfForm(id);else if(a==='edit')memberForm(id);else if(a==='merge')mergeForm(id);else if(a==='unlink')unlinkForm(id);
+    if(a==='admin')makeAdminForm(id);else if(a==='unadmin')removeAdminForm(id);else if(a==='editSelf')selfForm(id);else if(a==='edit')memberForm(id);else if(a==='merge')mergeForm(id);else if(a==='unlink')unlinkForm(id);else if(a==='invite')inviteForm(id);
     else if(a==='inactive'||a==='active')guarded(()=>S.db.doc('members/'+id).update({status:a==='active'?'active':'inactive',updatedAt:nowIso()}),a==='active'?'Member reactivated':'Marked inactive')});
 }
 function openMember(id){S.open=null;S.openM=id;renderMemberDrawer();$('#drawer').classList.add('on');$('#scrim').classList.add('on');$('#drawer').setAttribute('aria-hidden','false')}
@@ -984,11 +986,13 @@ function viewMe(){
   const mid=myMemberId();
   if(mid){const m=S.members[mid];return `<div class="page-h"><div style="display:flex;gap:14px;align-items:center">${avatar(mid,60)}<div><h2>${esc(m.displayName)}</h2><p>${esc((m.programs||[]).join(' · ')||'No program yet')}</p></div></div></div><div class="mepage" id="mePage">${memberDetail(mid,true)}</div>`}
   const c=S.claims[S.me];
-  if(c&&c.status!=='rejected')return `<div class="page-h"><div><h2>My profile</h2></div></div><div class="sec" style="max-width:640px"><h4>Request pending</h4><p style="margin:0 0 6px">You asked to be linked to ${c.type==='existing'?`<b>${esc(mName(c.memberId))}</b>`:`a new profile for <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b>`}.</p><p class="muted" style="margin:0">An admin will review it. Your profile will appear here once it's approved.</p><div class="actions"><button class="btn" id="withdraw">Withdraw request</button></div></div>`;
+  if(c&&c.type==='invite'&&c.status==='pending')return `<div class="page-h"><div><h2>Welcome to the VRC Rowing Portal</h2></div></div><div class="sec" style="max-width:640px"><h4>Setting up your account…</h4><p style="margin:0">Linking your sign-in to your member profile from the invitation. This takes a few seconds – the page refreshes by itself.</p></div>`;
+  if(c&&c.status!=='rejected'&&c.status!=='invite_failed')return `<div class="page-h"><div><h2>My profile</h2></div></div><div class="sec" style="max-width:640px"><h4>Request pending</h4><p style="margin:0 0 6px">You asked to be linked to ${c.type==='existing'?`<b>${esc(mName(c.memberId))}</b>`:`a new profile for <b>${esc(((c.firstName||'')+' '+(c.lastName||'')).trim())}</b>`}.</p><p class="muted" style="margin:0">An admin will review it. Your profile will appear here once it's approved.</p><div class="actions"><button class="btn" id="withdraw">Withdraw request</button></div></div>`;
 
   const q=S.claimQ.trim().toLowerCase();
   const cands=q?Object.entries(S.members).filter(([,m])=>!m.linkedUser&&m.status!=='inactive'&&`${m.displayName} ${m.firstName||''} ${m.lastName||''}`.toLowerCase().includes(q)).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName)).slice(0,30):[];
   return `<div class="page-h"><div><h2>Find your member profile</h2><p>Most members were brought over from the boat sign-out sheet as first name + last initial. Find yourself and an admin will confirm it's you.</p></div></div>
+  ${c&&c.status==='invite_failed'?`<div class="callout" style="max-width:720px">Your invitation couldn’t be used${c.inviteError?': '+esc(c.inviteError):'.'} Find yourself below instead and an admin will confirm it’s you.</div>`:''}
   ${c&&c.status==='rejected'?`<div class="callout" style="max-width:720px">Your last request wasn't approved${c.reason?': '+esc(c.reason):'.'} You can try again below.</div>`:''}
   <div class="sec" style="max-width:720px">
    <div class="search" style="margin-bottom:12px">${SEARCH_ICON}<input id="claimQ" placeholder="Type your first name…" value="${esc(S.claimQ)}"></div>
@@ -1051,8 +1055,9 @@ function memberForm(id){
     ${fld('PCOC date',`<input type="date" name="pcocDate" value="${esc(m.pcocDate||'')}">`)}
     <div class="full fsub">Private details · visible to admins and the member only</div>
     ${contactFields(pv,{admin:true})}
+    ${!id||!m.linkedUser?fld('Invitation',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="invite" value="1" ${id?'':'checked'}> Email ${id?'':'them '}an invitation to sign in (uses the email above)</label>`,'full','They get a link that signs them straight in to this profile – no approval step. The link works once and expires after 14 days.'):''}
   </div>${formFoot(id?'Save changes':'Add member')}</form>`,()=>{let av={file:null,removed:false};if(id)wireAvatarField(id).then(x=>av=x);wireForm({
-    validate:fd=>{if(!fd.firstName.trim())return 'First name is required.';const no=(fd.memberNo||'').trim().toLowerCase();
+    validate:fd=>{if(!fd.firstName.trim())return 'First name is required.';if((fd._c.invite||[]).length&&!validEmailC(fd.email))return 'Add their email address to send the invitation (or untick it).';const no=(fd.memberNo||'').trim().toLowerCase();
       if(no){const dup=Object.keys(S.members).find(x=>x!==id&&String((privOf(x)||{}).memberNo||'').trim().toLowerCase()===no);if(dup)return `Member number ${fd.memberNo.trim()} is already used by ${mName(dup)}.`}return null},
     msg:id?'Member updated':'Member added',
     save:async fd=>{
@@ -1066,6 +1071,7 @@ function memberForm(id){
       const ph=id?await savePhoto(av,pr.photo):undefined;
       await S.db.doc('memberPrefs/'+key).set({...(id?prefsOf(id):{}),sides:fd._c.sides||[],experience:fd.experience,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
       const p=privFrom(fd);if(Object.values(p).some(v=>v&&v!==p.updatedAt)||privOf(mid))await S.db.doc('memberPrivate/'+key).set({...(privOf(mid)||{}),...p});
+      if((fd._c.invite||[]).length){await createInvite(mid,fd.email);toast(`Invitation emailed to ${fd.email.trim()}`)}
     }})});
 }
 function selfForm(id){
@@ -1100,6 +1106,35 @@ function claimForm(mid){
       const base={note:fd.note.trim(),email:fd.email.trim(),phone:fd.phone.trim(),memberNo:(fd.memberNo||'').trim(),lastName:(fd.lastName||'').trim(),status:'pending',at:nowIso()};
       await S.db.doc('claims/'+S.me).set(m?{...base,type:'existing',memberId:mid}:{...base,type:'new',firstName:fd.firstName.trim(),programs:fd._c.programs||[]});
     }}));
+}
+/* ---------- Invitations: admin emails a sign-in link that links straight to a member profile (server: functions inviteOnCreate / inviteRedeem) ---------- */
+S.invites={};
+const validEmailC=e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e||'').trim());
+function newToken(){const a=new Uint8Array(24);crypto.getRandomValues(a);return btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+const lastInvite=mid=>Object.values(S.invites||{}).filter(v=>v.memberId===mid).sort((a,b)=>String(b.at).localeCompare(String(a.at)))[0]||null;
+async function createInvite(mid,email){
+  const t=newToken(),now=Date.now();
+  await S.db.doc('invites/'+t).set({memberId:mid,email:String(email).trim().toLowerCase(),by:S.me,byName:(S.members[myMemberId()]||{}).displayName||'',at:new Date(now).toISOString(),expiresAt:new Date(now+14*864e5).toISOString(),status:'pending'});
+}
+function inviteStatus(mid){const v=lastInvite(mid);if(!v)return '';
+  const exp=v.status==='pending'&&v.expiresAt<nowIso();
+  return `<p class="tag" style="margin:6px 0 0">✉ Invitation ${v.status==='used'?'used':exp?'expired':'sent'} to ${esc(v.email)} · ${fmtDate(v.at)}${v.status==='pending'&&!exp?' · not signed in yet (link valid until '+fmtDate(v.expiresAt)+')':''}${v.mailError?' · ⚠ email not sent: '+esc(v.mailError):''}</p>`}
+function inviteForm(mid){
+  const m=S.members[mid],pv=privOf(mid)||{};
+  openModal(`<h3>Invite ${esc(m.displayName)} to the portal</h3><p class="muted" style="margin-top:-6px">They’ll get an email with a link that signs them straight in to this profile – no approval step needed. The link works once and expires after 14 days.</p><form id="mform"><div class="fg">
+    ${fld('Their email',`<input name="email" type="email" required value="${esc(pv.email||'')}">`,'full',pv.email?'':'Also saved to their private details.')}
+  </div>${formFoot('Send invitation')}</form>`,()=>wireForm({validate:fd=>validEmailC(fd.email)?null:'Enter a valid email address.',msg:'Invitation sent',
+    save:async fd=>{const e=fd.email.trim();if(!pv.email)await S.db.doc('memberPrivate/'+mKey(mid)).set({...pv,email:e,updatedAt:nowIso()});await createInvite(mid,e)}}));
+}
+// invited person, signed in but not linked yet: hand the token to the server once
+function redeemInvite(snap){
+  let t=null;try{t=localStorage.getItem('vrcInvite')}catch(e){}
+  if(!t)return;
+  const c=snap&&snap.exists?snap.data():null;
+  if(c&&c.status==='invite_failed'&&c.invite===t){try{localStorage.removeItem('vrcInvite')}catch(e){}return}
+  if(S._invSent||(c&&c.invite===t))return;
+  S._invSent=true;
+  S.db.doc('claims/'+S.me).set({status:'pending',type:'invite',invite:t,at:nowIso()}).catch(()=>{S._invSent=false});
 }
 async function approveClaim(uid,btn){
   const c=S.claims[uid];if(!c)return;if(btn)btn.disabled=true;
@@ -2644,7 +2679,7 @@ function versionHtml(){const v=S.ver;if(!v)return '';const rel=/^v\d/.test(v.ver
   return `<div class="sec"><h4>Portal version</h4><p style="margin:0"><b style="font-size:18px">${esc(v.version)}</b>${v.date?` <span class="tag">· live since ${esc(new Date(v.date).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}))}</span>`:''}</p>
    ${v.title?`<p class="tag" style="margin:4px 0 0">Latest change: ${esc(v.title)}${v.sha?` · ${esc(v.sha)}`:''}</p>`:''}
    <p class="tag" style="margin:8px 0 0"><a class="lnk" href="${rel}" target="_blank" rel="noopener">See what changed in this version</a> · <a class="lnk" href="https://github.com/dlsl341/vrc-portal/releases" target="_blank" rel="noopener">All versions</a>. To go back to an earlier version, ask Claude to “roll back to v1.NN”, or use Firebase → Hosting → Release history → Rollback.</p></div>`}
-function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
+function pendingClaims(){return Object.entries(S.claims||{}).filter(([,c])=>c.status!=='rejected'&&c.status!=='invite_failed'&&c.type!=='invite').sort((a,b)=>(a[1].at||'').localeCompare(b[1].at||''))}
 function claimItem(uid,c){
   const who=(S.profiles[uid]&&S.profiles[uid].name)||'A member';
   const what=c.type==='existing'?`says they are <span class="lnk" data-member="${esc(c.memberId)}">${esc(mName(c.memberId))}</span>${c.lastName?` <span class="muted">(last name: ${esc(c.lastName)})</span>`:''}`

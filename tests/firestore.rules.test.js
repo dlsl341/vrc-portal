@@ -249,6 +249,18 @@ test('only admins set fee rules; members read only their own fees; admins can on
   await assertFails(getDoc(doc(as('alice'), 'feeRuns/x')));
 });
 
+// ---- invitations
+test('only admins create or read invitations', async () => {
+  const inv = { memberId: 'm_bob', email: 'bob@example.com', status: 'pending', at: 'now', expiresAt: 'later' };
+  await assertSucceeds(setDoc(doc(as('carol'), 'invites/abcdefghijklmnopqrstuvwxyz012345'), inv));
+  await assertFails(setDoc(doc(as('carol'), 'invites/short'), inv));
+  await assertFails(setDoc(doc(as('alice'), 'invites/zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'), inv));
+  await assertFails(getDoc(doc(as('alice'), 'invites/abcdefghijklmnopqrstuvwxyz012345')));
+  await assertFails(getDoc(doc(as('stranger'), 'invites/abcdefghijklmnopqrstuvwxyz012345')));
+  // a signed-in stranger may hand an invitation token to the server through their own pending claim
+  await assertSucceeds(setDoc(doc(as('stranger'), 'claims/stranger'), { status: 'pending', type: 'invite', invite: 'abcdefghijklmnopqrstuvwxyz012345', at: 'now' }));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));
