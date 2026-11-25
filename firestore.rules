@@ -1,246 +1,341 @@
 rules_version = '2';
 
-// VRC Rowing Portal – Firestore security rules
-//
-// Who's who
-//   signed in : anyone who has logged in (Google or email link). Can only see the member
-//               directory, manage their own profile request, and their own public profile name.
-//   member    : a signed-in person whose account an admin has linked to a member record
-//               (accounts/{uid} exists). Can book, report damage, log maintenance, edit own details.
-//   admin     : the owner (config/settings.ownerUid) or anyone listed in admins/{uid}.
-//               Can change boats, members, programs, sessions and see private details.
-
+// ICG Retail Operations Portal: who can read and change what.
+// User levels: super 5 · admin 4 · ho/dm 3 · sm 2 · store 1
+// A person's profile lives at /users/{their lowercase email}.
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() { return request.auth != null; }
-    function uid() { return request.auth.uid; }
-    function settingsPath() { return /databases/$(database)/documents/config/settings; }
-    function isOwner() {
-      return signedIn() && exists(settingsPath()) && get(settingsPath()).data.ownerUid == uid();
-    }
-    function isAdmin() {
-      return signedIn() && (isOwner() || exists(/databases/$(database)/documents/admins/$(uid())));
-    }
-    function isMember() {
-      return signedIn() && exists(/databases/$(database)/documents/accounts/$(uid()));
-    }
-    function canUse() { return isMember() || isAdmin(); }
-    function myMemberId() {
-      return get(/databases/$(database)/documents/accounts/$(uid())).data.memberId;
-    }
-    function isCoach() {                  // a linked member with the Coach role
-      return isMember() && 'coach' in get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []);
-    }
-    function onlyChanges(keys) {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
-    }
+    // ── Bootstrap Super Admin(s): keep in sync with src/firebase-config.js ──
+    function bootstrapEmails() { return ['james@inspiredcannabis.ca']; }
 
-    // ---- setup: the first person to sign in after deployment claims ownership ----
-    match /config/settings {
-      allow read: if signedIn();
-      allow create: if signedIn() && !exists(settingsPath())
-                    && request.resource.data.ownerUid == uid();
-      allow update: if isOwner() && request.resource.data.ownerUid == resource.data.ownerUid;
-      allow delete: if false;
+    function signedIn()   { return request.auth != null && request.auth.token.email is string; }
+    function myEmail()    { return request.auth.token.email.lower(); }
+    // Google and email-link accounts are verified. Microsoft work accounts are accepted
+    // (set MS_TENANT in firebase-config.js to lock Microsoft sign-in to ICG's tenant).
+    function trusted()    { return request.auth.token.email_verified == true
+                                   || request.auth.token.firebase.sign_in_provider == 'microsoft.com'; }
+    function myPath()     { return /databases/$(database)/documents/users/$(myEmail()); }
+    function hasProfile() { return signedIn() && exists(myPath()); }
+    function me()         { return get(myPath()).data; }
+    function active()     { return hasProfile() && trusted() && me().status == 'active'; }
+    function lvlOf(r)     { return r == 'super' ? 5 : r == 'admin' ? 4 : (r == 'ho' || r == 'dm' || r == 'pcadmin') ? 3 : r == 'sm' ? 2 : 1; }
+    function atLeast(n)   { return active() && lvlOf(me().role) >= n; }
+    function isSuper()    { return active() && me().role == 'super'; }
+    function onlyChanged(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function domainOk() {
+      let cfg = get(/databases/$(database)/documents/config/security).data;
+      return myEmail().split('@')[1] in cfg.allowedDomains;
     }
+    // ── Editable permissions (Admin → Roles & permissions, saved to /config/perms by Super Admins).
+    //    defaults() must match PERM_DEFAULTS in src/app.js. Super Admins always have everything.
+    function defaults(role) {
+      return role == 'admin' ? ['post','calendar','editAll','reports','srdash','admin','users','links','fleet','vault','audit','travel','hf']
+           : role == 'pcadmin' ? ['post','calendar','reports','srdash','travel','users','links','hf']
+           : (role == 'ho' || role == 'dm') ? ['post','calendar','reports','srdash','travel']
+           : role == 'sm' ? ['reports','srdash'] : [];
+    }
+    function permsPath() { return /databases/$(database)/documents/config/perms; }
+    function permsFor(role) {
+      return exists(permsPath()) && get(permsPath()).data.keys().hasAny([role]) ? get(permsPath()).data[role] : defaults(role);
+    }
+    function perm(k) { return active() && (me().role == 'super' || permsFor(me().role).hasAny([k])); }
 
-    // ---- people & access ----
-    match /profiles/{userId} {            // display name for each signed-in account
-      allow read: if signedIn();
-      allow write: if signedIn() && userId == uid();
-    }
-    match /accounts/{userId} {            // account -> member link, written by admins on approval
-      allow read: if signedIn() && (userId == uid() || isAdmin());
-      allow write: if isAdmin();
-    }
-    match /admins/{userId} {
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-    match /claims/{userId} {              // "this is me" profile requests
-      allow read: if signedIn() && (userId == uid() || isAdmin());
-      allow create, update: if signedIn() && ((userId == uid() && request.resource.data.status == 'pending') || isAdmin());
-      allow delete: if signedIn() && (userId == uid() || isAdmin());
-    }
-    match /members/{memberId} {           // names + programs: readable so new people can find themselves
-      allow read: if signedIn();
-      allow write: if isAdmin();
-    }
-    match /memberPrefs/{key} {            // sides, experience, bio, photo – keyed by account id once linked
-      allow read: if canUse();
-      allow write: if isAdmin() || (isMember() && key == uid());
-    }
-    match /memberPrivate/{key} {          // email, phone, emergency contact, weight
-      allow read, write: if isAdmin() || (isMember() && key == uid());
-    }
+    // Super Admins manage everyone; people with the "users" permission manage HO/DM/SM/Store accounts.
+    function canManage(role) { return isSuper() || (perm('users') && lvlOf(role) <= 3 && (role != 'pcadmin' || me().role == 'pcadmin')); }
+    function authorOk() { return perm('editAll') || (perm('post') && resource.data.author == me().id); }
 
-    // ---- club data that only admins change ----
-    match /boats/{id}       { allow read: if canUse(); allow write: if isAdmin(); }
-    match /programs/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
-    match /sessions/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
-    match /occurrences/{id} {
-      allow read: if canUse();
-      allow write: if isAdmin();
-      // coaches may cancel or reinstate a date (only the cancellation fields)
-      function cancelKeys() { return ['sessionId', 'date', 'cancelled', 'reasonCode', 'reason', 'cancelNotes', 'cancelledBy',
-                                      'cancelledAt', 'notify', 'notified', 'notifyReinstate', 'reinstateNotes', 'reinstatedAt', 'updatedAt']; }
-      allow create: if isCoach() && request.resource.data.keys().hasOnly(cancelKeys());
-      allow update: if isCoach() && onlyChanges(cancelKeys());
+    // ── Public: needed to brand the sign-in page ──
+    match /brands/{id} {
+      allow read: if true;
+      allow write: if perm('brands');
     }
-    match /activity/{id}    { allow read: if canUse(); allow write: if isAdmin(); }
-    match /crews/{id}       { allow read: if canUse(); allow write: if isAdmin(); }
-
-    // ---- things members add ----
-    match /issues/{id} {
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
-                                      && request.resource.data.status == 'open');
-      // the reporter can add photos to their own open report; admins can do anything
-      allow update: if isAdmin() || (isMember() && resource.data.by == uid()
-                                      && onlyChanges(['photos', 'updatedAt']));
-      allow delete: if isAdmin();
-    }
-    match /maintenance/{id} {
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
-      allow update, delete: if isAdmin();
-    }
-    // ---- coxswain availability: each member edits their own; admins can edit anyone's ----
-    match /coxAvail/{mid} {
-      allow read: if canUse();
-      allow write: if isAdmin() || (isMember() && mid == myMemberId());
-    }
-
-    // ---- no-show / late-cancel fees. Admins set a rule per program (feeRules/{programId}); the server
-    // (functions) creates fees/{id}, sends the emails and the weekly report. Admins may only waive / re-apply.
-    match /feeRules/{pid} {
-      allow read: if canUse();
-      allow write: if isAdmin();
-    }
-    match /fees/{id} {
-      allow read: if isAdmin() || (isMember() && resource.data.memberId == myMemberId());
-      allow update: if isAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'waivedBy', 'waivedAt', 'waiveNote', 'updatedAt'])
-        && request.resource.data.status in ['charged', 'waived'];
-      allow create, delete: if false;
-    }
-    match /feeRuns/{id} {
-      allow read: if isAdmin();
-      allow write: if false;
-    }
-    match /feeReports/{id} {                 // "Email me this week's report" – the server answers
-      allow read: if isAdmin();
-      allow create, update: if isAdmin() && id == 'request';
-    }
-
-    // ---- invitations: admins email a one-time sign-in link for a member profile (the server sends and redeems it)
-    match /invites/{token} {
-      allow read: if isAdmin();
-      allow create: if isAdmin() && request.resource.data.status == 'pending' && token.size() >= 24;
-      allow update, delete: if isAdmin();
-    }
-
-    // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
-    // The server (functions) gives a freed erg to the first in line and deletes the entry.
-    match /waitlist/{id} {
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
-                                      && request.resource.data.memberId == myMemberId()
-                                      && id == request.resource.data.sessionId + '_' + request.resource.data.date.replace('-', '') + '_' + myMemberId()
-                                      && request.resource.data.group is string
-                                      && request.resource.data.t is int        // place in line = time joined (ms)
-                                      && math.abs(request.resource.data.t - request.time.toMillis()) < 300000);
+    // Personal calendar feed tokens (Calendar → Sync to my calendar). The id is the secret token.
+    match /calfeeds/{token} {
+      allow read, delete: if active() && resource.data.uid == me().id;
+      allow create: if active() && request.resource.data.uid == me().id && request.resource.data.email == myEmail()
+        && token.size() >= 40 && request.resource.data.keys().hasOnly(['uid', 'email', 'created']);
       allow update: if false;
-      allow delete: if isAdmin() || (isMember() && resource.data.memberId == myMemberId());
+    }
+    // Brand website scans (Add brand → Get logo & colours). The server function fills in the result.
+    match /brandScans/{id} {
+      allow read: if perm('brands') && resource.data.by == me().id;
+      allow create: if perm('brands') && request.resource.data.by == me().id && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['url', 'by', 'status', 'createdAt']) && request.resource.data.url is string
+        && request.resource.data.url.size() < 300;
+      allow update, delete: if false;
+    }
+    match /config/security {
+      allow read: if true;
+      allow write: if isSuper();
+    }
+    // Slack bot token: Super Admins can set it but nobody can read it back (the server uses it).
+    match /config/slackSecret {
+      allow read: if false;
+      allow create, update: if isSuper() && request.resource.data.token is string && request.resource.data.token.size() < 300;
+      allow delete: if isSuper();
+    }
+    match /config/sd {
+      allow read: if active();
+      allow write: if perm('admin');
+      // Anyone opening a service request bumps the request counter.
+      allow update: if active() && onlyChanged(['seq']) && request.resource.data.seq == resource.data.seq + 1;
+    }
+    match /config/perms {
+      allow read: if active();
+      allow write: if isSuper();
+    }
+    match /config/meta {
+      allow read, write: if isSuper();
     }
 
-    // ---- open erg: members book an erg for themselves outside programmed erg time ----
-    match /openErg/{id} {
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
-                                      && request.resource.data.memberId == myMemberId()
-                                      && request.resource.data.erg is int
-                                      && request.resource.data.erg >= 1 && request.resource.data.erg <= 18);
-      allow update, delete: if isAdmin() || (isMember() && resource.data.by == uid());
+    // ── People ──
+    match /users/{email} {
+      allow read: if active() || (signedIn() && email == myEmail());
+
+      allow create: if signedIn() && trusted() && email == myEmail() && (
+                        // First sign-in of a bootstrap Super Admin
+                        (myEmail() in bootstrapEmails() && request.resource.data.role == 'super' && request.resource.data.status == 'active')
+                        // Anyone on an ICG domain can ask for access; they start as a pending Store User
+                     || (request.resource.data.role == 'store' && request.resource.data.status == 'pending'
+                         && request.resource.data.email == myEmail() && domainOk()
+                         && !request.resource.data.keys().hasAny(['dmStores', 'travelDesk', 'supervisor', 'pcTeam', 'grow', 'leadDept', 'leadDepts'])))
+                    || (canManage(request.resource.data.role) && request.resource.data.email == email);
+
+      allow update: if
+          // Your own profile: name, title, sign-in stamps; invited → active on first sign-in
+          (signedIn() && trusted() && email == myEmail()
+             && resource.data.status in ['active', 'invited']
+             && onlyChanged(['name', 'title', 'photo', 'lastAt', 'auth', 'status'])
+             && (request.resource.data.status == resource.data.status
+                 || (resource.data.status == 'invited' && request.resource.data.status == 'active')))
+          // Admins: approve, edit, deactivate (not yourself out of your own role)
+       || (canManage(resource.data.role) && canManage(request.resource.data.role)
+             // Only Super Admins and P&C Admins can add or remove someone from the P&C team.
+             && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['pcTeam']) || me().role in ['super', 'pcadmin'])
+             // Only Super Admins choose Grow Collaborators.
+             && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['grow']) || me().role == 'super')
+             // Department lead (gives Grow access): Super Admins and P&C Admins only.
+             && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['leadDept', 'leadDepts']) || me().role in ['super', 'pcadmin'])
+             && request.resource.data.email == email
+             && !(email == myEmail() && request.resource.data.role != resource.data.role));
+
+      allow delete: if canManage(resource.data.role) && email != myEmail();
     }
 
-    // ---- Concept2 connection: the server function holds the tokens; browsers can't read them ----
-    match /c2States/{state} {        // one-time 'state' for the Concept2 sign-in round trip
-      allow create: if signedIn() && request.resource.data.uid == uid()
-                    && request.resource.data.keys().hasOnly(['uid', 'at']);
+    match /favs/{uid} {
+      allow read, write: if active() && me().id == uid;
     }
-    match /c2Links/{u} {             // 'connected as …' status, written only by the server
-      allow read: if signedIn() && (u == uid() || isAdmin());
-    }
-    match /mailLog/{id} { allow read: if isAdmin(); }   // member emails sent by the server (admin page shows status)
-    match /c2Tokens/{u} { allow read, write: if false; }
-    match /c2Users/{c2id} { allow read, write: if false; }
 
-    // ---- scheduled maintenance: admins schedule; members can join/leave the crew; the crew can mark it done ----
-    match /maintJobs/{id} {
-      function crewChange() {           // only adds or removes the signed-in member
-        let before = resource.data.get('crew', []).toSet();
-        let after = request.resource.data.get('crew', []).toSet();
-        return after.difference(before).union(before.difference(after)).hasOnly([myMemberId()]);
+    // ── The Grind ──
+    match /posts/{id} {
+      function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+      // Acknowledging: you can only add yourself
+      function acksOk() { return !changed().hasAny(['acks'])
+                          || request.resource.data.acks.removeAll(resource.data.acks).hasOnly([me().id]); }
+      // Task progress: you can only change your own store's copy (or your own, for tasks assigned to people)
+      function progOk() { return !changed().hasAny(['prog'])
+                          || request.resource.data.prog.diff(resource.data.get('prog', {})).affectedKeys().hasOnly([me().store, me().id]); }
+      allow read: if active();
+      allow create: if perm('post') && request.resource.data.author == me().id;
+      allow update: if authorOk()
+                    || (active() && changed().hasOnly(['acks', 'prog']) && acksOk() && progOk());
+      allow delete: if authorOk();
+    }
+
+    // ── Calendar (tasks: stores tick off their own completion) ──
+    match /events/{id} {
+      allow read: if active();
+      // Service visits are no longer stored here (they're built from restricted service requests),
+      // so calendar entries can't carry request details. Old visit entries can only be removed.
+      allow create: if perm('calendar') && !('ticketId' in request.resource.data);
+      allow delete: if perm('calendar') || (atLeast(3) && resource.data.get('ticketId', null) is string);
+      allow update: if (perm('calendar') && !('ticketId' in request.resource.data))
+                    || (active() && onlyChanged(['comp'])
+                        && request.resource.data.comp.diff(resource.data.get('comp', {})).affectedKeys().hasOnly([me().store]));
+    }
+
+    // ── Resources ──
+    match /links/{id} {
+      allow read: if active();
+      allow write: if perm('links');
+      allow update: if active() && onlyChanged(['clicks']);
+    }
+
+    // ── Service requests ──
+    // Super Admin, Admin and Head Office: every store. District Managers: the stores in their
+    // district (users/{email}.dmStores, kept in sync from Fleet → Districts). Everyone else: their
+    // own store. Anyone can also see requests they opened themselves.
+    function ticketOk(d) {
+      return active() && (me().role in ['super', 'admin', 'ho', 'pcadmin']
+        || d.store == me().store
+        || (me().role == 'dm' && me().get('dmStores', []).hasAny([d.store]))
+        || d.requester == me().id);
+    }
+    match /tickets/{id} {
+      allow read: if ticketOk(resource.data);
+      allow create: if ticketOk(request.resource.data) && request.resource.data.requester == me().id;
+      allow update: if ticketOk(resource.data) && ticketOk(request.resource.data);
+      allow delete: if atLeast(4);
+    }
+
+    // ── Fleet & confidential store info ──
+    match /fleet/{id} {
+      allow read: if active();
+      allow write: if perm('fleet');
+    }
+    match /vault/{storeNo} {
+      allow read, write: if perm('vault');
+    }
+
+    // ── Travel ──
+    // The travel desk (users flagged travelDesk) sees and manages everything. Travel is never
+    // available to store-level roles, even if the permission is switched on for them.
+    function travelDesk() { return active() && me().get('travelDesk', false) == true; }
+    function canTravel() { return perm('travel') && !(me().role in ['sm', 'store']); }
+    // ── High Five: anyone can send; senders/recipients read their own; Admin-page users manage ──
+    function hfMgr() { return perm('hf'); }
+    match /highfives/{id} {
+      allow read: if hfMgr() || (active() && (resource.data.by == me().id || resource.data.toEmail == myEmail()));
+      allow create: if active() && request.resource.data.by == me().id
+        && request.resource.data.grind in ['none', 'pending'] && request.resource.data.get('postId', '') == ''
+        && request.resource.data.toEmail is string;
+      allow update, delete: if hfMgr();
+    }
+    match /hfdraws/{id} {
+      allow read, write: if hfMgr();
+    }
+
+    // ── Grow (NSO / NSA projects): department leads (users.leadDept), legacy Grow Collaborators and Super Admins ──
+    function growOk() { return active() && (me().role == 'super' || me().get('grow', false) == true || me().get('leadDept', '') != '' || me().get('leadDepts', []).size() > 0); }
+    match /growProjects/{id} {
+      allow read, write: if growOk();
+    }
+    match /growTasks/{id} {
+      allow read, write: if growOk();
+    }
+
+    // ── Developer Feedback: anyone can send (while the page is turned on); Super Admins triage ──
+    function fbOn() { return get(/databases/$(database)/documents/config/security).data.get('devFeedback', false) == true; }
+    match /feedback/{id} {
+      allow read: if isSuper() || (active() && resource.data.by == me().id);
+      allow create: if isSuper() || (active() && fbOn() && request.resource.data.by == me().id
+        && request.resource.data.status == 'new' && request.resource.data.version == '' && request.resource.data.notes == '');
+      // The sender can add comments to their own item; everything else is Super Admin only.
+      allow update: if isSuper() || (active() && resource.data.by == me().id
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['log', 'updated']));
+      allow delete: if isSuper();
+    }
+
+    // ── P&C forms: definitions readable by everyone; the P&C team (users.pcTeam) and Super Admins edit ──
+    function pcTeam() { return active() && (me().role in ['super', 'pcadmin'] || me().get('pcTeam', false) == true); }
+    match /forms/{id} {
+      allow read: if active();
+      allow write: if pcTeam();
+    }
+    // Submissions hold confidential HR details: P&C team sees all; submitters their own; DMs what they approve.
+    match /pcsubs/{id} {
+      function sChanged() { return request.resource.data.diff(resource.data).affectedKeys(); }
+      allow read: if pcTeam() || (active() && (resource.data.by == me().id || resource.data.approverId == me().id));
+      allow create: if pcTeam()
+        || (active() && request.resource.data.status in ['approval', 'submitted'] && request.resource.data.src == 'portal'
+            && (request.resource.data.by == me().id || (request.resource.data.anon == true && request.resource.data.by == ''))
+            // Approval goes to the submitter's own "Reports to" (or nobody, and P&C approves).
+            && request.resource.data.get('approverId', '') in [me().get('supervisor', ''), '']);
+      allow update: if pcTeam()
+        || (active() && resource.data.approverId == me().id && resource.data.by != me().id && resource.data.status == 'approval'
+            && request.resource.data.status in ['approved', 'declined'] && sChanged().hasOnly(['status', 'decision', 'log', 'updated']));
+      allow delete: if pcTeam();
+    }
+
+    // ── Retail Training Academy records ──
+    // Super/Admin/Support Centre/P&C see all; DMs their district's stores; Store Managers their store;
+    // anyone the records they made (trainer) or that are about them (trainee).
+    function trainAll() { return active() && (me().role in ['super', 'admin', 'ho', 'pcadmin'] || me().get('pcTeam', false) == true); }
+    function trainOk(d) {
+      return trainAll() || (active() && (d.by == me().id || d.get('empId', '') == me().id
+        || (lvlOf(me().role) >= 2 && d.store == me().store)
+        || (me().role == 'dm' && me().get('dmStores', []).hasAny([d.store]))));
+    }
+    match /training/{id} {
+      allow read: if trainOk(resource.data);
+      allow create: if trainOk(request.resource.data) && (request.resource.data.by == me().id || trainAll());
+      allow update: if trainOk(resource.data) && trainOk(request.resource.data)
+        && (trainAll() || lvlOf(me().role) >= 2 || resource.data.by == me().id)
+        && request.resource.data.by == resource.data.by;
+      allow delete: if trainAll() || atLeast(4) || (active() && resource.data.by == me().id);
+    }
+
+    // ── Leadership Training Academy checklists: one doc per person (id = their user id) ──
+    match /leadprog/{id} {
+      allow read: if active() && (resource.data.uid == me().id || atLeast(3) || pcTeam());
+      allow create, update: if active() && id == me().id && request.resource.data.uid == me().id;
+      allow delete: if isSuper();
+    }
+
+    // ── P&C page sections: everyone active reads; the resource-library permission edits ──
+    match /pc/{id} {
+      allow read: if active();
+      allow write: if perm('links');
+    }
+
+    // ── SOP library: everyone active can read; the resource-library permission manages it ──
+    match /sops/{id} {
+      allow read: if active();
+      allow create, update, delete: if perm('links');
+    }
+    match /travelers/{uid} {
+      allow read: if travelDesk() || (active() && (resource.data.uid == me().id || me().role == 'pcadmin'));
+      allow create, update: if travelDesk() || (active() && uid == me().id && request.resource.data.uid == me().id);
+      allow delete: if travelDesk();
+    }
+    match /trips/{id} {
+      function party(d) { return d.travelerId == me().id || d.approverId == me().id || d.createdBy == me().id; }
+      function tchanged() { return request.resource.data.diff(resource.data).affectedKeys(); }
+      function from() { return resource.data.status; }
+      function to() { return request.resource.data.status; }
+      // Traveler: request approval on a quote, or cancel before booking. Nothing else.
+      // A trip created before "Reports to" was set picks up the traveler's approver on request.
+      function approverFill() {
+        return !tchanged().hasAny(['approverId'])
+          || (resource.data.get('approverId', '') == '' && request.resource.data.approverId == me().get('supervisor', ''));
       }
-      allow read: if canUse();
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin()
-                    || (isMember() && resource.data.status == 'scheduled' && onlyChanges(['crew', 'updatedAt']) && crewChange())
-                    || (isMember() && myMemberId() in resource.data.crew
-                        && onlyChanges(['status', 'doneAt', 'doneNotes', 'updatedAt'])
-                        && request.resource.data.status == 'done');
-    }
-    match /events/{id} {                  // boat activity log
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid());
-      allow update, delete: if isAdmin();
-    }
-
-    // ---- attendance: coaches and admins check athletes in; everyone in the club can see it ----
-    match /attendance/{id} {
-      allow read: if canUse();
-      allow write: if isAdmin() || isCoach();
-    }
-
-    // ---- results: members log their own training; anyone in the club can add/remove only their own like ----
-    match /results/{id} {
-      function likesOf(d) { return d.get('likes', {}); }
-      function onlyMyLike() { return likesOf(request.resource.data).diff(likesOf(resource.data)).affectedKeys().hasOnly([uid()]); }
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
-                                      && request.resource.data.memberId == myMemberId()
-                                      && likesOf(request.resource.data).size() == 0);
-      allow update: if isAdmin()
-                    || (isMember() && resource.data.by == uid()                        // my own result
-                        && request.resource.data.by == uid()
-                        && request.resource.data.memberId == resource.data.memberId
-                        && onlyMyLike())
-                    || (isMember() && onlyChanges(['likes']) && onlyMyLike());        // liking someone else's
-      allow delete: if isAdmin() || (isMember() && resource.data.by == uid());
+      function travelerMove() {
+        return resource.data.travelerId == me().id && tchanged().hasOnly(['status', 'log', 'updated', 'approverId']) && approverFill()
+          && ((from() == 'quoted' && to() == 'approval_requested')
+              || (to() == 'cancelled' && from() in ['submitted', 'quoted', 'approval_requested', 'declined']));
+      }
+      // Approver: approve or decline a trip waiting for them.
+      function approverMove() {
+        return resource.data.approverId == me().id && resource.data.travelerId != me().id
+          && tchanged().hasOnly(['status', 'log', 'updated', 'decision'])
+          && from() == 'approval_requested' && to() in ['approved', 'declined']
+          && request.resource.data.decision.by == me().id;
+      }
+      allow read: if travelDesk() || (active() && party(resource.data));
+      // New requests go to the traveler's "Reports to" approver and start as "submitted".
+      allow create: if travelDesk()
+        || (canTravel() && request.resource.data.travelerId == me().id && request.resource.data.createdBy == me().id
+            && request.resource.data.status == 'submitted' && request.resource.data.approverId == me().get('supervisor', ''));
+      allow update: if travelDesk() || (active() && (travelerMove() || approverMove()));
+      allow delete: if travelDesk();
     }
 
-    // ---- bookings: the booker/captain or an admin manages a booking; crew can leave; anyone eligible can join an open seat ----
-    match /bookings/{id} {
-      function inCrew(data) { return myMemberId() in data.crew || data.cox == myMemberId(); }
-      function isBooker() { return resource.data.createdBy == uid() || resource.data.captain == myMemberId(); }
-
-      allow read: if canUse();
-      allow create: if isAdmin() || (isMember()
-                       && request.resource.data.createdBy == uid()
-                       && inCrew(request.resource.data));
-      allow update: if isAdmin()
-                    || (isMember() && isBooker()
-                        && request.resource.data.createdBy == resource.data.createdBy
-                        && request.resource.data.captain == resource.data.captain)
-                    || (isMember() && onlyChanges(['crew', 'cox', 'open', 'updatedAt'])
-                        && (inCrew(resource.data)                                         // leaving / swapping out
-                            || (resource.data.open == true && inCrew(request.resource.data)))); // joining an open seat
-      allow delete: if isAdmin() || (isMember() && isBooker());
+    // ── Outgoing email queue (sent by the Trigger Email extension) ──
+    match /mail/{id} {
+      allow create: if active() && request.resource.data.keys().hasOnly(['to', 'message', 'meta', 'createdAt'])
+        && request.resource.data.to is list && request.resource.data.to.size() <= 10
+        && request.resource.data.meta.by in ['', request.auth.token.email.lower()];
+      allow read: if perm('audit');
+      allow update, delete: if false;
     }
 
-    // everything else is closed
-    match /{document=**} { allow read, write: if false; }
+    // ── Audit log: append-only ──
+    match /audit/{id} {
+      allow read: if perm('audit');
+      allow create: if active() && request.resource.data.w is string
+        && request.resource.data.get('by', '') == request.auth.token.email.lower();
+      allow update, delete: if false;
+    }
   }
 }
