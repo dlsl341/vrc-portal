@@ -149,3 +149,18 @@ export function feeReportEmail(r) {
   return { subject: r.title + ` · ${r.count} charged, ${money(r.total)}`, html: frame(r.title, r.html + button(SITE + '/#admin', 'Open the Admin page')), text: r.text + `\n\n${SITE}/#admin`,
     attachments: [{ filename: r.title.replace(/[^\w\- ]+/g, '').replace(/\s+/g, '_') + '.csv', content: r.csv, contentType: 'text/csv' }] };
 }
+
+// An admin invited a member to the portal
+export function inviteEmail({ firstName, memberName, programs = [], link, inviter, expires }) {
+  const hi = firstName || (memberName || '').split(' ')[0] || 'there';
+  const subject = 'You’re invited to the VRC Rowing Portal';
+  const progs = programs.length ? ` You’re set up for <b>${esc(programs.join(', '))}</b>.` : '';
+  const html = frame('You’re invited to the VRC Rowing Portal', `<p>Hi ${esc(hi)},</p>
+<p>${inviter ? esc(inviter) + ' has' : 'A club admin has'} invited you to the Vancouver Rowing Club’s rowers portal, where you book sessions, boats and ergs, log your results and see what’s on.${progs}</p>
+${button(link, 'Accept invitation')}
+<p>Click the button, then sign in with Google or with your email address. Your account is linked to your member profile${memberName ? ` (<b>${esc(memberName)}</b>)` : ''} automatically – no waiting for approval.</p>
+<p style="color:#555">The link works once and expires on ${esc(expires)}. Please open it on the phone or computer you’ll use for the portal. Tip: afterwards, add the portal to your home screen for one-tap access.</p>
+<p>See you on the water!</p>`);
+  const text = `Hi ${hi},\n\n${inviter || 'A club admin'} has invited you to the Vancouver Rowing Club's rowers portal – book sessions, boats and ergs, log results and see what's on.\n\nAccept the invitation: ${link}\n\nSign in with Google or your email address; your account is linked to your member profile${memberName ? ` (${memberName})` : ''} automatically. The link works once and expires on ${expires}.\n\nSee you on the water!\nVancouver Rowing Club`;
+  return { subject, html, text };
+}

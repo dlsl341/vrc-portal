@@ -134,6 +134,13 @@ service cloud.firestore {
       allow create, update: if isAdmin() && id == 'request';
     }
 
+    // ---- invitations: admins email a one-time sign-in link for a member profile (the server sends and redeems it)
+    match /invites/{token} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.status == 'pending' && token.size() >= 24;
+      allow update, delete: if isAdmin();
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {

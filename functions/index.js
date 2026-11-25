@@ -14,7 +14,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, smtpSettings, validEmail } from './mail.js';
 import { ruleOf, lateCancel, noShows, resolveLate, weekOf, weeklyReport, bcToday, addDays, dow, startMs, closeMs } from './fees.js';
 import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
 
@@ -187,7 +187,7 @@ async function memberEmail(uid, claim) {
 }
 async function sendOnce(key, to, msg) {
   const cfg = smtpSettings();
-  if (!cfg) { console.warn('mail: SMTP not configured – skipped', key); return; }
+  if (!cfg) { console.warn('mail: SMTP not configured – skipped', key); return false; }
   const ref = db.doc('mailLog/' + key);
   const toLabel = typeof to === 'string' ? to : (to.label || `${to.bcc.length} admin${to.bcc.length === 1 ? '' : 's'}`);
   try { await ref.create({ to: toLabel, subject: msg.subject, at: new Date().toISOString(), status: 'sending' }); }
@@ -197,14 +197,16 @@ async function sendOnce(key, to, msg) {
     const rcpt = typeof to === 'string' ? { to } : { to: cfg.from, bcc: to.bcc };
     const info = await t.sendMail({ from: cfg.from, ...rcpt, subject: msg.subject, text: msg.text, html: msg.html, ...(msg.attachments ? { attachments: msg.attachments } : {}) });
     await ref.update({ status: 'sent', messageId: info.messageId || null });
+    return true;
   } catch (e) {
     console.error('mail: send failed', key, e && e.message);
     await ref.update({ status: 'failed', error: String(e && e.message || e).slice(0, 300) });
+    return false;
   }
 }
 export const emailOnApproval = onDocumentCreated({ document: 'accounts/{uid}', region: REGION }, async (event) => {
   const uid = event.params.uid, acct = event.data && event.data.data();
-  if (!acct || !acct.memberId) return;
+  if (!acct || !acct.memberId || acct.via === 'invite') return;            // invited people already had an email
   const [m, c] = await Promise.all([db.doc('members/' + acct.memberId).get(), db.doc('claims/' + uid).get()]);
   const member = m.exists ? m.data() : {}, claim = c.exists ? c.data() : {};
   const to = await memberEmail(uid, claim);
@@ -283,6 +285,7 @@ export const emailAdminsOnClaim = onDocumentWritten({ document: 'claims/{uid}', 
   const before = (event.data.before && event.data.before.data()) || null, after = (event.data.after && event.data.after.data()) || null;
   if (!after || after.status !== 'pending' || (before && before.status === 'pending')) return;
   const uid = event.params.uid;
+  if (after.type === 'invite' || await matchingInvite(uid, after)) return;      // linked automatically, no admin needed
   const [p, m] = await Promise.all([db.doc('profiles/' + uid).get(), after.memberId ? db.doc('members/' + after.memberId).get() : null]);
   const to = await adminEmails('claimEmails');
   if (!to.length) return console.warn('mail: no admin emails for claim', uid);
@@ -485,4 +488,65 @@ export const feeReportOnRequest = onDocumentWritten({ document: 'feeReports/requ
   if (!(await isAdminUid(q.by))) return;
   const to = await memberEmail(q.by, null); if (!to) return;
   await sendOnce(`feereport_req_${Date.now()}`, to, feeReportEmail(await buildFeeReport()));
+});
+
+// ---------------------------------------------------------------------------------------------
+// Invitations: an admin creates invites/{token} {memberId, email, expiresAt, status:'pending'} from the
+// portal → we email a one-time link (SITE/?invite=token). The invitee signs in; the app writes their own
+// claims/{uid} {type:'invite', invite:token} and we link the account (same steps as approving a request).
+// Fallback: a normal "This is me" request for a member with a pending invite to the same email is
+// linked automatically too (e.g. they opened the link on another device).
+export const inviteOnCreate = onDocumentCreated({ document: 'invites/{token}', region: REGION }, async (event) => {
+  const v = event.data.data(); if (!v || v.status !== 'pending' || !validEmail(v.email)) return;
+  const m = await db.doc('members/' + v.memberId).get(); if (!m.exists) return;
+  const md = m.data();
+  const expires = new Date(v.expiresAt).toLocaleDateString('en-CA', { timeZone: 'Etc/GMT+7', month: 'long', day: 'numeric' });
+  const r = await sendOnce(`invite_${event.params.token}`, v.email, inviteEmail({ firstName: md.firstName, memberName: md.displayName, programs: md.programs || [],
+    link: `${SITE}/?invite=${event.params.token}`, inviter: v.byName, expires }));
+  if (r === false) await event.data.ref.update({ mailError: 'the email could not be sent (see Recent emails)' }).catch(() => {});
+});
+
+async function authEmail(uid) { try { return String((await getAuth().getUser(uid)).email || '').toLowerCase(); } catch (e) { return ''; } }
+async function matchingInvite(uid, claim) {
+  if (!claim || claim.type !== 'existing' || !claim.memberId) return null;
+  const email = await authEmail(uid); if (!email) return null;
+  const q = await db.collection('invites').where('memberId', '==', claim.memberId).where('email', '==', email).where('status', '==', 'pending').get();
+  const now = new Date().toISOString();
+  const d = q.docs.find(x => (x.data().expiresAt || '') > now);
+  return d ? { ref: d.ref, ...d.data() } : null;
+}
+export const inviteRedeem = onDocumentWritten({ document: 'claims/{uid}', region: REGION }, async (event) => {
+  const c = event.data.after && event.data.after.data(); if (!c || c.status !== 'pending') return;
+  const uid = event.params.uid, claimRef = event.data.after.ref;
+  let inv = null;
+  const fail = msg => claimRef.update({ status: 'invite_failed', inviteError: msg });
+  if (c.type === 'invite') {
+    if (!c.invite || !/^[A-Za-z0-9_-]{20,80}$/.test(c.invite)) return fail('the link is incomplete');
+    const s = await db.doc('invites/' + c.invite).get();
+    if (!s.exists) return fail('the link isn’t recognised');
+    inv = { ref: s.ref, ...s.data() };
+    if (inv.status === 'used') return fail(inv.usedBy === uid ? 'it was already used' : 'it has already been used');
+    if (inv.status !== 'pending') return fail('it was withdrawn');
+    if ((inv.expiresAt || '') < new Date().toISOString()) return fail('it has expired – ask an admin to send a new one');
+  } else {
+    inv = await matchingInvite(uid, c); if (!inv) return;
+  }
+  const mid = inv.memberId, mRef = db.doc('members/' + mid);
+  const [m, acct, priv, prefs] = await Promise.all([mRef.get(), db.doc('accounts/' + uid).get(), db.doc('memberPrivate/' + mid).get(), db.doc('memberPrefs/' + mid).get()]);
+  if (!m.exists) return fail('that member profile no longer exists');
+  if (m.data().linkedUser && m.data().linkedUser !== uid) return fail('that member profile is already linked to another account');
+  if (acct.exists && acct.data().memberId !== mid) return fail('this sign-in is already linked to a different member');
+  const now = new Date().toISOString(), md = m.data();
+  const b = db.batch();
+  b.update(mRef, { linkedUser: uid, linkedAt: now, updatedAt: now, ...(md.status === 'inactive' ? { status: 'active' } : {}) });
+  const p = priv.exists ? priv.data() : {};
+  b.set(db.doc('memberPrivate/' + uid), { ...p, email: p.email || inv.email, updatedAt: now });
+  if (priv.exists) b.delete(priv.ref);
+  if (prefs.exists) { b.set(db.doc('memberPrefs/' + uid), prefs.data()); b.delete(prefs.ref); }
+  b.set(db.doc('accounts/' + uid), { memberId: mid, linkedAt: now, via: 'invite' });
+  if (md.siteAdmin) b.set(db.doc('admins/' + uid), { memberId: mid, since: now });
+  b.update(inv.ref, { status: 'used', usedBy: uid, usedAt: now });
+  b.delete(claimRef);
+  await b.commit();
+  console.log('invite: linked', uid, '→', mid);
 });

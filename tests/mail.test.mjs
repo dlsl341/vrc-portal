@@ -52,3 +52,11 @@ test('join request email to admins', () => {
   assert.match(m.html, /VRC-1042/); assert.match(m.html, /#admin/); assert.match(m.text, /Member number: VRC-1042/);
   assert.match(claimAdminEmail({ type: 'new', firstName: 'Sam', lastName: 'Ng', programs: ['Rec'] }).html, /new to the portal: <b>Sam Ng<\/b> · Rec/);
 });
+
+test('invitation email has the one-time link', async () => {
+  const { inviteEmail } = await import('../functions/mail.js');
+  const m = inviteEmail({ firstName: 'Jo', memberName: 'Jo B', programs: ['Masters'], link: 'https://x/?invite=abc', inviter: 'James N', expires: 'December 8' });
+  assert.match(m.subject, /invited/);
+  assert.match(m.html, /https:\/\/x\/\?invite=abc/);
+  assert.match(m.text, /expires on December 8/);
+});
