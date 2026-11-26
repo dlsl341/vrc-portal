@@ -141,6 +141,15 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ---- regattas (admins only); boatHolds = the public part that takes boats out of booking
+    match /regattas/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /boatHolds/{id} {
+      allow read: if canUse();
+      allow write: if isAdmin();
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {

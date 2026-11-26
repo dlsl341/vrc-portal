@@ -261,6 +261,16 @@ test('only admins create or read invitations', async () => {
   await assertSucceeds(setDoc(doc(as('stranger'), 'claims/stranger'), { status: 'pending', type: 'invite', invite: 'abcdefghijklmnopqrstuvwxyz012345', at: 'now' }));
 });
 
+// ---- regattas
+test('regattas are admins-only; everyone can see which boats are away', async () => {
+  await assertSucceeds(setDoc(doc(as('carol'), 'regattas/r1'), { name: 'Head of the Lake', boatIds: ['b1'] }));
+  await assertSucceeds(setDoc(doc(as('carol'), 'boatHolds/r1'), { boatIds: ['b1'], from: '2026-05-01', to: '2026-05-04' }));
+  await assertFails(getDoc(doc(as('alice'), 'regattas/r1')));
+  await assertFails(setDoc(doc(as('alice'), 'regattas/r2'), { name: 'x' }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'boatHolds/r1')));
+  await assertFails(setDoc(doc(as('alice'), 'boatHolds/r1'), { boatIds: [] }));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));

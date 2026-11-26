@@ -107,7 +107,9 @@ const assetsApi = Object.freeze({
     const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random()).replace(/[^a-z0-9]/gi, '');
     const type = (opts && opts.type) || blob.type || 'image/jpeg';
     const ext = type === 'image/png' ? 'png' : type === 'image/webp' ? 'webp' : type === 'image/gif' ? 'gif' : 'jpg';
-    const r = ref(storage, `photos/${id}.${ext}`);
+    // documents (regatta entries etc.) keep their own file name under docs/<id>/
+    const safe = String((opts && opts.name) || 'file').replace(/[^\w.\- ]+/g, '_').slice(-120);
+    const r = ref(storage, opts && opts.folder === 'docs' ? `docs/${id}/${safe}` : `photos/${id}.${ext}`);
     try {
       await uploadBytes(r, blob, { contentType: type, cacheControl: 'public,max-age=31536000' });
       const url = await getDownloadURL(r);
