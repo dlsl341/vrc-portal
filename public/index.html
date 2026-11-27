@@ -324,7 +324,12 @@ footer .ver{color:var(--ink3);font-size:11.5px}
 .ywd,.ygrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}.ywd span{font-size:10px;color:var(--muted,#888)}
 .ycd{border:0;background:none;font:inherit;font-size:12px;padding:3px 0;border-radius:5px;cursor:pointer;color:inherit}.ycd:hover{background:var(--bg2,#f1efeb)}
 .ycd.has{background:var(--rc);color:#fff;font-weight:700}.ycd.today{outline:2px solid #231f20;outline-offset:-2px}
-.sec.reg{border-left:5px solid var(--rc)}.reg-h{display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer}.reg-sh{margin:18px 0 8px;font-size:16px}
+.sec.reg{border-left:5px solid var(--rc)}a.sec.reg{display:block;text-decoration:none;color:inherit}a.sec.reg:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}.reg-tabs{margin:0 0 12px}
+.enttbl{border-collapse:collapse;width:100%;font-size:14px}.enttbl th{text-align:left;font-size:12px;color:var(--muted,#777);padding:4px 6px}.enttbl td{padding:6px;border-top:1px solid var(--line,#eee);vertical-align:top}.enttbl tr[data-entry]{cursor:pointer}.enttbl tr[data-entry]:hover{background:#faf8f5}.enttbl tr.warnrow{background:#fff4f4}.enttbl .str{font-weight:600}
+.ent-iss{font-size:13px;padding:2px 0;color:#555}.ent-iss.warn{color:#a1191e}.feetbl.cost input{width:120px}
+.print-area{display:none}
+@media print{body.printing{background:#fff}body.printing>*:not(.print-area){display:none!important}body.printing .print-area{display:block;font:12px/1.4 Inter,Arial,sans-serif;color:#000}
+.print-area h1{font:700 20px 'Libre Baskerville',serif;margin:0}.print-area h2{font-size:15px;margin:16px 0 6px}.print-area table{border-collapse:collapse;width:100%}.print-area th,.print-area td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}.print-area tr{break-inside:avoid}}.reg-h{display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer}.reg-sh{margin:18px 0 8px;font-size:16px}
 .reg-files{margin-top:12px}.reg-files .item{display:flex;gap:10px;align-items:center;justify-content:space-between}.reg-files .item a{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 14px;max-height:280px;overflow:auto;padding:4px 2px}.rb{display:block;font-size:14px;padding:2px 0}.rb-warn{color:var(--red-d,#b3261e);font-size:12px}
 .away{font-size:12px;background:#fff4e5;color:#8a4b00;border-radius:6px;padding:3px 8px;margin:2px 0 6px;display:inline-block}.away.now{background:#fde8e8;color:#a1191e}.feetbl{border-collapse:collapse;width:100%;font-size:14px}.feetbl th{text-align:left;font-size:12px;font-weight:600;color:var(--muted,#666);padding:4px 6px;vertical-align:bottom}.feetbl td{padding:4px 6px;border-top:1px solid var(--line,#eee)}.feetbl input[type=number]{width:90px}.tblwrap{overflow-x:auto}.fee-h{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 8px}.feepol{margin:0 0 10px}.sec.fees .item{display:flex;justify-content:space-between;align-items:center;gap:10px}.sec.fees .item .actions{align-items:center}.wl-g{margin-top:8px}.wl-g ol{margin:4px 0 0;padding-left:22px;font-size:14px;line-height:1.7}.wl-g li.me{font-weight:700}.wl-g .btn.sm{padding:0 7px;line-height:1.4}.callout .btn.sm{margin-left:6px}.sec.policy ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.55}
@@ -413,7 +418,7 @@ ol.steps li{margin-bottom:8px}
       <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="48" height="48">
       <div class="brand-t"><h1><b>VRC</b> Rowing</h1><small>Rowers portal</small></div>
     </a>
-    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a><a href="#challenges" data-v="challenges">Club challenges</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#feedback" data-v="feedback" data-fb hidden>Feedback</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
+    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a><a href="#challenges" data-v="challenges">Club challenges</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-reg hidden>Regattas</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#feedback" data-v="feedback" data-fb hidden>Feedback</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
     <div class="mods">
       <span class="role" id="role">Connecting…</span>
       <a href="#me" data-v="me" class="melink">My profile</a>
@@ -424,7 +429,7 @@ ol.steps li{margin-bottom:8px}
 <div class="mnav" id="mnav" aria-hidden="true"><div class="mn-scrim" data-close></div>
   <aside class="mn-panel" aria-label="Menu">
     <div class="mn-top"><img src="img/vrc-logo.png" alt="" width="40" height="40"><div><b>VRC Rowing</b><small id="mnRole"></small></div><button type="button" class="mn-x" data-close aria-label="Close menu">×</button></div>
-    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a><a href="#challenges" data-v="challenges">Club challenges</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#feedback" data-v="feedback" data-fb hidden>Developer feedback</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
+    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a><a href="#challenges" data-v="challenges">Club challenges</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-reg hidden>Regattas</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#feedback" data-v="feedback" data-fb hidden>Developer feedback</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
     <div class="mn-sec mn-acct"><a href="#me" data-v="me">My profile</a><button type="button" id="mnSignOut">Sign out</button></div>
   </aside>
 </div>
@@ -519,7 +524,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('regattas','regattas',true);sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin||hasRole('regatta')){sub('regattas','regattas',true)}if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -558,7 +563,8 @@ function route(){S.checkin=false;setMenu(false);if(S.view&&S.view!=='feedback')S
   const cm=h.match(/^challenge-([A-Za-z0-9_-]+)$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
   else if(cm){S.sess=null;S.view='challenges';S.chOpen=cm[1]}
-  else{if(h==='challenges')S.chOpen=null;S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home','programs','regattas','feedback','challenges'].includes(h)?h:'home'}
+  else if(/^regatta-[A-Za-z0-9_-]+$/.test(h)){S.sess=null;S.view='regattas';const nid=h.slice(8);if(S.regOpen!==nid)S.regTab='overview';S.regOpen=nid}
+  else{if(h==='challenges')S.chOpen=null;if(h==='regattas')S.regOpen=null;S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home','programs','regattas','feedback','challenges'].includes(h)?h:'home'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
@@ -574,7 +580,7 @@ function render(){
   else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
   const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
   document.querySelectorAll('.nb-issues').forEach(x=>{x.hidden=!openIss;x.textContent=openIss});
-  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('[data-fb]').forEach(x=>x.hidden=!fbVisible());document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
+  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('[data-fb]').forEach(x=>x.hidden=!fbVisible());document.querySelectorAll('[data-reg]').forEach(x=>x.hidden=!canRegatta());document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
   {const mr=$('#mnRole');if(mr)mr.textContent=$('#role').textContent}
   const m=$('#main');
   if(S.error==='nodb'){m.innerHTML=`<div class="banner"><h3>Club data isn't available</h3>Please sign in again to see the fleet and members.</div>`;return}
@@ -583,8 +589,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='challenges'?viewChallenges():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canAdmin()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canAdmin())bindRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='challenges')bindChallenges();else if(S.view==='home')bindHome();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='challenges'?viewChallenges():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canRegatta()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins and the regatta committee</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canRegatta())bindRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='challenges')bindChallenges();else if(S.view==='home')bindHome();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -868,7 +874,7 @@ function maintForm(id){
 const M_PROGRAMS=['Juniors','Novice','Intermediate','Rec','Masters','Para'];
 const SIDES=['Port','Starboard','Sculling','Cox'];
 const EXPERIENCE=['Learn to Row','Novice','Intermediate','Experienced','Competitive'];
-const ROLES={rower:'Rower',coach:'Coach',cox:'Cox'};
+const ROLES={rower:'Rower',coach:'Coach',cox:'Cox',regatta:'Regatta committee'};
 const M_STATUS={active:'Active',review:'Needs details',inactive:'Inactive'};
 Object.assign(S,{members:{},activity:{},crews:{},claims:{},mpriv:{},mprefs:{},openM:null,mq:'',mprog:'all',mstatus:'current',mlayout:'grid',claimQ:''});
 Object.assign(S.loaded,{members:false,activity:false,crews:false});
@@ -2041,6 +2047,8 @@ const attKey=(sid,d)=>sid+'_'+d.replace(/-/g,'');
 const attOf=(sid,d)=>S.attendance[attKey(sid,d)]||null;
 const markOf=(sid,d,mid)=>((attOf(sid,d)||{}).marks||{})[mid]||null;
 const isCoach=()=>{const me=myMemberId();return !!me&&((S.members[me]||{}).roles||[]).includes('coach')};
+const hasRole=r=>{const me=myMemberId();return !!me&&((S.members[me]||{}).roles||[]).includes(r)};
+const canRegatta=()=>canAdmin()||hasRole('regatta');
 const canCheckIn=()=>canAdmin()||(canMember()&&isCoach());
 const MARKS={present:['✓','Present','ok'],late:['⏱','Late','warn'],absent:['✗','No-show','bad']};
 function markBadge(mk){if(!mk||!MARKS[mk])return '';const [i,l,c]=MARKS[mk];return ` <span class="mk mk-${c}" title="${l}">${i}</span>`}
@@ -2519,32 +2527,143 @@ function yearCal(year){
     return `<div class="ym"><div class="ymh">${mn}</div><div class="ywd"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div><div class="ygrid">${cells}</div></div>`}).join('')}</div>`;
 }
 function regCard(id,r){
-  const boats=(r.boatIds||[]).filter(b=>S.boats[b]),cl=awayClashes(boats,r.awayFrom||r.start,r.awayTo||r.end||r.start),st=REG_STATUS[r.status||'planned']||REG_STATUS.planned,open=S.regOpen===id;
-  return `<div class="sec reg ${open?'open':''}" id="reg-${esc(id)}" style="--rc:${regColor(id)}">
-    <div class="reg-h" data-regtoggle="${esc(id)}"><div><h4 style="margin:0">${esc(r.name)}</h4><div class="tag">${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · ${boats.length} boat${boats.length===1?'':'s'}${(r.files||[]).length?` · ${(r.files||[]).length} file${r.files.length===1?'':'s'}`:''}</div></div>
-      <div style="display:flex;gap:8px;align-items:center">${cl.length?`<span class="pill s-repair" title="Bookings use these boats while they're away">⚠ ${cl.length}</span>`:''}<span class="pill ${st[1]}">${st[0]}</span><span class="chev">${open?'▴':'▾'}</span></div></div>
-    ${open?`<div class="reg-b">
-      <p class="tag" style="margin:8px 0">Boats away from booking: <b>${rangeTxt(r.awayFrom||r.start,r.awayTo||r.end||r.start)}</b>${r.link?` · <a class="lnk" href="${esc(r.link)}" target="_blank" rel="noopener">Regatta website ↗</a>`:''}</p>
-      <div>${boats.length?boats.map(b=>`<span class="bchip" data-boat="${esc(b)}">${esc(S.boats[b].currentRig||'')} ${esc(S.boats[b].name)}</span>`).join(''):'<span class="muted">No boats picked yet.</span>'}</div>
-      ${cl.length?`<div class="callout bad" style="margin:10px 0 0"><b>${cl.length} booking${cl.length===1?' uses':'s use'} these boats while they’re away</b> – they were made before the regatta was added. Contact the crews or move them to another boat:<ul style="margin:6px 0 0;padding-left:20px">${cl.map(([,b])=>`<li>${fmtDate(b.date)} · ${esc((S.sessions[b.sessionId]||{}).title||'Session')} · ${esc(S.boats[b.boatId].name)} · ${esc(bMembers(b).map(mName).join(', '))} <span class="lnk" data-gosess="${esc(b.sessionId)}|${b.date}">open</span></li>`).join('')}</ul></div>`:''}
-      ${r.notes?`<p style="margin:10px 0 0;white-space:pre-wrap">${esc(r.notes)}</p>`:''}
-      <div class="reg-files"><b>Entries & bookings</b>${(r.files||[]).length?r.files.map((f,i)=>`<div class="item"><a class="lnk" href="${esc(f.url)}" target="_blank" rel="noopener">📄 ${esc(f.name)}</a><span class="tag">${fmtSize(f.size)} · ${fmtDate(f.at)}</span><button class="btn sm" data-regfiledel="${esc(id)}|${i}" title="Remove file">×</button></div>`).join(''):'<div class="empty">Nothing uploaded yet – add the entry list, crew line-ups, hotel or trailer bookings.</div>'}
-        <label class="btn" style="margin-top:8px">⬆ Upload entries / bookings<input type="file" data-regup="${esc(id)}" multiple accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.txt,image/*" hidden></label></div>
-      <div class="actions"><button class="btn pri" data-regedit="${esc(id)}">Edit</button><button class="btn" data-regcal="${esc(id)}">📅 Add to calendar</button><button class="btn dan" data-regdel="${esc(id)}">Delete</button></div>
-    </div>`:''}</div>`;
+  const boats=(r.boatIds||[]).filter(b=>S.boats[b]),cl=awayClashes(boats,r.awayFrom||r.start,r.awayTo||r.end||r.start),st=REG_STATUS[r.status||'planned']||REG_STATUS.planned;
+  const ne=(r.entries||[]).length,iss=entryIssues(r).length;
+  return `<a class="sec reg" href="#regatta-${esc(id)}" style="--rc:${regColor(id)}"><div class="reg-h"><div><h4 style="margin:0">${esc(r.name)}</h4><div class="tag">${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · ${boats.length} boat${boats.length===1?'':'s'} · ${ne} entr${ne===1?'y':'ies'}${(r.files||[]).length?` · ${(r.files||[]).length} file${r.files.length===1?'':'s'}`:''}</div></div>
+    <div style="display:flex;gap:8px;align-items:center">${cl.length?`<span class="pill s-repair" title="Bookings use these boats while they're away">⚠ ${cl.length} booking${cl.length===1?'':'s'}</span>`:''}${iss?`<span class="pill s-dnr" title="Entry warnings">⚠ ${iss}</span>`:''}<span class="pill ${st[1]}">${st[0]}</span><span class="chev">›</span></div></div></a>`;
 }
-const fmtSize=n=>!n?'':n<1024*1024?Math.max(1,Math.round(n/1024))+' KB':(n/1048576).toFixed(1)+' MB';
 function viewRegattas(){
+  if(S.regOpen&&S.regattas[S.regOpen])return viewRegatta(S.regOpen);
   const y=S.regYear||+today().slice(0,4),t=today();
   const L=Object.entries(S.regattas||{}).filter(([,r])=>(r.start||'').startsWith(String(y))||(r.end||'').startsWith(String(y))).sort((a,b)=>a[1].start.localeCompare(b[1].start));
   const up=L.filter(([,r])=>(r.end||r.start)>=t),past=L.filter(([,r])=>(r.end||r.start)<t).reverse();
   const away=Object.values(S.holds||{}).filter(h=>h.from<=t&&h.to>=t).reduce((a,h)=>a+(h.boatIds||[]).length,0);
-  return `<div class="page-h"><div><h2>Regattas</h2><p>Plan the regatta season, take boats out of booking while they’re away, and keep entries and bookings in one place. Admins only.</p></div>
+  return `<div class="page-h"><div><h2>Regattas</h2><p>Plan the regatta season: entries, boats and oars, the trailer load list and costs – and take boats out of booking while they’re away. For admins and the regatta committee.</p></div>
     <div class="actions" style="margin:0"><button class="btn pri" id="regAdd">+ Add regatta</button></div></div>
     <div class="sec"><div class="fee-h" style="justify-content:space-between"><div class="chips"><button class="chip" data-regy="-1" aria-label="Previous year">‹</button><button class="chip on">${y}</button><button class="chip" data-regy="1" aria-label="Next year">›</button></div>
       <span class="tag">${L.length} regatta${L.length===1?'':'s'} in ${y}${away?` · ${away} boat${away===1?'':'s'} away today`:''} · click a date to add one</span></div>${yearCal(y)}</div>
     ${up.length?`<h3 class="reg-sh">Coming up</h3>${up.map(([id,r])=>regCard(id,r)).join('')}`:`<div class="banner">No upcoming regattas in ${y}. Click a date on the calendar or “+ Add regatta”.</div>`}
     ${past.length?`<h3 class="reg-sh">Earlier in ${y}</h3>${past.map(([id,r])=>regCard(id,r)).join('')}`:''}`;
+}
+
+/* ----- regatta detail: tabs ----- */
+S.regTab='overview';
+const REG_TABS=[['overview','Overview'],['entries','Entries'],['reports','Reports'],['costs','Costs']];
+const regDaysOf=r=>{const out=[];let d=r.start;for(let i=0;i<14&&d<=(r.end||r.start);i++,d=addDays(d,1))out.push(d);return out};
+const hm2m=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+(m||0)};
+const m2hm=n=>`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
+const regSet=r=>({before:+(r.settings||{}).before||45,after:+(r.settings||{}).after||30,spareSculls:(r.settings||{}).spareSculls??2,spareSweep:(r.settings||{}).spareSweep??2,spareRiggers:(r.settings||{}).spareRiggers??2,scullRig:+(r.settings||{}).scullRig||2,sweepRig:+(r.settings||{}).sweepRig||1});
+const entryPeople=e=>[...(e.crew||[]),e.cox].filter(Boolean);
+const entriesSorted=r=>[...(r.entries||[])].sort((a,b)=>(a.day+(a.time||'99:99')+String(a.no||'').padStart(4,'0')).localeCompare(b.day+(b.time||'99:99')+String(b.no||'').padStart(4,'0')));
+const entryWin=(r,e)=>{const st=regSet(r),t=e.time?hm2m(e.time):null;return t==null?null:[t-st.before,t+st.after]};
+const eLabel=e=>`${e.no?'#'+e.no+' ':''}${e.event||'Entry'}`;
+const isScullRig=rig=>/x/.test(rig||'');
+function entryIssues(r){
+  const out=[],E=entriesSorted(r);
+  for(let i=0;i<E.length;i++){const a=E[i],wa=entryWin(r,a),seats=seatsFor(a.rig||'1x');
+    const empty=(a.crew||[]).slice(0,seats.rowers).filter(x=>!x).length+(seats.cox&&!a.cox?1:0)+Math.max(0,seats.rowers-(a.crew||[]).length);
+    if(empty)out.push({id:a.id,lvl:'info',t:`${eLabel(a)}: ${empty} seat${empty===1?'':'s'} not filled yet`});
+    const b=S.boats[a.boatId];
+    if(!a.boatId)out.push({id:a.id,lvl:'info',t:`${eLabel(a)}: no boat picked yet`});
+    else if(b){if(b.rigs&&b.rigs.length&&a.rig&&!b.rigs.includes(a.rig))out.push({id:a.id,lvl:'warn',t:`${eLabel(a)}: ${b.name} can’t be rigged as ${a.rig} (rigs: ${b.rigs.join(' ')})`});
+      if(b.status&&b.status!=='available')out.push({id:a.id,lvl:'warn',t:`${eLabel(a)}: ${b.name} is ${STATUS[b.status]||b.status}`})}
+    for(let j=i+1;j<E.length;j++){const c=E[j];if(c.day!==a.day)continue;const wc=entryWin(r,c);const overlap=wa&&wc&&wc[0]<wa[1]&&wa[0]<wc[1];
+      if(overlap&&a.boatId&&a.boatId===c.boatId)out.push({id:c.id,lvl:'warn',t:`Boat clash: ${S.boats[a.boatId]?S.boats[a.boatId].name:'boat'} is in ${eLabel(a)} (${a.time}) and ${eLabel(c)} (${c.time}) at the same time`});
+      if(overlap){const both=entryPeople(a).filter(x=>entryPeople(c).includes(x));both.forEach(m=>out.push({id:c.id,lvl:'warn',t:`Rower clash: ${mName(m)} is in ${eLabel(a)} (${a.time}) and ${eLabel(c)} (${c.time})`}))}}
+  }
+  // re-rig: same boat, consecutive uses with a different rig
+  const byBoat={};E.filter(e=>e.boatId).forEach(e=>(byBoat[e.boatId]=byBoat[e.boatId]||[]).push(e));
+  Object.entries(byBoat).forEach(([bid,L])=>{for(let i=1;i<L.length;i++){const p=L[i-1],c=L[i];if(p.rig&&c.rig&&p.rig!==c.rig&&isScullRig(p.rig)!==isScullRig(c.rig)||p.rig&&c.rig&&p.rig!==c.rig&&seatsFor(p.rig).cox!==seatsFor(c.rig).cox){
+    const gap=p.day===c.day&&p.time&&c.time?hm2m(c.time)-hm2m(p.time):null;
+    out.push({id:c.id,lvl:gap!=null&&gap<90?'warn':'info',t:`Re-rig: ${(S.boats[bid]||{}).name||'boat'} goes from ${p.rig} (${eLabel(p)}) to ${c.rig} (${eLabel(c)})${gap!=null?` – ${Math.floor(gap/60)}h${String(gap%60).padStart(2,'0')} between races`:p.day!==c.day?' – overnight':''}`})}}});
+  return out;
+}
+// peak number of blades needed at once (per day), by kind / oar set
+function bladePeaks(r){
+  const E=entriesSorted(r),res={};
+  regDaysOf(r).forEach(d=>{const ev=[];E.filter(e=>e.day===d&&e.time).forEach(e=>{const w=entryWin(r,e),n=seatsFor(e.rig||'1x').rowers,sc=isScullRig(e.rig);
+      const add={sculls:sc?n:0,bow:sc?0:Math.ceil(n/2),stroke:sc?0:Math.floor(n/2)};const set=(e.oars||'').trim()||(sc?'Sculls (no set named)':'Sweep (no set named)');
+      ev.push([w[0],1,add,set,sc?n:n]);ev.push([w[1],-1,add,set,sc?n:n])});
+    ev.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cur={sculls:0,bow:0,stroke:0},sets={};
+    ev.forEach(([t,k,add,set,n])=>{for(const x in add)cur[x]+=k*add[x];sets[set]=(sets[set]||0)+k*n;
+      for(const x in cur){const key=x;if(!res[key]||cur[x]>res[key].n)res[key]={n:cur[x],at:`${fmtDate(d)} ${m2hm(Math.max(0,t))}`}}
+      for(const st in sets){const key='set:'+st;if(!res[key]||sets[st]>res[key].n)res[key]={n:sets[st],at:`${fmtDate(d)} ${m2hm(Math.max(0,t))}`}}})});
+  return res;
+}
+function loadList(r){
+  const st=regSet(r),E=entriesSorted(r),boats={};
+  (r.boatIds||[]).filter(b=>S.boats[b]).forEach(b=>boats[b]={rigs:[],races:0});
+  E.filter(e=>e.boatId).forEach(e=>{const x=boats[e.boatId]=boats[e.boatId]||{rigs:[],races:0};x.races++;if(e.rig&&!x.rigs.includes(e.rig))x.rigs.push(e.rig)});
+  return Object.entries(boats).map(([bid,x])=>{const b=S.boats[bid]||{},travel=x.rigs[0]||b.currentRig||'';
+    const rig=rg=>seatsFor(rg).rowers*(isScullRig(rg)?st.scullRig:st.sweepRig);
+    const extra=x.rigs.filter(rg=>rg!==travel&&isScullRig(rg)!==isScullRig(travel));
+    return {bid,name:b.name||'(removed boat)',seats:b.seats||'',travel,rigs:x.rigs,races:x.races,riggersOn:travel?rig(travel):'',extraRiggers:extra.map(rg=>`${rig(rg)} × ${isScullRig(rg)?'sculling':'sweep'} (for ${rg})`).join(', ')}})
+    .sort((a,b)=>String(b.seats).localeCompare(String(a.seats))||a.name.localeCompare(b.name));
+}
+function viewRegatta(id){
+  const r=S.regattas[id],st=REG_STATUS[r.status||'planned']||REG_STATUS.planned,tab=S.regTab||'overview';
+  const iss=entryIssues(r);
+  return `<div class="page-h"><div><a class="lnk" href="#regattas">‹ All regattas</a><h2>${esc(r.name)}</h2><p>${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · <span class="pill ${st[1]}">${st[0]}</span></p></div>
+    <div class="actions" style="margin:0"><button class="btn" data-regedit="${esc(id)}">Edit details</button><button class="btn" data-regcal="${esc(id)}">📅 Add to calendar</button></div></div>
+    <div class="chips reg-tabs">${REG_TABS.map(([k,l])=>`<button class="chip ${tab===k?'on':''}" data-regtab="${k}">${l}${k==='entries'?` <span class="tag">${(r.entries||[]).length}</span>`:''}${k==='entries'&&iss.filter(x=>x.lvl==='warn').length?' ⚠':''}</button>`).join('')}</div>
+    ${tab==='entries'?regEntriesHtml(id,r,iss):tab==='reports'?regReportsHtml(id,r):tab==='costs'?regCostsHtml(id,r):regOverviewHtml(id,r)}`;
+}
+function regOverviewHtml(id,r){
+  const boats=(r.boatIds||[]).filter(b=>S.boats[b]),cl=awayClashes(boats,r.awayFrom||r.start,r.awayTo||r.end||r.start);
+  return `<div class="sec reg" style="--rc:${regColor(id)}">
+      <p class="tag" style="margin:0 0 8px">Boats away from booking: <b>${rangeTxt(r.awayFrom||r.start,r.awayTo||r.end||r.start)}</b>${r.link?` · <a class="lnk" href="${esc(r.link)}" target="_blank" rel="noopener">Regatta website ↗</a>`:''}${r.entryDeadline?` · Entry deadline <b>${fmtDate(r.entryDeadline)}</b>`:''}</p>
+      <div>${boats.length?boats.map(b=>`<span class="bchip" data-boat="${esc(b)}">${esc(S.boats[b].currentRig||'')} ${esc(S.boats[b].name)}</span>`).join(''):'<span class="muted">No boats picked yet – add entries or edit the details.</span>'}</div>
+      ${cl.length?`<div class="callout bad" style="margin:10px 0 0"><b>${cl.length} booking${cl.length===1?' uses':'s use'} these boats while they’re away.</b> The crews have been emailed to pick another boat:<ul style="margin:6px 0 0;padding-left:20px">${cl.map(([,b])=>`<li>${fmtDate(b.date)} · ${esc((S.sessions[b.sessionId]||{}).title||'Session')} · ${esc(S.boats[b.boatId].name)} · ${esc(bMembers(b).map(mName).join(', '))} <span class="lnk" data-gosess="${esc(b.sessionId)}|${b.date}">open</span></li>`).join('')}</ul></div>`:''}
+      ${r.notes?`<p style="margin:10px 0 0;white-space:pre-wrap">${esc(r.notes)}</p>`:''}</div>
+    <div class="sec"><div class="reg-files"><b>Files – entries, line-ups, bookings</b>${(r.files||[]).length?r.files.map((f,i)=>`<div class="item"><a class="lnk" href="${esc(f.url)}" target="_blank" rel="noopener">📄 ${esc(f.name)}</a><span class="tag">${fmtSize(f.size)} · ${fmtDate(f.at)}</span><button class="btn sm" data-regfiledel="${esc(id)}|${i}" title="Remove file">×</button></div>`).join(''):'<div class="empty">Nothing uploaded yet.</div>'}
+      <label class="btn" style="margin-top:8px">⬆ Upload files<input type="file" data-regup="${esc(id)}" multiple accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.txt,image/*" hidden></label></div></div>
+    <div class="actions"><button class="btn dan" data-regdel="${esc(id)}">Delete regatta</button></div>`;
+}
+function regEntriesHtml(id,r,iss){
+  const E=entriesSorted(r),byDay={};E.forEach(e=>(byDay[e.day]=byDay[e.day]||[]).push(e));
+  const warn=iss.filter(x=>x.lvl==='warn'),info=iss.filter(x=>x.lvl!=='warn');
+  const row=e=>{const b=S.boats[e.boatId],mine=iss.filter(x=>x.id===e.id);
+    return `<tr data-entry="${esc(e.id)}" class="${mine.some(x=>x.lvl==='warn')?'warnrow':''}"><td>${esc(e.no||'')}</td><td>${esc(e.time||'—')}</td><td><b>${esc(e.event||'')}</b>${e.category?` <span class="tag">${esc(e.category)}</span>`:''}</td>
+      <td>${(e.crew||[]).map((m,i)=>m?`<span class="${i===(e.crew.length-1)?'str':''}">${esc(mName(m))}</span>`:'<i class="muted">open</i>').join(', ')}${e.cox?` · <span class="tag">cox</span> ${esc(mName(e.cox))}`:''}</td>
+      <td>${b?esc(b.name):'<i class="muted">—</i>'}</td><td>${esc(e.rig||'')}</td><td>${esc(e.oars||'')}</td><td>${mine.length?`<span title="${esc(mine.map(x=>x.t).join('\n'))}">⚠</span>`:''}</td></tr>`};
+  return `<div class="actions" style="margin:0 0 10px"><button class="btn pri" id="entAdd">+ Add entry</button><button class="btn" id="entPaste">📋 Paste entries</button><button class="btn" id="regSettings">⚙ Timing & spares</button></div>
+    ${warn.length||info.length?`<div class="sec"><h4>Checks</h4>${warn.map(x=>`<div class="ent-iss warn">⚠ ${esc(x.t)}</div>`).join('')}${info.map(x=>`<div class="ent-iss">• ${esc(x.t)}</div>`).join('')}</div>`:''}
+    ${E.length?Object.entries(byDay).map(([d,L])=>`<div class="sec"><h4>${fmtDate(d)}</h4><div class="tblwrap"><table class="enttbl"><tr><th>#</th><th>Race</th><th>Event</th><th>Crew (bow → stroke)</th><th>Boat</th><th>Rig</th><th>Oars</th><th></th></tr>${L.map(row).join('')}</table></div></div>`).join('')
+      :`<div class="banner">No entries yet. Add them one by one, or paste a list from RegattaCentral or a spreadsheet with “📋 Paste entries”.</div>`}`;
+}
+function regReportsHtml(id,r){
+  const pk=bladePeaks(r),st=regSet(r),L=loadList(r),E=entriesSorted(r);
+  const sets=Object.entries(pk).filter(([k])=>k.startsWith('set:'));
+  const line=(lab,k,spare,unit)=>pk[k]&&pk[k].n?`<tr><td>${lab}</td><td><b>${pk[k].n}</b> ${unit}</td><td>${pk[k].at}</td><td>+${spare}</td><td><b>${pk[k].n+(+spare||0)}</b></td></tr>`:'';
+  return `<div class="actions" style="margin:0 0 10px"><button class="btn pri" data-regprint="alloc">🖨 Equipment allocation</button><button class="btn pri" data-regprint="load">🖨 Loading checklist</button><button class="btn" data-regcsv="alloc">⬇ Allocation CSV</button><button class="btn" id="regSettings">⚙ Timing & spares</button></div>
+    <div class="sec"><h4>Blades needed</h4><p class="tag" style="margin:0 0 6px">The most needed at the same time (a crew uses its blades from ${st.before} min before its race to ${st.after} min after), plus spares.</p>
+      ${E.some(e=>e.time)?`<table class="feetbl"><tr><th>Blades</th><th>Peak</th><th>When</th><th>Spares</th><th>Bring</th></tr>${line('Sculls (pairs)','sculls',st.spareSculls,'pairs')}${line('Sweep – bow side','bow',Math.ceil(st.spareSweep/2),'oars')}${line('Sweep – stroke side','stroke',Math.floor(st.spareSweep/2),'oars')}</table>
+        ${sets.length>1||(sets.length&&!/no set named/.test(sets[0][0]))?`<p class="tag" style="margin:10px 0 4px">By oar set (peak blades in use at once):</p><table class="feetbl">${sets.map(([k,v])=>`<tr><td>${esc(k.slice(4))}</td><td><b>${v.n}</b></td><td>${v.at}</td></tr>`).join('')}</table>`:''}`:'<div class="empty">Add race times to the entries to work out blade counts.</div>'}</div>
+    <div class="sec"><h4>Boats & riggers</h4>${L.length?`<table class="feetbl"><tr><th>Boat</th><th>Travels as</th><th>Races</th><th>Riggers on the boat</th><th>Extra riggers to pack</th></tr>${L.map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.travel)}</td><td>${x.races}</td><td>${x.riggersOn}</td><td>${esc(x.extraRiggers||'—')}</td></tr>`).join('')}</table>
+      <p class="tag" style="margin:6px 0 0">Plus ${st.spareRiggers} spare rigger${+st.spareRiggers===1?'':'s'}. Assumes ${st.scullRig} riggers per seat for sculling and ${st.sweepRig} for sweep – change under ⚙ Timing & spares.</p>`:'<div class="empty">No boats yet.</div>'}</div>`;
+}
+function regCosts(r){
+  const c=r.costs||{},lines=c.lines||[{label:'Truck',est:'',act:''},{label:'Trailer',est:'',act:''},{label:'Fuel',est:'',act:''},{label:'Other',est:'',act:''}];
+  const E=r.entries||[],feeEst=E.reduce((a,e)=>a+(+e.fee||0),0),feeAct=c.feesActual===''||c.feesActual==null?null:+c.feesActual;
+  const v=l=>l.act!==''&&l.act!=null?+l.act:+l.est||0;
+  const transport=lines.reduce((a,l)=>a+v(l),0),transportEst=lines.reduce((a,l)=>a+(+l.est||0),0),transportAct=lines.some(l=>l.act!==''&&l.act!=null)?lines.reduce((a,l)=>a+(+l.act||0),0):null;
+  const people={};E.forEach(e=>{const ps=entryPeople(e);ps.forEach(m=>{const p=people[m]=people[m]||{fees:0,seats:0,entries:0};p.entries++;p.seats++;p.fees+=(+e.fee||0)/(ps.length||1)})});
+  const ids=Object.keys(people),totalSeats=ids.reduce((a,m)=>a+people[m].seats,0),split=c.split||'equal';
+  const feeScale=feeAct!=null&&feeEst?feeAct/feeEst:1;
+  ids.forEach(m=>{const p=people[m];p.fees*=feeScale;p.transport=!ids.length?0:split==='seats'?transport*p.seats/(totalSeats||1):transport/ids.length;p.total=p.fees+p.transport});
+  return {lines,feeEst,feeAct,transport,transportEst,transportAct,people,ids,split,totalEst:feeEst+transportEst,totalAct:(feeAct??feeEst)+(transportAct??transportEst)};
+}
+function regCostsHtml(id,r){
+  const k=regCosts(r);
+  return `<div class="sec"><h4>Estimate vs actual</h4><form id="costForm"><table class="feetbl cost"><tr><th>Item</th><th>Estimate ($)</th><th>Actual ($)</th><th></th></tr>
+    <tr><td>Entry fees <span class="tag">(from ${(r.entries||[]).length} entries)</span></td><td><b>${money(k.feeEst)}</b></td><td><input name="feesActual" type="number" step="0.01" min="0" value="${esc(k.feeAct??'')}" placeholder="from invoice"></td><td></td></tr>
+    ${k.lines.map((l,i)=>`<tr data-cl="${i}"><td><input name="label" value="${esc(l.label)}"></td><td><input name="est" type="number" step="0.01" min="0" value="${esc(l.est??'')}"></td><td><input name="act" type="number" step="0.01" min="0" value="${esc(l.act??'')}"></td><td><button type="button" class="btn sm" data-cldel="${i}">×</button></td></tr>`).join('')}
+    <tr><td><button type="button" class="btn sm" id="clAdd">+ Add item</button></td><td><b>${money(k.totalEst)}</b></td><td><b>${money(k.totalAct)}</b></td><td></td></tr></table>
+    <label style="display:block;margin:10px 0">Split transport costs <select name="split"><option value="equal" ${k.split==='equal'?'selected':''}>equally between everyone racing</option><option value="seats" ${k.split==='seats'?'selected':''}>by number of races each person rows</option></select></label>
+    <div class="actions"><button class="btn pri" type="submit">Save costs</button></div></form></div>
+    <div class="sec"><div class="fee-h" style="justify-content:space-between"><h4 style="margin:0">Per person (${k.ids.length})</h4><button class="btn sm" data-regcsv="costs">⬇ CSV for billing</button></div>
+      ${k.ids.length?`<table class="feetbl"><tr><th>Member</th><th>Races</th><th>Entry fees</th><th>Transport</th><th>Total</th></tr>${k.ids.sort((a,b)=>mName(a).localeCompare(mName(b))).map(m=>{const p=k.people[m];return `<tr><td>${esc(mName(m))}</td><td>${p.entries}</td><td>${money(p.fees)}</td><td>${money(p.transport)}</td><td><b>${money(p.total)}</b></td></tr>`}).join('')}</table>
+      <p class="tag" style="margin:6px 0 0">Each entry’s fee is split between its crew (incl. cox). Uses actual amounts where filled in, otherwise the estimate.</p>`:'<div class="empty">Add entries with crews to see each person’s share.</div>'}</div>`;
 }
 function regattaForm(id,preDate){
   const r=id?S.regattas[id]:{start:preDate||today(),status:'planned',boatIds:[]};
@@ -2576,7 +2695,7 @@ function regattaForm(id,preDate){
         const data={name:fd.name.trim(),location:fd.location.trim(),status:fd.status,start:fd.start,end:fd.end||fd.start,awayFrom:a,awayTo:b,link:fd.link.trim(),notes:fd.notes.trim(),boatIds:boats,updatedAt:nowIso(),updatedBy:S.me};
         if(id)await S.db.doc('regattas/'+rid).update(data);else await S.db.doc('regattas/'+rid).set({...data,files:[],createdAt:nowIso(),createdBy:S.me});
         await S.db.doc('boatHolds/'+rid).set({kind:'regatta',name:data.name,boatIds:boats,from:a,to:b,updatedAt:nowIso()});
-        S.regOpen=rid;S.regYear=+fd.start.slice(0,4)}});
+        S.regYear=+fd.start.slice(0,4);if(!id)location.hash='#regatta-'+rid}});
   });
 }
 async function regUpload(id,files){
@@ -2593,21 +2712,125 @@ function regIcs(id){const r=S.regattas[id];const d=x=>x.replace(/-/g,'');
     'DESCRIPTION:'+('Boats away '+(r.awayFrom||'')+' to '+(r.awayTo||'')+((r.boatIds||[]).length?' – '+(r.boatIds||[]).map(b=>(S.boats[b]||{}).name).filter(Boolean).join(' / '):'')).replace(/[,;\n]/g,' '),'END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
   const url=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));const l=document.createElement('a');l.href=url;l.download=slugify(r.name||'regatta')+'.ics';document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(url);l.remove()},500)}
 function bindRegattas(){
-  const m=$('#main');const on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};
+  const m=$('#main');const on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};const id=S.regOpen,r=id&&S.regattas[id];
   on('#regAdd',()=>regattaForm(null));
   m.querySelectorAll('[data-regy]').forEach(el=>el.onclick=()=>{S.regYear=(S.regYear||+today().slice(0,4))+ +el.dataset.regy;render()});
   m.querySelectorAll('[data-regnew]').forEach(el=>el.onclick=()=>regattaForm(null,el.dataset.regnew));
-  m.querySelectorAll('[data-regopen]').forEach(el=>el.onclick=()=>{S.regOpen=el.dataset.regopen;render();const c=$('#reg-'+CSS.escape(S.regOpen));if(c)c.scrollIntoView({behavior:'smooth',block:'start'})});
-  m.querySelectorAll('[data-regtoggle]').forEach(el=>el.onclick=()=>{S.regOpen=S.regOpen===el.dataset.regtoggle?null:el.dataset.regtoggle;render()});
+  m.querySelectorAll('[data-regopen]').forEach(el=>el.onclick=()=>{location.hash='#regatta-'+el.dataset.regopen});
+  m.querySelectorAll('[data-regtab]').forEach(el=>el.onclick=()=>{S.regTab=el.dataset.regtab;render()});
   m.querySelectorAll('[data-regedit]').forEach(el=>el.onclick=()=>regattaForm(el.dataset.regedit));
   m.querySelectorAll('[data-regcal]').forEach(el=>el.onclick=()=>regIcs(el.dataset.regcal));
   m.querySelectorAll('[data-regup]').forEach(el=>el.onchange=()=>{regUpload(el.dataset.regup,[...el.files]);el.value=''});
-  m.querySelectorAll('[data-regfiledel]').forEach(el=>el.onclick=()=>{const [id,i]=el.dataset.regfiledel.split('|');const r=S.regattas[id],f=(r.files||[])[+i];if(!f||!confirm(`Remove ${f.name}?`))return;
-    guarded(async()=>{await S.db.doc('regattas/'+id).update({files:r.files.filter((_,j)=>j!==+i),updatedAt:nowIso()});try{(await assetsNs()).delete(f.url)}catch(e){}},'File removed')});
-  m.querySelectorAll('[data-regdel]').forEach(el=>el.onclick=()=>{const id=el.dataset.regdel,r=S.regattas[id];if(!confirm(`Delete ${r.name}? Its boats become bookable again for those dates.`))return;
-    guarded(async()=>{await S.db.doc('boatHolds/'+id).delete();await S.db.doc('regattas/'+id).delete();S.regOpen=null},'Regatta deleted')});
+  m.querySelectorAll('[data-regfiledel]').forEach(el=>el.onclick=()=>{const [rid,i]=el.dataset.regfiledel.split('|');const rr=S.regattas[rid],f=(rr.files||[])[+i];if(!f||!confirm(`Remove ${f.name}?`))return;
+    guarded(async()=>{await S.db.doc('regattas/'+rid).update({files:rr.files.filter((_,j)=>j!==+i),updatedAt:nowIso()});try{(await assetsNs()).delete(f.url)}catch(e){}},'File removed')});
+  m.querySelectorAll('[data-regdel]').forEach(el=>el.onclick=()=>{const rid=el.dataset.regdel,rr=S.regattas[rid];if(!confirm(`Delete ${rr.name}? Its boats become bookable again for those dates.`))return;
+    guarded(async()=>{await S.db.doc('boatHolds/'+rid).delete();await S.db.doc('regattas/'+rid).delete();location.hash='#regattas'},'Regatta deleted')});
   m.querySelectorAll('[data-boat]').forEach(el=>el.onclick=e=>{e.stopPropagation();openBoat(el.dataset.boat)});
   m.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
+  if(!r)return;
+  on('#entAdd',()=>entryForm(id,null));
+  on('#entPaste',()=>entryPaste(id));
+  m.querySelectorAll('#regSettings').forEach(el=>el.onclick=()=>regSettingsForm(id));
+  m.querySelectorAll('[data-entry]').forEach(el=>el.onclick=()=>entryForm(id,el.dataset.entry));
+  m.querySelectorAll('[data-regprint]').forEach(el=>el.onclick=()=>regPrint(id,el.dataset.regprint));
+  m.querySelectorAll('[data-regcsv]').forEach(el=>el.onclick=()=>regCsv(id,el.dataset.regcsv));
+  const cf=$('#costForm');if(cf){
+    const read=()=>({lines:[...cf.querySelectorAll('[data-cl]')].map(tr=>({label:tr.querySelector('[name=label]').value.trim(),est:tr.querySelector('[name=est]').value,act:tr.querySelector('[name=act]').value})),feesActual:cf.feesActual.value,split:cf.split.value});
+    cf.onsubmit=e=>{e.preventDefault();guarded(()=>S.db.doc('regattas/'+id).update({costs:read(),updatedAt:nowIso()}),'Costs saved')};
+    on('#clAdd',()=>{const c=read();c.lines.push({label:'',est:'',act:''});guarded(()=>S.db.doc('regattas/'+id).update({costs:c}),'')});
+    cf.querySelectorAll('[data-cldel]').forEach(el=>el.onclick=()=>{const c=read();c.lines.splice(+el.dataset.cldel,1);guarded(()=>S.db.doc('regattas/'+id).update({costs:c}),'')});
+  }
+}
+function memberOptsAll(sel){return `<option value="">—</option>`+Object.entries(S.members).filter(([,m])=>m.status!=='inactive').sort((a,b)=>String(a[1].displayName).localeCompare(String(b[1].displayName))).map(([k,m])=>`<option value="${esc(k)}" ${k===sel?'selected':''}>${esc(m.displayName)}</option>`).join('')}
+async function saveEntries(id,entries,extra={}){
+  const r=S.regattas[id],boats=new Set(r.boatIds||[]);entries.forEach(e=>{if(e.boatId)boats.add(e.boatId)});
+  const boatIds=[...boats];await S.db.doc('regattas/'+id).update({entries,boatIds,...extra,updatedAt:nowIso()});
+  if(boatIds.length!==(r.boatIds||[]).length)await S.db.doc('boatHolds/'+id).set({kind:'regatta',name:r.name,boatIds,from:r.awayFrom||addDays(r.start,-1),to:r.awayTo||addDays(r.end||r.start,1),updatedAt:nowIso()});
+}
+function entryForm(id,eid){
+  const r=S.regattas[id],e=eid?(r.entries||[]).find(x=>x.id===eid):{day:r.start,rig:'4x',crew:[]};const days=regDaysOf(r);
+  openModal(`<h3>${eid?'Edit entry':'Add entry'}</h3><form id="mform"><div class="fg">
+    ${fld('Event',`<input name="event" required value="${esc(e.event||'')}" placeholder="e.g. Masters W 4x+ B">`,'full')}
+    ${fld('Event / race #',`<input name="no" value="${esc(e.no||'')}" style="max-width:120px">`)}
+    ${fld('Day',`<select name="day">${days.map(d=>`<option value="${d}" ${e.day===d?'selected':''}>${fmtDate(d)}</option>`).join('')}</select>`)}
+    ${fld('Race time',`<input type="time" name="time" value="${esc(e.time||'')}">`,'','Used for clash checks and blade counts.')}
+    ${fld('Boat class',`<select name="rig">${RIGS.map(x=>`<option ${e.rig===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+    <div class="full" id="entSeats"></div>
+    ${fld('Boat',`<select name="boatId"></select>`,'','Picking a boat adds it to the trailer and takes it out of booking.')}
+    ${fld('Oar set',`<input name="oars" list="oarSets" value="${esc(e.oars||'')}" placeholder="e.g. Blue Fat2 sculls"><datalist id="oarSets">${[...new Set(Object.values(S.regattas).flatMap(x=>(x.entries||[]).map(y=>y.oars)).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join('')}</datalist>`)}
+    ${fld('Entry fee ($)',`<input name="fee" type="number" min="0" step="0.01" value="${esc(e.fee??'')}">`)}
+    ${fld('Notes',`<input name="notes" value="${esc(e.notes||'')}">`,'full')}
+    <div class="full" id="entIss"></div>
+  </div><div class="actions">${eid?'<button type="button" class="btn dan" id="entDel">Delete entry</button><button type="button" class="btn" id="entDup">Duplicate</button>':''}<span style="flex:1"></span><button type="button" class="btn" id="mCancel">Cancel</button><button class="btn pri" id="mSave">${eid?'Save':'Add entry'}</button></div></form>`,()=>{
+    const f=$('#mform');let crew=[...(e.crew||[])],cox=e.cox||'';
+    const seatsHtml=()=>{const {rowers,cox:hc}=seatsFor(f.rig.value);return `<div class="fg">${Array.from({length:rowers},(_,i)=>fld(rowers===1?'Sculler':i===0?'Bow (1)':i===rowers-1?`Stroke (${i+1})`:`Seat ${i+1}`,`<select data-eseat="${i}">${memberOptsAll(crew[i]||'')}</select>`)).join('')}${hc?fld('Cox',`<select data-ecox>${memberOptsAll(cox)}</select>`):''}</div>`};
+    const boatsHtml=()=>{const rg=f.rig.value,n=seatsFor(rg).rowers;const L=Object.entries(S.boats).filter(([,b])=>b.status!=='retired'&&(String(b.seats)===String(n)||(b.rigs||[]).includes(rg))).sort((a,b)=>(b[1].rigs||[]).includes(rg)-(a[1].rigs||[]).includes(rg)||a[1].name.localeCompare(b[1].name));
+      return `<option value="">— coach to assign —</option>`+L.map(([k,b])=>`<option value="${esc(k)}" ${k===e.boatId?'selected':''}>${esc(b.name)}${(b.rigs||[]).includes(rg)?'':' (re-rig needed)'}${b.status!=='available'?' · '+esc(STATUS[b.status]||b.status):''}</option>`).join('')};
+    const read=()=>{crew=[...f.querySelectorAll('[data-eseat]')].map(x=>x.value||null);const c=f.querySelector('[data-ecox]');cox=c?c.value:''};
+    const draw=()=>{$('#entSeats').innerHTML=seatsHtml();f.boatId.innerHTML=boatsHtml();check()};
+    const build=()=>{read();const n=seatsFor(f.rig.value);return {...e,id:e.id||'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),event:f.event.value.trim(),no:f.no.value.trim(),day:f.day.value,time:f.time.value,rig:f.rig.value,crew:crew.slice(0,n.rowers),cox:n.cox?(cox||null):null,boatId:f.boatId.value||null,oars:f.oars.value.trim(),fee:f.fee.value===''?null:+f.fee.value,notes:f.notes.value.trim()}};
+    const check=()=>{const x=build(),others=(r.entries||[]).filter(y=>y.id!==x.id);const iss=entryIssues({...r,entries:[...others,x]}).filter(i=>i.id===x.id||i.t.includes(eLabel(x)));
+      $('#entIss').innerHTML=iss.map(i=>`<div class="ent-iss ${i.lvl==='warn'?'warn':''}">${i.lvl==='warn'?'⚠':'•'} ${esc(i.t)}</div>`).join('')};
+    f.rig.onchange=()=>{read();draw()};f.addEventListener('change',e2=>{if(e2.target.name!=='rig')check()});draw();
+    $('#mCancel').onclick=closeModal;
+    f.onsubmit=async ev=>{ev.preventDefault();if(!f.event.value.trim())return toast('Name the event');const x=build();const L=(r.entries||[]).filter(y=>y.id!==x.id);L.push(x);
+      await guarded(()=>saveEntries(id,L),eid?'Entry saved':'Entry added');closeModal()};
+    const del=$('#entDel');if(del)del.onclick=async()=>{if(!confirm('Delete this entry?'))return;await guarded(()=>S.db.doc('regattas/'+id).update({entries:(r.entries||[]).filter(y=>y.id!==eid),updatedAt:nowIso()}),'Entry deleted');closeModal()};
+    const dup=$('#entDup');if(dup)dup.onclick=async()=>{const x={...build(),id:'e'+Date.now().toString(36),no:'',time:'',crew:[],cox:null};await guarded(()=>saveEntries(id,[...(r.entries||[]),x]),'Duplicated – fill in the new crew');closeModal();entryForm(id,x.id)};
+  });
+}
+// Paste rows from RegattaCentral or a spreadsheet: Event# | Event | Day | Time | Boat class | Boat | Crew bow→stroke (comma) | Cox | Oars | Fee
+function entryPaste(id){
+  const r=S.regattas[id];
+  openModal(`<h3>Paste entries</h3><p class="muted" style="margin-top:-6px">One entry per line, columns separated by tabs (copied from a spreadsheet) or <b>|</b>:<br><code>Event # | Event | Day (date or 1/2) | Race time | Boat class | Boat name | Crew bow→stroke, comma-separated | Cox | Oar set | Fee</code><br>Names are matched to members and boats; anything not found is listed so you can fix it.</p>
+    <form id="mform"><textarea name="t" rows="10" style="width:100%" placeholder="12 | Masters W 4x+ B | 1 | 09:40 | 4x+ | Rio 2016 | Jan K, Kerri F, Amy K, Mike C | Cox C | Blue sculls | 85"></textarea>
+    <div id="pastePrev" class="tag" style="margin-top:8px"></div>${formFoot('Add entries')}</form>`,()=>{
+    const f=$('#mform'),days=regDaysOf(r);
+    const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+    const findM=n=>{const k=norm(n);if(!k)return null;const hit=Object.entries(S.members).find(([,m])=>norm(m.displayName)===k||norm((m.firstName||'')+(m.lastName||''))===k);return hit?hit[0]:undefined};
+    const findB=n=>{const k=norm(n);if(!k)return null;const hit=Object.entries(S.boats).find(([,b])=>norm(b.name)===k);return hit?hit[0]:undefined};
+    const parse=()=>{const miss=new Set();const L=f.t.value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const c=(l.includes('\t')?l.split('\t'):l.split('|')).map(x=>x.trim());
+      const [no,event,day,time,rig,boat,crew,cox,oars,fee]=c;const dd=/^\d$/.test(day||'')?days[+day-1]:/^\d{4}-\d\d-\d\d$/.test(day||'')?day:days[0];
+      const crewIds=(crew||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean).map(n=>{const k=findM(n);if(k===undefined){miss.add('member: '+n);return null}return k});
+      const bId=findB(boat);if(boat&&bId===undefined)miss.add('boat: '+boat);const cId=findM(cox);if(cox&&cId===undefined)miss.add('cox: '+cox);
+      const tt=(time||'').match(/(\d{1,2})[:.h](\d{2})/);
+      return {id:'e'+Math.random().toString(36).slice(2,10),no:no||'',event:event||'Entry',day:dd,time:tt?`${tt[1].padStart(2,'0')}:${tt[2]}`:'',rig:RIGS.includes(rig)?rig:'4x',boatId:bId||null,crew:crewIds,cox:cId||null,oars:oars||'',fee:fee&&!isNaN(+String(fee).replace(/[$,]/g,''))?+String(fee).replace(/[$,]/g,''):null,notes:''}});
+      return {L,miss:[...miss]}};
+    f.t.oninput=()=>{const {L,miss}=parse();$('#pastePrev').innerHTML=`${L.length} entr${L.length===1?'y':'ies'} read.${miss.length?` <b>Not found</b> (left empty – fix after adding): ${esc(miss.join('; '))}`:''}`};
+    wireForm({validate:()=>parse().L.length?null:'Paste at least one line.',msg:'Entries added',save:()=>saveEntries(id,[...(r.entries||[]),...parse().L])});
+  });
+}
+function regSettingsForm(id){const r=S.regattas[id],st=regSet(r);
+  openModal(`<h3>Timing & spares</h3><form id="mform"><div class="fg">
+    ${fld('Boats leave the dock … min before their race',`<input name="before" type="number" min="0" value="${st.before}">`)}
+    ${fld('… and are back … min after',`<input name="after" type="number" min="0" value="${st.after}">`,'','Used to decide which entries are on the water at the same time.')}
+    ${fld('Spare sculls (pairs)',`<input name="spareSculls" type="number" min="0" value="${st.spareSculls}">`)}
+    ${fld('Spare sweep oars',`<input name="spareSweep" type="number" min="0" value="${st.spareSweep}">`)}
+    ${fld('Spare riggers',`<input name="spareRiggers" type="number" min="0" value="${st.spareRiggers}">`)}
+    ${fld('Riggers per seat – sculling',`<input name="scullRig" type="number" min="1" max="2" value="${st.scullRig}">`)}
+    ${fld('Riggers per seat – sweep',`<input name="sweepRig" type="number" min="1" max="2" value="${st.sweepRig}">`)}
+    ${fld('Entry deadline',`<input name="entryDeadline" type="date" value="${esc(r.entryDeadline||'')}">`)}
+  </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Saved',save:fd=>S.db.doc('regattas/'+id).update({settings:{before:+fd.before,after:+fd.after,spareSculls:+fd.spareSculls,spareSweep:+fd.spareSweep,spareRiggers:+fd.spareRiggers,scullRig:+fd.scullRig,sweepRig:+fd.sweepRig},entryDeadline:fd.entryDeadline||null,updatedAt:nowIso()})}));
+}
+function regReportDoc(id,kind){
+  const r=S.regattas[id],E=entriesSorted(r),st=regSet(r),pk=bladePeaks(r),L=loadList(r);
+  const head=`<h1>${esc(r.name)}</h1><p>${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · printed ${fmtDate(today())}</p>`;
+  if(kind==='alloc')return head+`<h2>Equipment allocation by event</h2><table><tr><th>#</th><th>Day</th><th>Race</th><th>Event</th><th>Boat</th><th>Rig</th><th>Oars</th><th>Crew (bow → stroke)</th><th>Cox</th></tr>${E.map(e=>`<tr><td>${esc(e.no||'')}</td><td>${fmtDate(e.day).replace(/, \d{4}$/,'')}</td><td>${esc(e.time||'')}</td><td>${esc(e.event)}</td><td>${esc((S.boats[e.boatId]||{}).name||'')}</td><td>${esc(e.rig||'')}</td><td>${esc(e.oars||'')}</td><td>${(e.crew||[]).map(m=>m?esc(mName(m)):'—').join(', ')}</td><td>${e.cox?esc(mName(e.cox)):''}</td></tr>`).join('')}</table>`;
+  const bl=(lab,k,sp)=>pk[k]&&pk[k].n?`<tr><td>☐</td><td>${lab}</td><td><b>${pk[k].n+(+sp||0)}</b> (${pk[k].n} at once + ${sp} spare)</td></tr>`:'';
+  return head+`<h2>Boat loading checklist</h2><table><tr><th>✓</th><th>Boat</th><th>Travels as</th><th>Races</th><th>Riggers on boat</th><th>Extra riggers</th><th>Slings / straps</th></tr>${L.map(x=>`<tr><td>☐</td><td><b>${esc(x.name)}</b></td><td>${esc(x.travel)}</td><td>${x.races}</td><td>${x.riggersOn}</td><td>${esc(x.extraRiggers||'')}</td><td>☐</td></tr>`).join('')}</table>
+    <h2>Blades</h2><table>${bl('Sculls (pairs)','sculls',st.spareSculls)}${bl('Sweep – bow side','bow',Math.ceil(st.spareSweep/2))}${bl('Sweep – stroke side','stroke',Math.floor(st.spareSweep/2))}${Object.entries(pk).filter(([k])=>k.startsWith('set:')&&!/no set named/.test(k)).map(([k,v])=>`<tr><td>☐</td><td>${esc(k.slice(4))}</td><td><b>${v.n}</b> blades at once</td></tr>`).join('')}</table>
+    <h2>Also</h2><table><tr><td>☐</td><td>Spare riggers</td><td>${st.spareRiggers}</td></tr><tr><td>☐</td><td>Tool kit, spare nuts & spacers</td><td></td></tr><tr><td>☐</td><td>Boat slings / trestles</td><td></td></tr><tr><td>☐</td><td>Straps & flags for the trailer</td><td></td></tr></table>`;
+}
+function regPrint(id,kind){
+  const w=document.createElement('div');w.className='print-area';w.innerHTML=regReportDoc(id,kind);document.body.appendChild(w);document.body.classList.add('printing');
+  const done=()=>{document.body.classList.remove('printing');w.remove();window.removeEventListener('afterprint',done)};window.addEventListener('afterprint',done);setTimeout(()=>{window.print();setTimeout(done,500)},50);
+}
+function regCsv(id,kind){
+  const r=S.regattas[id],q=v=>{const x=String(v??'');return /[",\n]/.test(x)||/^[=+\-@]/.test(x)?'"'+(/^[=+\-@]/.test(x)?"'":'')+x.replace(/"/g,'""')+'"':x};
+  let rows;
+  if(kind==='costs'){const k=regCosts(r);rows=[['Member','Races','Entry fees','Transport','Total'],...k.ids.sort((a,b)=>mName(a).localeCompare(mName(b))).map(m=>{const p=k.people[m];return [mName(m),p.entries,p.fees.toFixed(2),p.transport.toFixed(2),p.total.toFixed(2)]})]}
+  else rows=[['Event #','Day','Race time','Event','Boat','Rig','Oars','Crew bow to stroke','Cox','Fee'],...entriesSorted(r).map(e=>[e.no||'',e.day,e.time||'',e.event,(S.boats[e.boatId]||{}).name||'',e.rig||'',e.oars||'',(e.crew||[]).map(m=>m?mName(m):'').join(', '),e.cox?mName(e.cox):'',e.fee??''])];
+  const u=URL.createObjectURL(new Blob([rows.map(r2=>r2.map(q).join(',')).join('\n')+'\n'],{type:'text/csv'}));const a=document.createElement('a');a.href=u;a.download=`${slugify(r.name)}-${kind==='costs'?'costs':'allocation'}.csv`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},500);
 }
 /* ---------- Developer feedback: bugs, ideas, feedback → status → "Copy for Claude" (feedback/{id}).
    Admins can hide the tab from members (appSettings/features.feedback === false); admins always see it. ---------- */
