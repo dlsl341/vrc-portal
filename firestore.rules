@@ -172,6 +172,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ---- club challenges: coaches and admins build them; members may only join/leave (their own key in participants)
+    match /challenges/{id} {
+      function partsOf(d) { return d.get('participants', {}); }
+      allow read: if canUse();
+      allow create, delete: if isAdmin() || isCoach();
+      allow update: if isAdmin() || isCoach()
+                    || (isMember() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants'])
+                        && partsOf(request.resource.data).diff(partsOf(resource.data)).affectedKeys().hasOnly([myMemberId()]));
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {

@@ -307,6 +307,14 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .ro{padding:8px 0;font-weight:600}
 footer .ver{color:var(--ink3);font-size:11.5px}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}
+.ch-card{display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit}.ch-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}.ch-e{font-size:34px;line-height:1}
+.ch-ct{display:flex;justify-content:space-between;gap:10px;align-items:center}.ch-bar{height:8px;background:var(--bg2,#eee);border-radius:6px;margin-top:8px;overflow:hidden}.ch-bar i{display:block;height:100%;background:var(--red);border-radius:6px}
+.ch-desc{font-size:15px;margin:0 0 6px;max-width:760px}.ch-track svg{width:100%;height:auto;display:block}.ch-track .tag{text-align:center;margin-top:4px}.ch-ms{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}.ch-ms span{font-size:12px;border:1px solid var(--line,#ddd);border-radius:20px;padding:2px 9px;color:#777}.ch-ms span.ok{border-color:var(--red);color:#231f20}.ch-ms i{font-style:normal;color:#999}
+.ch-cols{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}@media(max-width:860px){.ch-cols{grid-template-columns:1fr}}
+.ch-lb{list-style:none;margin:0;padding:0}.ch-lb li{display:flex;gap:10px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--line,#eee)}.ch-lb li.me{background:#fff4f4;font-weight:600}
+.ch-lb .rk{width:28px;text-align:center}.ch-lb .nm{flex:1}.ch-mini{width:80px;height:6px;background:var(--bg2,#eee);border-radius:4px;overflow:hidden}.ch-mini i{display:block;height:100%;background:var(--red)}
+.ch-ps{display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line,#eee);cursor:pointer}.ch-ps span:first-child{flex:1;font-weight:600}
+.ch-psl{padding:4px 0 8px 12px;font-size:14px}.ch-psl div,.ch-lp{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.ch-lp{border-bottom:1px solid var(--line,#f0f0f0);font-size:14px}
 .sec.fb{padding:12px 14px}.fb-h{display:flex;gap:10px;align-items:flex-start}.fb-t{font-weight:700}.fb-d{margin:8px 0 0;white-space:pre-wrap;font-size:14px}
 .fb-vote{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line,#ddd);background:#fff;border-radius:8px;min-width:40px;padding:3px 0;cursor:pointer;font-size:11px;color:var(--muted,#777)}
 .fb-vote b{font-size:14px;color:#231f20}.fb-vote.on{border-color:var(--red);color:var(--red)}.fb-sel{margin-top:10px}
@@ -405,7 +413,7 @@ ol.steps li{margin-bottom:8px}
       <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="48" height="48">
       <div class="brand-t"><h1><b>VRC</b> Rowing</h1><small>Rowers portal</small></div>
     </a>
-    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#feedback" data-v="feedback" data-fb hidden>Feedback</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
+    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a><a href="#challenges" data-v="challenges">Club challenges</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#feedback" data-v="feedback" data-fb hidden>Feedback</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
     <div class="mods">
       <span class="role" id="role">Connecting…</span>
       <a href="#me" data-v="me" class="melink">My profile</a>
@@ -416,7 +424,7 @@ ol.steps li{margin-bottom:8px}
 <div class="mnav" id="mnav" aria-hidden="true"><div class="mn-scrim" data-close></div>
   <aside class="mn-panel" aria-label="Menu">
     <div class="mn-top"><img src="img/vrc-logo.png" alt="" width="40" height="40"><div><b>VRC Rowing</b><small id="mnRole"></small></div><button type="button" class="mn-x" data-close aria-label="Close menu">×</button></div>
-    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#feedback" data-v="feedback" data-fb hidden>Developer feedback</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
+    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a><a href="#challenges" data-v="challenges">Club challenges</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#feedback" data-v="feedback" data-fb hidden>Developer feedback</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
     <div class="mn-sec mn-acct"><a href="#me" data-v="me">My profile</a><button type="button" id="mnSignOut">Sign out</button></div>
   </aside>
 </div>
@@ -511,7 +519,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('regattas','regattas',true);sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('regattas','regattas',true);sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -547,8 +555,10 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenu(false);document.querySelectorAll('.topnav .grp.open').forEach(g=>g.classList.remove('open'))}});
 function route(){S.checkin=false;setMenu(false);if(S.view&&S.view!=='feedback')S.prevView=S.sess?'session':S.view;const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
+  const cm=h.match(/^challenge-([A-Za-z0-9_-]+)$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
-  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home','programs','regattas','feedback'].includes(h)?h:'home'}
+  else if(cm){S.sess=null;S.view='challenges';S.chOpen=cm[1]}
+  else{if(h==='challenges')S.chOpen=null;S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home','programs','regattas','feedback','challenges'].includes(h)?h:'home'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
@@ -557,7 +567,7 @@ function render(){
   const curV=S.view==='manage'||S.view==='import'?'programs':S.view;
   document.querySelectorAll('[data-v]').forEach(a=>a.classList.toggle('on',a.dataset.v===curV));
   document.querySelectorAll('.topnav .grp').forEach(g=>g.classList.toggle('on',!!g.querySelector('a.on')));
-  const TAB={home:'home',programs:'programs',openerg:'programs',coxswains:'programs',manage:'programs',results:'results',leaderboard:'results',fleet:'fleet',issues:'fleet',maintenance:'fleet',members:'members'};
+  const TAB={home:'home',programs:'programs',openerg:'programs',coxswains:'programs',manage:'programs',results:'results',leaderboard:'results',challenges:'results',fleet:'fleet',issues:'fleet',maintenance:'fleet',members:'members'};
   document.querySelectorAll('.tabbar [data-tab]').forEach(a=>a.classList.toggle('on',TAB[S.view]===a.dataset.tab));
   const role=$('#role');
   if(!S.db&&S.error!=='nodb')role.textContent='Connecting…';
@@ -573,8 +583,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canAdmin()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canAdmin())bindRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='home')bindHome();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='challenges'?viewChallenges():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canAdmin()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canAdmin())bindRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='challenges')bindChallenges();else if(S.view==='home')bindHome();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -2708,6 +2718,141 @@ function bindFeedback(){
   {const a=$('#fbAll');if(a)a.onchange=()=>{fbList().forEach(([id])=>a.checked?S.fbSel.add(id):S.fbSel.delete(id));render()}}
   {const e=$('#fbExport');if(e)e.onclick=()=>fbCopy([...S.fbSel])}
   {const e=$('#fbExportFile');if(e)e.onclick=()=>fbCopy([...S.fbSel],true)}
+}
+/* ---------- Club challenges (Training ▾ Club challenges). Coaches/admins build challenges; progress comes from the
+   members' logged results (incl. Concept2 imports) – nothing extra to log. challenges/{id}. ---------- */
+S.challenges={};S.chOpen=null;S.chLb='all';S.chProg='';S.chProgOpen=null;
+const CH_KIND={team:['Team goal','Everyone’s distance adds up towards one big target'],leaderboard:['Leaderboard','Most distance / time / pieces wins'],personal:['Personal goal','Everyone tries to reach the same target']};
+const CH_METRIC={km:['km','Kilometres'],min:['min','Minutes'],pieces:['pieces','Pieces logged']};
+const CH_TEMPLATES={
+  hawaii:{title:'Erg to Hawaii',emoji:'🌺',kind:'team',metric:'km',goal:4330,types:'erg',days:56,description:'Together we row from Vancouver across the Pacific to Honolulu. Every erg metre you log moves the club closer – Concept2 workouts count automatically.',
+    milestones:'Jericho Beach | 0\nVictoria | 105\nCape Flattery – open ocean | 215\nHalfway across the Pacific | 2165\nKauaʻi in sight | 4130\nHonolulu, Hawaii | 4330'},
+  month:{title:'Kilometre King & Queen',emoji:'👑',kind:'leaderboard',metric:'km',types:'all',days:30,description:'Most kilometres this month – erg and water both count.'},
+  hundred:{title:'100 km club',emoji:'💯',kind:'personal',metric:'km',goal:100,types:'all',days:30,description:'Row 100 km before the end date. Everyone who makes it joins the 100 km club.'},
+  streak:{title:'Show-up challenge',emoji:'🔥',kind:'leaderboard',metric:'pieces',types:'all',days:28,description:'Log the most pieces in four weeks. Consistency beats heroics!'}};
+const canBuildCh=()=>canAdmin()||isCoach();
+function chParse(t){return String(t||'').split('\n').map(l=>l.split('|')).map(([n,v])=>({name:(n||'').trim(),at:parseFloat(String(v||'').replace(/[, ]/g,''))})).filter(x=>x.name&&!isNaN(x.at)).sort((a,b)=>a.at-b.at)}
+function chVal(c,r){return c.metric==='min'?(+r.timeSec||0)/60:c.metric==='pieces'?1:kmOf(r)}
+function chResults(c,from,to){const progs=c.programs||[],joined=c.optIn?(c.participants||{}):null;
+  return Object.entries(S.results||{}).filter(([,r])=>r.date>=(from||c.start)&&r.date<=(to||c.end)&&r.memberId&&(c.includeCross||!isCross(r))&&(c.types==='all'||!c.types||r.type===c.types)
+    &&(!progs.length||progs.includes(r.program))&&(!joined||joined[r.memberId]))}
+const chSum=(c,rs)=>rs.reduce((a,[,r])=>a+chVal(c,r),0);
+function chBoard(c,rs){const m={};rs.forEach(([,r])=>{m[r.memberId]=(m[r.memberId]||0)+chVal(c,r)});return Object.entries(m).sort((a,b)=>b[1]-a[1])}
+const chFmt=(c,v)=>c.metric==='km'?(v<10?v.toFixed(1):Math.round(v).toLocaleString())+' km':c.metric==='min'?(v<600?Math.round(v)+' min':(v/60).toFixed(1)+' h'):Math.round(v)+' piece'+(Math.round(v)===1?'':'s');
+function chState(c){const t=today();if((c.end||'')<t)return ['done','Finished'];if(c.start>t)return ['soon',`Starts ${fmtDate(c.start)}`];const d=Math.round((pd(c.end)-pd(t))/864e5);return ['live',d===0?'Last day!':d+' day'+(d===1?'':'s')+' left']}
+function chTrack(c,total){
+  const ms=chParse(c.milestones),goal=c.goal||(ms.length?ms[ms.length-1].at:0);if(!goal)return '';
+  const pct=Math.min(1,total/goal),W=1000,x=v=>20+Math.min(1,v/goal)*(W-40);
+  const next=ms.find(m=>m.at>total);
+  return `<div class="ch-track"><svg viewBox="0 0 ${W} 120" role="img" aria-label="${Math.round(pct*100)}% of the way">
+    <line x1="20" y1="60" x2="${W-20}" y2="60" stroke="var(--line,#ddd)" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 10"/>
+    <line x1="20" y1="60" x2="${x(total)}" y2="60" stroke="var(--red)" stroke-width="6" stroke-linecap="round"/>
+    ${(()=>{const last=[-1e9,-1e9];return ms.map((m,i)=>{const cx=x(m.at),w=Math.max(m.name.length*8.2,70);let row=-1;
+        for(const r of [i%2,1-i%2]){const left=Math.max(20,Math.min(W-20-w,cx-w/2));if(left>last[r]+12){row=r;last[r]=left+w;m._lx=left;break}}
+        const col=m.at<=total?'#231f20':'#888';
+        return `<g><title>${esc(m.name)} – ${m.at.toLocaleString()} ${CH_METRIC[c.metric][0]}</title><circle cx="${cx}" cy="60" r="7" fill="${m.at<=total?'var(--red)':'#fff'}" stroke="${m.at<=total?'var(--red)':'#bbb'}" stroke-width="3"/>
+        ${row<0?'':`<text x="${m._lx}" y="${row?100:28}" font-size="15" fill="${col}">${esc(m.name)}</text><text x="${m._lx}" y="${row?116:12}" font-size="12" fill="#999">${m.at.toLocaleString()} ${CH_METRIC[c.metric][0]}</text>`}</g>`}).join('')})()}
+    <text x="${x(total)}" y="${ms.length?66:52}" text-anchor="middle" font-size="26">🚣</text></svg>
+    <div class="ch-ms">${ms.map(m=>`<span class="${m.at<=total?'ok':''}">${m.at<=total?'✓ ':''}${esc(m.name)} <i>${m.at.toLocaleString()}</i></span>`).join('')}</div>
+    <div class="tag">${pct>=1?'🎉 We made it!':next?`<b>${chFmt(c,next.at-total)}</b> to ${esc(next.name)}`:`<b>${chFmt(c,goal-total)}</b> to go`} · ${Math.round(pct*1000)/10}% of the way</div></div>`;
+}
+function chCard(id,c){const rs=chResults(c),tot=chSum(c,rs),st=chState(c),n=new Set(rs.map(([,r])=>r.memberId)).size;
+  const pct=c.kind==='team'&&c.goal?Math.min(100,tot/c.goal*100):null;
+  const me=myMemberId(),mine=me?chSum(c,rs.filter(([,r])=>r.memberId===me)):0;
+  return `<a class="sec ch-card" href="#challenge-${esc(id)}"><div class="ch-e">${esc(c.emoji||'🏆')}</div><div style="flex:1;min-width:0">
+    <div class="ch-ct"><b>${esc(c.title)}</b><span class="pill ${st[0]==='live'?'s-available':st[0]==='soon'?'s-repair':'s-retired'}">${st[1]}</span></div>
+    <div class="tag">${CH_KIND[c.kind][0]} · ${rangeTxt(c.start,c.end)} · ${n} rower${n===1?'':'s'} · ${chFmt(c,tot)}${me&&mine?` · you: ${chFmt(c,mine)}`:''}</div>
+    ${pct!=null?`<div class="ch-bar"><i style="width:${pct}%"></i></div>`:c.kind==='personal'&&me?`<div class="ch-bar"><i style="width:${Math.min(100,mine/(c.goal||1)*100)}%"></i></div>`:''}</div></a>`}
+function viewChallenges(){
+  if(S.chOpen&&S.challenges[S.chOpen])return viewChallenge(S.chOpen);
+  const L=Object.entries(S.challenges||{}).sort((a,b)=>String(a[1].start).localeCompare(String(b[1].start)));
+  const by=k=>L.filter(([,c])=>chState(c)[0]===k);
+  const live=by('live'),soon=by('soon'),done=by('done').reverse();
+  return `<div class="page-h"><div><h2>Club challenges</h2><p>Games and goals set by our coaches. Every piece you log on the Results page – or that comes in from Concept2 – counts automatically.</p></div>
+    ${canBuildCh()?`<div class="actions" style="margin:0"><button class="btn pri" id="chNew">+ New challenge</button></div>`:''}</div>
+    ${live.length?`<h3 class="reg-sh">Happening now</h3>${live.map(([id,c])=>chCard(id,c)).join('')}`:`<div class="banner">No challenge running right now.${canBuildCh()?' Start one with “+ New challenge” – there are ready-made templates.':' Check back soon!'}</div>`}
+    ${soon.length?`<h3 class="reg-sh">Coming up</h3>${soon.map(([id,c])=>chCard(id,c)).join('')}`:''}
+    ${done.length?`<h3 class="reg-sh">Finished</h3>${done.slice(0,12).map(([id,c])=>chCard(id,c)).join('')}`:''}`;
+}
+function viewChallenge(id){
+  const c=S.challenges[id],st=chState(c),me=myMemberId(),wk=mondayOf(today());
+  const all=chResults(c),week=chResults(c,wk>c.start?wk:c.start,today()),rs=S.chLb==='week'?week:all;
+  const total=chSum(c,all),wTotal=chSum(c,week),rowers=new Set(all.map(([,r])=>r.memberId)).size;
+  const progOf=r=>r.program||'Unassigned';
+  const progs=[...new Set(all.map(([,r])=>progOf(r)))].sort();
+  const brs=S.chProg?rs.filter(([,r])=>progOf(r)===S.chProg):rs;
+  const board=chBoard(c,brs),medal=['🥇','🥈','🥉'];
+  const joined=!c.optIn||!!(c.participants||{})[me];
+  const mine=me?chSum(c,all.filter(([,r])=>r.memberId===me)):0,goal=+c.goal||0;
+  const finishers=c.kind==='personal'&&goal?chBoard(c,all).filter(([,v])=>v>=goal).length:0;
+  const standings=progs.map(p=>{const pr=all.filter(([,r])=>progOf(r)===p);return [p,chSum(c,pr),chBoard(c,pr)]}).sort((a,b)=>b[1]-a[1]);
+  const latest=[...all].sort((a,b)=>(b[1].date+(b[1].at||'')).localeCompare(a[1].date+(a[1].at||''))).slice(0,12);
+  const tile=(v,l)=>`<div class="tile"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  return `<div class="page-h"><div><a class="lnk" href="#challenges">‹ All challenges</a><h2>${esc(c.emoji||'🏆')} ${esc(c.title)}</h2>
+      <p>${rangeTxt(c.start,c.end)} · ${CH_KIND[c.kind][0]} · <span class="pill ${st[0]==='live'?'s-available':st[0]==='soon'?'s-repair':'s-retired'}">${st[1]}</span>${(c.programs||[]).length?' · '+esc(c.programs.join(', ')):''}</p></div>
+    <div class="actions" style="margin:0">${st[0]!=='done'&&me&&joined?`<button class="btn pri" id="chLog">+ Log a piece</button>`:''}${c.optIn&&me&&st[0]!=='done'?`<button class="btn ${joined?'':'pri'}" id="chJoin">${joined?'Leave challenge':'Join the challenge'}</button>`:''}
+      ${canBuildCh()?`<button class="btn" id="chEdit">Edit</button><button class="btn dan" id="chDel">Delete</button>`:''}</div></div>
+    ${c.description?`<p class="ch-desc">${esc(c.description)}</p>`:''}
+    <p class="tag" style="margin:-4px 0 12px">Counts: ${c.types==='erg'?'erg pieces':c.types==='water'?'on-water rows':'erg and on-water'}${c.includeCross?' incl. cross-training':''} logged between ${fmtDate(c.start)} and ${fmtDate(c.end)}${c.optIn?' by members who joined':''}. Concept2 workouts come in automatically if you’ve connected Concept2 on <a class="lnk" href="#me">My profile</a>.</p>
+    <div class="tiles">${c.kind==='team'?tile(chFmt(c,total),goal?`of ${chFmt(c,goal)} · ${Math.round(Math.min(1,total/goal)*100)}%`:'team total'):tile(chFmt(c,total),'club total')}
+      ${tile(chFmt(c,wTotal),'this week')}${tile(rowers,'rower'+(rowers===1?'':'s'))}
+      ${me?tile(chFmt(c,mine),c.kind==='personal'&&goal?`you · ${Math.min(100,Math.round(mine/goal*100))}% of ${chFmt(c,goal)}`:'you'):''}${c.kind==='personal'&&goal?tile(finishers,'reached the goal'):''}</div>
+    ${c.kind==='team'?`<div class="sec">${chTrack(c,total)}</div>`:''}
+    <div class="ch-cols"><div class="sec"><div class="fee-h" style="justify-content:space-between"><h4 style="margin:0">Leaderboard</h4>
+        <div class="chips"><button class="chip ${S.chLb==='week'?'on':''}" data-chlb="week">This week</button><button class="chip ${S.chLb!=='week'?'on':''}" data-chlb="all">Whole challenge</button></div></div>
+      ${progs.length>1?`<div class="chips" style="margin:0 0 8px"><button class="chip ${!S.chProg?'on':''}" data-chprog="">All programs</button>${progs.map(p=>`<button class="chip ${S.chProg===p?'on':''}" data-chprog="${esc(p)}">${esc(p)}</button>`).join('')}</div>`:''}
+      ${board.length?`<ol class="ch-lb">${board.slice(0,25).map(([mid,v],i)=>`<li class="${mid===me?'me':''}"><span class="rk">${medal[i]||i+1}</span><span class="lnk nm" data-member="${esc(mid)}">${esc(mName(mid))}</span>
+        ${c.kind==='personal'&&goal?`<span class="ch-mini"><i style="width:${Math.min(100,v/goal*100)}%"></i></span>`:''}<b>${chFmt(c,v)}</b>${c.kind==='personal'&&goal&&v>=goal?' ✅':''}</li>`).join('')}</ol>`:'<div class="empty">No pieces logged yet – be the first!</div>'}</div>
+      <div><div class="sec"><h4>Program standings</h4>${standings.length?standings.map(([p,v,b])=>`<div class="ch-ps" data-chps="${esc(p)}"><span>${esc(p)}</span><span class="tag">${b.length} rower${b.length===1?'':'s'}</span><b>${chFmt(c,v)}</b></div>
+          ${S.chProgOpen===p?`<div class="ch-psl">${b.map(([mid,x])=>`<div><span class="lnk" data-member="${esc(mid)}">${esc(mName(mid))}</span><span>${chFmt(c,x)}</span></div>`).join('')}</div>`:''}`).join(''):'<div class="empty">—</div>'}</div>
+        <div class="sec"><h4>Latest pieces</h4>${latest.length?latest.map(([,r])=>`<div class="ch-lp"><span><span class="lnk" data-member="${esc(r.memberId)}">${esc(mName(r.memberId))}</span> <span class="tag">${fmtDate(r.date)}${r.source==='concept2'?' · C2':''}</span></span><b>${c.metric==='min'?fmtDur(r.timeSec):fmtDist(kmOf(r)).v+' '+fmtDist(kmOf(r)).u}</b></div>`).join(''):'<div class="empty">—</div>'}</div></div></div>`;
+}
+function challengeForm(id,tpl){
+  const t=CH_TEMPLATES[tpl]||{};const s0=today();
+  const c=id?S.challenges[id]:{kind:'team',metric:'km',types:'erg',...t,start:s0,end:addDays(s0,(t.days||28)-1),programs:[]};
+  const progNames=Object.values(S.programs).filter(p=>p.active!==false).map(p=>p.name);
+  openModal(`<h3>${id?'Edit challenge':'New challenge'}</h3>
+    ${id?'':`<div class="chips" style="margin:-4px 0 12px;flex-wrap:wrap"><span class="tag" style="align-self:center">Start from:</span>${Object.entries(CH_TEMPLATES).map(([k,v])=>`<button class="chip ${tpl===k?'on':''}" data-chtpl="${k}" type="button">${v.emoji} ${esc(v.title)}</button>`).join('')}<button class="chip ${!tpl?'on':''}" data-chtpl="" type="button">Blank</button></div>`}
+    <form id="mform"><div class="fg">
+    ${fld('Name',`<input name="title" required maxlength="80" value="${esc(c.title||'')}" placeholder="e.g. Erg to Hawaii">`)}
+    ${fld('Emoji',`<input name="emoji" maxlength="4" value="${esc(c.emoji||'🏆')}" style="max-width:90px">`)}
+    ${fld('Type of challenge',`<select name="kind">${Object.entries(CH_KIND).map(([k,v])=>`<option value="${k}" ${c.kind===k?'selected':''}>${v[0]} – ${v[1]}</option>`).join('')}</select>`,'full')}
+    ${fld('Measure',`<select name="metric">${Object.entries(CH_METRIC).map(([k,v])=>`<option value="${k}" ${c.metric===k?'selected':''}>${v[1]}</option>`).join('')}</select>`)}
+    ${fld('Target',`<input name="goal" type="number" min="0" step="any" value="${esc(c.goal??'')}" placeholder="e.g. 4330">`,'','Team goal: the club total. Personal goal: each person’s target. Leaderboard: optional.')}
+    ${fld('Starts',`<input type="date" name="start" required value="${esc(c.start||'')}">`)}
+    ${fld('Ends',`<input type="date" name="end" required value="${esc(c.end||'')}">`)}
+    ${fld('What counts',`<select name="types"><option value="erg" ${c.types==='erg'?'selected':''}>Erg only</option><option value="water" ${c.types==='water'?'selected':''}>On-water only</option><option value="all" ${c.types==='all'?'selected':''}>Erg and on-water</option></select>`)}
+    ${fld('Cross-training',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="includeCross" value="1" ${c.includeCross?'checked':''}> Count bike / ski erg too</label>`)}
+    ${fld('Programs',`<div class="chips" style="flex-wrap:wrap">${progNames.map(p=>`<label class="chip"><input type="checkbox" name="programs" value="${esc(p)}" ${(c.programs||[]).includes(p)?'checked':''}> ${esc(p)}</label>`).join('')}</div>`,'full','Leave all unticked for the whole club. Results count for the program they were logged under.')}
+    ${fld('Sign-up',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="optIn" value="1" ${c.optIn?'checked':''}> Members must tap “Join” to take part</label>`,'full','Otherwise everyone’s pieces count automatically.')}
+    ${fld('Description',`<textarea name="description" rows="3" maxlength="1000">${esc(c.description||'')}</textarea>`,'full')}
+    ${fld('Journey milestones (team goals)',`<textarea name="milestones" rows="5" placeholder="Jericho Beach | 0&#10;Victoria | 105&#10;Honolulu | 4330">${esc(c.milestones||'')}</textarea>`,'full','One per line: place | distance. Shown as a map-like track the club rows along. The last one is the target if Target is empty.')}
+  </div>${formFoot(id?'Save':'Create challenge')}</form>`,()=>{
+    document.querySelectorAll('[data-chtpl]').forEach(b=>b.onclick=()=>challengeForm(null,b.dataset.chtpl||null));
+    wireForm({validate:fd=>{if(!fd.title.trim())return 'Give the challenge a name.';if(!fd.start||!fd.end||fd.end<fd.start)return 'Check the start and end dates.';
+        if(fd.kind!=='leaderboard'&&!(+fd.goal>0)&&!(fd.kind==='team'&&chParse(fd.milestones).length))return 'Set a target.';return null},
+      msg:id?'Challenge saved':'Challenge created – it’s live for members',
+      save:async fd=>{const ms=chParse(fd.milestones);const data={title:fd.title.trim(),emoji:fd.emoji.trim()||'🏆',kind:fd.kind,metric:fd.metric,goal:+fd.goal||(fd.kind==='team'&&ms.length?ms[ms.length-1].at:null),
+          start:fd.start,end:fd.end,types:fd.types,includeCross:!!(fd._c.includeCross||[]).length,programs:fd._c.programs||[],optIn:!!(fd._c.optIn||[]).length,
+          description:fd.description.trim(),milestones:fd.milestones.trim(),updatedAt:nowIso(),updatedBy:S.me};
+        if(id)await S.db.doc('challenges/'+id).update(data);
+        else{const ref=await S.db.collection('challenges').add({...data,participants:{},createdAt:nowIso(),createdBy:S.me});location.hash='#challenge-'+ref.id}}});
+  });
+}
+function bindChallenges(){
+  const m=$('#main'),on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f},id=S.chOpen,c=id&&S.challenges[id];
+  on('#chNew',()=>challengeForm(null,'hawaii'));
+  if(c){
+    on('#chLog',()=>resultForm(null,{type:c.types==='water'?'water':'erg'}));
+    on('#chEdit',()=>challengeForm(id));
+    on('#chDel',()=>{if(confirm(`Delete “${c.title}”? Logged results are not affected.`))guarded(async()=>{await S.db.doc('challenges/'+id).delete();location.hash='#challenges'},'Challenge deleted')});
+    on('#chJoin',()=>{const me=myMemberId(),p={...(c.participants||{})};const was=!!p[me];if(was)delete p[me];else p[me]=nowIso();
+      guarded(()=>S.db.doc('challenges/'+id).update({participants:p}),was?'You left the challenge':'You’re in! Every piece you log now counts.')});
+    m.querySelectorAll('[data-chlb]').forEach(el=>el.onclick=()=>{S.chLb=el.dataset.chlb;render()});
+    m.querySelectorAll('[data-chprog]').forEach(el=>el.onclick=()=>{S.chProg=el.dataset.chprog;render()});
+    m.querySelectorAll('[data-chps]').forEach(el=>el.onclick=()=>{S.chProgOpen=S.chProgOpen===el.dataset.chps?null:el.dataset.chps;render()});
+  }
+  m.querySelectorAll('[data-member]').forEach(el=>el.onclick=e=>{e.preventDefault();openMember(el.dataset.member)});
 }
 function viewCoxswains(){
   const me=myMemberId(),t=today(),cx=coxList(),iAmCox=!!me&&isCoxMember(me);

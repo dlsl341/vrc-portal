@@ -292,6 +292,19 @@ test('feedback: members post their own, +1 only for themselves, edit only while 
   await assertSucceeds(getDoc(doc(as('alice'), 'appSettings/features')));
 });
 
+// ---- club challenges
+test('challenges: coaches/admins build them, members only join or leave themselves', async () => {
+  const c = { title: 'Erg to Hawaii', kind: 'team', metric: 'km', goal: 4330, start: '2026-12-01', end: '2027-01-31', participants: {} };
+  await assertSucceeds(setDoc(doc(as('carol'), 'challenges/c1'), c));
+  await assertFails(setDoc(doc(as('alice'), 'challenges/c2'), c));
+  await assertSucceeds(getDoc(doc(as('alice'), 'challenges/c1')));
+  await assertSucceeds(updateDoc(doc(as('alice'), 'challenges/c1'), { participants: { m_alice: 'now' } }));
+  await assertFails(updateDoc(doc(as('alice'), 'challenges/c1'), { participants: { m_alice: 'now', m_bob: 'now' } }));
+  await assertFails(updateDoc(doc(as('alice'), 'challenges/c1'), { goal: 1 }));
+  await assertFails(deleteDoc(doc(as('alice'), 'challenges/c1')));
+  await assertFails(getDoc(doc(as('stranger'), 'challenges/c1')));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));
