@@ -29,6 +29,23 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
 
+  guides:
+    name: Help guides up to date?
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Remind to update the Help guides when the portal's screens change
+        run: |
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          if echo "$CHANGED" | grep -q '^public/index.html$' && ! echo "$CHANGED" | grep -q '^public/help/articles.md$'; then
+            echo "::warning title=Help guides::The portal's screens changed but public/help/articles.md didn't. If members will notice the change, update the matching guide."
+            echo "⚠ Screens changed without a Help guide update – check public/help/articles.md." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✓ Help guides OK" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   preview:
     name: Preview link
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -66,6 +83,17 @@ jobs:
           cat public/version.json
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+      - name: Write "What's new" for the Help page (from the GitHub releases)
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          gh api "repos/${{ github.repository }}/releases?per_page=30" > "$RUNNER_TEMP/rel.json" || echo "[]" > "$RUNNER_TEMP/rel.json"
+          node -e '
+            const fs=require("fs"),v=require("./public/version.json");
+            let rel=[];try{rel=JSON.parse(fs.readFileSync(process.argv[1],"utf8"))}catch(e){}
+            const clean=t=>String(t||"").replace(/^v1\.\d+\s*[–-]\s*/,"");
+            const list=[{version:v.version,date:v.date,title:v.title}, ...rel.map(r=>({version:r.tag_name,date:r.published_at,title:clean(r.name)}))]
+              .filter((x,i,a)=>x.title&&a.findIndex(y=>y.version===x.version)===i).slice(0,30);
+            fs.writeFileSync("public/changelog.json",JSON.stringify(list));console.log(list.length,"entries");' "$RUNNER_TEMP/rel.json"
       - name: Write service account key
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

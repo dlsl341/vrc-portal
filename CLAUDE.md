@@ -136,6 +136,11 @@ language, and keep the "propose → preview link → merge" workflow.
   **⬇ Download .md** (`fbClaudeText`: a self-contained brief pointing at this repo + CLAUDE.md, marks `exportedAt`).
   Admin page toggle hides the tab from members (`appSettings/features.feedback=false`; read via `feat()`); admins
   always see it.
+- **Help & how-to** (`#help`, `#help-<id>`; round **?** button in the header next to My profile, ☰ Club ▸ "Help & how-to",
+  "? Help" on Home): guides live in **`public/help/articles.md`** (format in its header comment: `## id | Title |
+  audience | page`, audience all|coach|committee|admin filtered by role, page = view key for "Help for <page you came
+  from>" via `S.prevView`), rendered by `mdLite` with search. "What's new" reads `public/changelog.json`, rewritten by the
+  deploy job from the GitHub releases (PR titles – so write PR titles members can understand).
 - **Coxswains** (`#coxswains` tab, `coxAvail/{memberId}`: offered, weekly{sessionId:true}, dates{"<sid>_<YYYYMMDD>": yes|no}):
   a coxswain = Cox role OR member ticked "I can cox" on their profile (`offered`). They mark availability per
   on-water session for the next 2 weeks (+ "Every week"). Booking form's cox seat lists available coxswains
@@ -229,6 +234,9 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 
 ## Working on it
 - Branch → commit → push → open a PR. The PR gets a preview link; the user merges to go live.
+- **Keep the Help guides current:** any PR that changes what members see (screens, button names, rules, emails) must
+  update `public/help/articles.md` in the same PR (add a guide for new features). The PR check "Help guides up to
+  date?" warns when `public/index.html` changes without it.
 - Run `npm test` locally if Java + network are available; otherwise CI runs it. Add a rules test for
   any rules change.
 - **Regatta roles load late**: committee/dockmaster rights come from `members.roles`, so `render()` subscribes to
@@ -236,7 +244,8 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 - UI smoke tests in previous sessions served `public/` and swapped the gstatic Firebase modules for
   in-memory fakes via Playwright request routing – a quick way to exercise flows without a project.
 - **Navigation**: Home first; desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
-  Training ▾ Results/Leaderboard/Club challenges · Fleet ▾ Boats/Issues/Maintenance/Regattas · Members · Feedback · Admin). ≤1020px: ☰ slide-in
+  Training ▾ Results/Leaderboard/Club challenges · Fleet ▾ Boats/Issues/Maintenance/Regattas · Members · Feedback · Admin; Help = round ? by My profile). The admin role chip hides below 1380px and the nav tightens
+  below 1180/1080px so the header fits. ≤1020px: ☰ slide-in
   menu (`#mnav`); ≤700px also a bottom tab bar (Home, Programs, Training, Fleet, Menu). Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
   `.nb-claims`; `[data-admin]` shows for admins. Add a new page to all three places.
 - Style: VRC red `#ea3c42` (`--red`), near-black `#231f20`, Libre Baskerville headings, Inter body.
