@@ -2555,12 +2555,13 @@ function viewRegattas(){
   if(S.regOpen&&S.regattas[S.regOpen])return viewRegatta(S.regOpen);
   const y=S.regYear||+today().slice(0,4),t=today();
   const L=Object.entries(S.regattas||{}).filter(([,r])=>(r.start||'').startsWith(String(y))||(r.end||'').startsWith(String(y))).sort((a,b)=>a[1].start.localeCompare(b[1].start));
-  const up=L.filter(([,r])=>(r.end||r.start)>=t),past=L.filter(([,r])=>(r.end||r.start)<t).reverse();
+  // Coming up = every future regatta, whatever year the calendar shows; Earlier = past ones in the shown year
+  const up=Object.entries(S.regattas||{}).filter(([,r])=>(r.end||r.start||'')>=t).sort((a,b)=>a[1].start.localeCompare(b[1].start)),past=L.filter(([,r])=>(r.end||r.start)<t).reverse();
   const away=Object.values(S.holds||{}).filter(h=>h.from<=t&&h.to>=t).reduce((a,h)=>a+(h.boatIds||[]).length,0);
   return `<div class="page-h"><div><h2>Regattas</h2><p>Plan the regatta season: entries, boats and oars, the trailer load list and costs – and take boats out of booking while they’re away. For admins and the regatta committee.</p></div>
     <div class="actions" style="margin:0"><button class="btn pri" id="regAdd">+ Add regatta</button></div></div>
     <div class="reg-layout"><div class="reg-up"><h3 class="reg-sh" style="margin-top:0">Coming up</h3>
-      ${up.length?up.map(([id,r])=>regCard(id,r)).join(''):`<div class="banner">No upcoming regattas in ${y}. Click a date on the calendar or “+ Add regatta”.</div>`}</div>
+      ${up.length?up.map(([id,r])=>regCard(id,r)).join(''):`<div class="banner">No upcoming regattas. Click a date on the calendar or “+ Add regatta”.</div>`}</div>
     <div class="sec reg-cal"><div class="fee-h" style="justify-content:space-between"><div class="chips"><button class="chip" data-regy="-1" aria-label="Previous year">‹</button><button class="chip on">${y}</button><button class="chip" data-regy="1" aria-label="Next year">›</button></div>
       <span class="tag">${L.length} regatta${L.length===1?'':'s'} in ${y}${away?` · ${away} boat${away===1?'':'s'} away today`:''} · click a date to add one</span></div>${yearCal(y)}</div></div>
     ${past.length?`<h3 class="reg-sh">Earlier in ${y}</h3>${past.map(([id,r])=>regCard(id,r)).join('')}`:''}`;
