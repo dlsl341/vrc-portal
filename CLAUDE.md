@@ -85,6 +85,14 @@ language, and keep the "propose → preview link → merge" workflow.
   places as `boatInMaint`) and fleet cards show "🏁 Away / Going away" (next 21 days). Existing bookings that clash are
   listed on the form and the card (⚠ count) – not cancelled. Uploads go to Storage `docs/<id>/<name>` (pdf, office,
   csv, images ≤ 20 MB; adapter `upload(blob,{folder:'docs',name})`). "Add to calendar" downloads an all-day .ics.
+- **Developer feedback** (`#feedback`, top nav "Feedback" + ☰ Club ▸ "Developer feedback", `[data-fb]`): members report
+  🐞 bugs / 💡 feature requests / 💬 feedback (`feedback/{id}`: type, page (prefilled from `S.prevView`), title, details,
+  steps, expected, photos (≤3 via `uploadPhotos`), device + portal version auto-added, by, name, votes{uid}, status
+  new|planned|progress|done|wont, adminNote, exportedAt). Everyone reads and ▲ +1s (own key only); authors edit/delete
+  while "new"; admins set status/reply. Admin tools: tick items (or "Select all shown") → **📋 Copy for Claude** /
+  **⬇ Download .md** (`fbClaudeText`: a self-contained brief pointing at this repo + CLAUDE.md, marks `exportedAt`).
+  Admin page toggle hides the tab from members (`appSettings/features.feedback=false`; read via `feat()`); admins
+  always see it.
 - **Coxswains** (`#coxswains` tab, `coxAvail/{memberId}`: offered, weekly{sessionId:true}, dates{"<sid>_<YYYYMMDD>": yes|no}):
   a coxswain = Cox role OR member ticked "I can cox" on their profile (`offered`). They mark availability per
   on-water session for the next 2 weeks (+ "Every week"). Booking form's cox seat lists available coxswains
@@ -154,7 +162,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
 `openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` · `feeRules` · `fees` · `feeRuns` · `feeReports` ·
-`regattas` · `boatHolds` ·
+`regattas` · `boatHolds` · `feedback` · `appSettings/features` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
@@ -183,7 +191,7 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 - UI smoke tests in previous sessions served `public/` and swapped the gstatic Firebase modules for
   in-memory fakes via Playwright request routing – a quick way to exercise flows without a project.
 - **Navigation**: Home first; desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
-  Training ▾ Results/Leaderboard · Fleet ▾ Boats/Issues/Maintenance/Regattas (admins) · Members · Admin). ≤1020px: ☰ slide-in
+  Training ▾ Results/Leaderboard · Fleet ▾ Boats/Issues/Maintenance/Regattas (admins) · Members · Feedback · Admin). ≤1020px: ☰ slide-in
   menu (`#mnav`); ≤700px also a bottom tab bar (Home, Programs, Training, Fleet, Menu). Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
   `.nb-claims`; `[data-admin]` shows for admins. Add a new page to all three places.
 - Style: VRC red `#ea3c42` (`--red`), near-black `#231f20`, Libre Baskerville headings, Inter body.

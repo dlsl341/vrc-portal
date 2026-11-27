@@ -150,6 +150,28 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ---- developer feedback (bugs / ideas / feedback). Everyone using the portal reads and +1s; authors edit or delete
+    // their own while it's still "new"; admins set status/notes. appSettings/features: admins switch the tab off/on.
+    match /feedback/{id} {
+      function votesOf(d) { return d.get('votes', {}); }
+      function onlyMyVote() { return votesOf(request.resource.data).diff(votesOf(resource.data)).affectedKeys().hasOnly([uid()]); }
+      function fbFields() { return request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 140
+                                   && request.resource.data.get('details', '').size() <= 4000 && request.resource.data.type in ['bug', 'idea', 'feedback']; }
+      allow read: if canUse();
+      allow create: if canUse() && request.resource.data.by == uid() && request.resource.data.status == 'new' && fbFields()
+                    && request.resource.data.keys().hasOnly(['type','page','title','details','steps','expected','status','by','memberId','name','device','version','photos','votes','at','updatedAt'])
+                    && votesOf(request.resource.data).keys().hasOnly([uid()]);
+      allow update: if isAdmin()
+                    || (canUse() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']) && onlyMyVote())
+                    || (canUse() && resource.data.by == uid() && resource.data.status == 'new'
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['type','page','title','details','steps','expected','updatedAt']) && fbFields());
+      allow delete: if isAdmin() || (canUse() && resource.data.by == uid() && resource.data.status == 'new');
+    }
+    match /appSettings/{id} {
+      allow read: if canUse();
+      allow write: if isAdmin();
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {
