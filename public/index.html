@@ -307,6 +307,11 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .ro{padding:8px 0;font-weight:600}
 footer .ver{color:var(--ink3);font-size:11.5px}
 .sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}
+.sec.fb{padding:12px 14px}.fb-h{display:flex;gap:10px;align-items:flex-start}.fb-t{font-weight:700}.fb-d{margin:8px 0 0;white-space:pre-wrap;font-size:14px}
+.fb-vote{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line,#ddd);background:#fff;border-radius:8px;min-width:40px;padding:3px 0;cursor:pointer;font-size:11px;color:var(--muted,#777)}
+.fb-vote b{font-size:14px;color:#231f20}.fb-vote.on{border-color:var(--red);color:var(--red)}.fb-sel{margin-top:10px}
+.fb-ph{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.fb-ph img{height:90px;border-radius:6px;border:1px solid var(--line,#ddd)}
+.fb-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 10px;padding:8px 10px;background:var(--bg2,#f4f2ee);border-radius:8px}
 .ycal{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px 18px;margin-top:10px}.ymh{font-weight:700;font-size:13px;margin-bottom:4px}
 .ywd,.ygrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}.ywd span{font-size:10px;color:var(--muted,#888)}
 .ycd{border:0;background:none;font:inherit;font-size:12px;padding:3px 0;border-radius:5px;cursor:pointer;color:inherit}.ycd:hover{background:var(--bg2,#f1efeb)}
@@ -400,7 +405,7 @@ ol.steps li{margin-bottom:8px}
       <img src="img/vrc-logo.png" alt="Vancouver Rowing Club" width="48" height="48">
       <div class="brand-t"><h1><b>VRC</b> Rowing</h1><small>Rowers portal</small></div>
     </a>
-    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
+    <nav class="topnav" aria-label="Main"><a class="solo" href="#home" data-v="home">Home</a><div class="grp" data-g="programs"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Programs<i>▾</i></button><div class="dd"><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div></div><div class="grp" data-g="training"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Training<i>▾</i></button><div class="dd"><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div></div><div class="grp" data-g="fleet"><button type="button" class="gbtn" aria-haspopup="true" aria-expanded="false">Fleet<span class="n nb-issues" hidden></span><i>▾</i></button><div class="dd"><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div></div><a class="solo" href="#members" data-v="members">Members</a><a class="solo" href="#feedback" data-v="feedback" data-fb hidden>Feedback</a><a class="solo" href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></nav>
     <div class="mods">
       <span class="role" id="role">Connecting…</span>
       <a href="#me" data-v="me" class="melink">My profile</a>
@@ -411,7 +416,7 @@ ol.steps li{margin-bottom:8px}
 <div class="mnav" id="mnav" aria-hidden="true"><div class="mn-scrim" data-close></div>
   <aside class="mn-panel" aria-label="Menu">
     <div class="mn-top"><img src="img/vrc-logo.png" alt="" width="40" height="40"><div><b>VRC Rowing</b><small id="mnRole"></small></div><button type="button" class="mn-x" data-close aria-label="Close menu">×</button></div>
-    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
+    <div class="mn-sec"><a href="#home" data-v="home">Home</a></div><div class="mn-sec"><div class="mn-h">Programs</div><a href="#programs" data-v="programs">Weekly schedule</a><a href="#openerg" data-v="openerg">Open erg</a><a href="#coxswains" data-v="coxswains">Coxswains</a></div><div class="mn-sec"><div class="mn-h">Training</div><a href="#results" data-v="results">Results</a><a href="#leaderboard" data-v="leaderboard">Leaderboard</a></div><div class="mn-sec"><div class="mn-h">Fleet</div><a href="#fleet" data-v="fleet">Boats</a><a href="#issues" data-v="issues">Issues<span class="n nb-issues" hidden></span></a><a href="#maintenance" data-v="maintenance">Maintenance</a><a href="#regattas" data-v="regattas" data-admin hidden>Regattas</a></div><div class="mn-sec"><div class="mn-h">Club</div><a href="#members" data-v="members">Members</a><a href="#feedback" data-v="feedback" data-fb hidden>Developer feedback</a><a href="#admin" data-v="admin" data-admin hidden>Admin<span class="n nb-claims" hidden></span></a></div>
     <div class="mn-sec mn-acct"><a href="#me" data-v="me">My profile</a><button type="button" id="mnSignOut">Sign out</button></div>
   </aside>
 </div>
@@ -506,7 +511,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('regattas','regattas',true);sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('regattas','regattas',true);sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -541,9 +546,9 @@ document.addEventListener('click',e=>{
   if(e.target.closest('.topnav .dd a'))document.querySelectorAll('.topnav .grp.open').forEach(g=>g.classList.remove('open'));
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){setMenu(false);document.querySelectorAll('.topnav .grp.open').forEach(g=>g.classList.remove('open'))}});
-function route(){S.checkin=false;setMenu(false);const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
+function route(){S.checkin=false;setMenu(false);if(S.view&&S.view!=='feedback')S.prevView=S.sess?'session':S.view;const h=S.guest?'me':location.hash.replace('#','');const m=h.match(/^s-([a-z0-9-]+)-(\d{8})$/);
   if(m){S.view='programs';S.sess={id:m[1],date:m[2].slice(0,4)+'-'+m[2].slice(4,6)+'-'+m[2].slice(6)}}
-  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home','programs','regattas'].includes(h)?h:'home'}
+  else{S.sess=null;S.view=['fleet','issues','maintenance','members','me','manage','import','admin','results','leaderboard','openerg','coxswains','home','programs','regattas','feedback'].includes(h)?h:'home'}
   if(typeof closeModal==='function')closeModal();render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 
@@ -559,7 +564,7 @@ function render(){
   else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
   const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
   document.querySelectorAll('.nb-issues').forEach(x=>{x.hidden=!openIss;x.textContent=openIss});
-  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
+  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('[data-fb]').forEach(x=>x.hidden=!fbVisible());document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
   {const mr=$('#mnRole');if(mr)mr.textContent=$('#role').textContent}
   const m=$('#main');
   if(S.error==='nodb'){m.innerHTML=`<div class="banner"><h3>Club data isn't available</h3>Please sign in again to see the fleet and members.</div>`;return}
@@ -568,8 +573,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='regattas'?(canAdmin()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canAdmin())bindRegattas();else if(S.view==='home')bindHome();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canAdmin()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canAdmin())bindRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='home')bindHome();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -1016,6 +1021,7 @@ function bindMembers(){
   m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
   m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
   bindFees();
+  {const t=$('#fbTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('appSettings/features').set({...feat(),feedback:t.checked,updatedBy:S.me,updatedAt:nowIso()}),t.checked?'Feedback tab shown to everyone':'Feedback tab hidden from members')}
   {const t=$('#claimMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({claimEmails:t.checked},{merge:true}),t.checked?'You’ll get join request emails':'Join request emails off')}
   {const t=$('#issueMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({issueEmails:t.checked},{merge:true}),t.checked?'You’ll get damage report emails':'Damage report emails off')}
   m.querySelectorAll('[data-mprog]').forEach(el=>el.onclick=()=>{S.mprog=el.dataset.mprog;render()});
@@ -2593,6 +2599,116 @@ function bindRegattas(){
   m.querySelectorAll('[data-boat]').forEach(el=>el.onclick=e=>{e.stopPropagation();openBoat(el.dataset.boat)});
   m.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
 }
+/* ---------- Developer feedback: bugs, ideas, feedback → status → "Copy for Claude" (feedback/{id}).
+   Admins can hide the tab from members (appSettings/features.feedback === false); admins always see it. ---------- */
+S.feedback={};S.features={};const feat=()=>(S.features||{}).features||{};S.fbFilter={type:'all',status:'open',q:''};S.fbSel=new Set();
+const fbVisible=()=>canAdmin()||(!S.guest&&!(feat().feedback===false));
+const FB_TYPES={bug:['🐞','Bug'],idea:['💡','Feature request'],feedback:['💬','Feedback']};
+const FB_STATUS={new:['New','s-available'],planned:['Planned','s-repair'],progress:['In progress','s-repair'],done:['Done','s-retired'],wont:['Won’t do','s-dnr']};
+const FB_OPEN=['new','planned','progress'];
+function fbAdminHtml(){const on=!(feat().feedback===false);
+  return `<div class="sec"><h4>Developer feedback tab</h4><label class="tog" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="fbTog" ${on?'checked':''}> Show the <b>Feedback</b> tab to members (bug reports, ideas, feedback)</label><p class="tag" style="margin:6px 0 0">When off, only admins see it. Existing reports are kept. <a class="lnk" href="#feedback">Open feedback ›</a></p></div>`}
+function fbDevice(){const ua=navigator.userAgent;const os=/iPhone|iPad/.test(ua)?'iOS':/Android/.test(ua)?'Android':/Mac/.test(ua)?'Mac':/Windows/.test(ua)?'Windows':'Other';
+  const br=/Edg\//.test(ua)?'Edge':/CriOS|Chrome\//.test(ua)?'Chrome':/FxiOS|Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'Browser';
+  return `${os} · ${br} · ${window.innerWidth}×${window.innerHeight}${matchMedia('(display-mode: standalone)').matches?' · home-screen app':''}`}
+const fbVer=()=>S.ver?S.ver.version:'dev';
+function fbList(){const f=S.fbFilter,q=f.q.trim().toLowerCase();
+  return Object.entries(S.feedback||{}).filter(([,x])=>(f.type==='all'||x.type===f.type)&&(f.status==='all'||(f.status==='open'?FB_OPEN.includes(x.status||'new'):(x.status||'new')===f.status))
+    &&(!q||(x.title+' '+(x.details||'')+' '+(x.name||'')).toLowerCase().includes(q)))
+    .sort((a,b)=>Object.keys(b[1].votes||{}).length-Object.keys(a[1].votes||{}).length||String(b[1].at).localeCompare(String(a[1].at)))}
+function fbCard(id,x){
+  const t=FB_TYPES[x.type]||FB_TYPES.feedback,st=FB_STATUS[x.status||'new']||FB_STATUS.new,v=Object.keys(x.votes||{}).length,mine=!!(x.votes||{})[S.me],own=x.by===S.me;
+  return `<div class="sec fb" id="fb-${esc(id)}">
+    <div class="fb-h">${canAdmin()?`<input type="checkbox" class="fb-sel" data-fbsel="${esc(id)}" ${S.fbSel.has(id)?'checked':''} title="Select for export">`:''}
+      <button class="fb-vote ${mine?'on':''}" data-fbvote="${esc(id)}" title="${mine?'Remove your +1':'+1 – me too'}">▲<b>${v}</b></button>
+      <div style="flex:1;min-width:0"><div class="fb-t">${t[0]} ${esc(x.title)}</div>
+        <div class="tag">${t[1]} · ${esc(x.name||'Member')} · ${fmtDate((x.at||'').slice(0,10))}${x.page?' · page: '+esc(x.page):''}${x.exportedAt?' · 📤 sent to Claude '+fmtDate(x.exportedAt.slice(0,10)):''}</div></div>
+      <span class="pill ${st[1]}">${st[0]}</span></div>
+    ${x.details?`<p class="fb-d">${esc(x.details)}</p>`:''}
+    ${x.steps?`<p class="fb-d"><b>Steps:</b> ${esc(x.steps)}</p>`:''}
+    ${x.expected?`<p class="fb-d"><b>Expected:</b> ${esc(x.expected)}</p>`:''}
+    ${(x.photos||[]).length?`<div class="fb-ph">${x.photos.map(p=>`<a href="${esc(blobUrl(p))}" target="_blank" rel="noopener"><img src="${esc(blobUrl(p))}" alt="Screenshot" loading="lazy"></a>`).join('')}</div>`:''}
+    ${x.adminNote?`<div class="callout" style="margin:8px 0 0"><b>From the admins:</b> ${esc(x.adminNote)}</div>`:''}
+    <div class="actions" style="margin-top:8px">${canAdmin()?`<button class="btn sm" data-fbstatus="${esc(id)}">Status / reply</button><button class="btn sm" data-fbclaude="${esc(id)}">📋 Copy for Claude</button>`:''}
+      ${own&&(x.status||'new')==='new'||canAdmin()?`<button class="btn sm" data-fbedit="${esc(id)}">Edit</button><button class="btn sm dan" data-fbdel="${esc(id)}">Delete</button>`:''}</div></div>`;
+}
+function viewFeedback(){
+  const f=S.fbFilter,L=fbList(),all=Object.values(S.feedback||{});
+  const cnt=k=>all.filter(x=>FB_OPEN.includes(x.status||'new')&&x.type===k).length;
+  const chip=(k,v,lab)=>`<button class="chip ${f[k]===v?'on':''}" data-fbf="${k}|${v}">${lab}</button>`;
+  return `<div class="page-h"><div><h2>Developer feedback</h2><p>Found a bug? Have an idea? Tell us here – every report gets a status so you can see what’s happening with it. Give a ▲ to the ones you care about.</p></div>
+    <div class="actions" style="margin:0"><button class="btn pri" data-fbnew="bug">🐞 Report a bug</button><button class="btn" data-fbnew="idea">💡 Request a feature</button><button class="btn" data-fbnew="feedback">💬 Feedback</button></div></div>
+    ${canAdmin()&&feat().feedback===false?`<div class="callout" style="margin-bottom:12px">This tab is <b>hidden from members</b> – only admins see it. Turn it on from the Admin page.</div>`:''}
+    <div class="fee-h"><div class="chips">${chip('type','all','All')}${chip('type','bug','🐞 Bugs '+cnt('bug'))}${chip('type','idea','💡 Ideas '+cnt('idea'))}${chip('type','feedback','💬 Feedback '+cnt('feedback'))}</div>
+      <div class="chips">${chip('status','open','Open')}${Object.entries(FB_STATUS).filter(([k])=>!FB_OPEN.includes(k)).map(([k,v])=>chip('status',k,v[0])).join('')}${chip('status','all','Everything')}</div>
+      <input id="fbQ" placeholder="Search…" value="${esc(f.q)}" style="max-width:200px"></div>
+    ${canAdmin()?`<div class="fb-bar"><label><input type="checkbox" id="fbAll" ${L.length&&L.every(([id])=>S.fbSel.has(id))?'checked':''}> Select all shown</label>
+      <span class="tag">${S.fbSel.size} selected</span><button class="btn sm pri" id="fbExport" ${S.fbSel.size?'':'disabled'}>📋 Copy ${S.fbSel.size||''} for Claude</button><button class="btn sm" id="fbExportFile" ${S.fbSel.size?'':'disabled'}>⬇ Download .md</button>
+      <span class="tag">Paste into Claude (with the vrc-portal repo) to have the changes made as a pull request.</span></div>`:''}
+    ${L.length?L.map(([id,x])=>fbCard(id,x)).join(''):`<div class="empty">Nothing here${f.status==='open'?' – no open reports':''}.</div>`}`;
+}
+function fbForm(type,id){
+  const PV={home:'Home',programs:'Weekly schedule',session:'Session / booking',openerg:'Open erg',coxswains:'Coxswains',results:'Results',leaderboard:'Leaderboard',fleet:'Fleet',issues:'Issues',maintenance:'Maintenance',regattas:'Regattas',members:'Members',me:'My profile',admin:'Admin'};
+  const x=id?S.feedback[id]:{type,page:PV[S.prevView]||''};const bug=(x.type||type)==='bug';
+  const pages=['Home','Weekly schedule','Session / booking','Open erg','Coxswains','Results','Leaderboard','Fleet','Issues','Maintenance','Regattas','Members','My profile','Admin','Sign-in','Other'];
+  openModal(`<h3>${id?'Edit':FB_TYPES[type][0]+' '+(type==='bug'?'Report a bug':type==='idea'?'Request a feature':'Send feedback')}</h3><form id="mform"><div class="fg">
+    ${id?fld('Type',`<select name="type">${Object.entries(FB_TYPES).map(([k,v])=>`<option value="${k}" ${x.type===k?'selected':''}>${v[0]} ${v[1]}</option>`).join('')}</select>`):`<input type="hidden" name="type" value="${type}">`}
+    ${fld('Where in the portal?',`<select name="page"><option value="">—</option>${pages.map(p=>`<option ${x.page===p?'selected':''}>${p}</option>`).join('')}</select>`)}
+    ${fld(bug?'What went wrong? (one line)':type==='idea'?'Your idea in one line':'Summary',`<input name="title" required maxlength="140" value="${esc(x.title||'')}" placeholder="${bug?'e.g. Erg 14 shows as free but I can’t book it':type==='idea'?'e.g. Let coaches message their whole class':'e.g. Booking on my phone is great!'}">`,'full')}
+    ${fld(bug?'Details':type==='idea'?'Why would it help? How should it work?':'Details',`<textarea name="details" rows="4" maxlength="4000">${esc(x.details||'')}</textarea>`,'full')}
+    ${bug?fld('Steps to make it happen',`<textarea name="steps" rows="3" maxlength="2000" placeholder="1. Open … 2. Tap … 3. See …">${esc(x.steps||'')}</textarea>`,'full')+fld('What did you expect instead?',`<input name="expected" maxlength="500" value="${esc(x.expected||'')}">`,'full'):''}
+    ${id?'':fld('Screenshot (optional)',`<input type="file" id="fbShot" accept="image/*" multiple>`,'full','Up to 3 images. Your phone/computer details are added automatically to help find bugs.')}
+  </div>${formFoot(id?'Save':'Send')}</form>`,()=>wireForm({validate:fd=>fd.title.trim()?null:'Give it a short title.',msg:id?'Saved':'Thanks – sent! You can follow its status here.',
+    save:async fd=>{const data={type:fd.type,page:fd.page,title:fd.title.trim(),details:(fd.details||'').trim(),steps:(fd.steps||'').trim(),expected:(fd.expected||'').trim(),updatedAt:nowIso()};
+      if(id)return S.db.doc('feedback/'+id).update(data);
+      const fs=[...(($('#fbShot')||{}).files||[])].slice(0,3);if(fs.length)$('#mSave').textContent='Uploading…';
+      const photos=fs.length?await uploadPhotos(fs):[];
+      await S.db.collection('feedback').add({...data,status:'new',by:S.me,memberId:myMemberId()||null,name:(S.members[myMemberId()]||{}).displayName||'',
+        device:fbDevice(),version:fbVer(),photos,votes:{[S.me]:nowIso()},at:nowIso()})}}));
+}
+function fbStatusForm(id){const x=S.feedback[id];
+  openModal(`<h3>Status / reply</h3><p class="muted" style="margin-top:-6px">${esc(x.title)}</p><form id="mform"><div class="fg">
+    ${fld('Status',`<select name="status">${Object.entries(FB_STATUS).map(([k,v])=>`<option value="${k}" ${(x.status||'new')===k?'selected':''}>${v[0]}</option>`).join('')}</select>`)}
+    ${fld('Note to everyone (optional)',`<textarea name="adminNote" rows="3" maxlength="1000" placeholder="e.g. Fixed in v1.58 – thanks!">${esc(x.adminNote||'')}</textarea>`,'full','Shown on the report.')}
+  </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Updated',save:fd=>S.db.doc('feedback/'+id).update({status:fd.status,adminNote:fd.adminNote.trim(),statusBy:S.me,statusAt:nowIso(),updatedAt:nowIso()})}));
+}
+// Claude-ready text: one self-contained brief per item
+function fbClaudeText(ids){
+  const items=ids.map(id=>[id,S.feedback[id]]).filter(([,x])=>x);
+  const one=([id,x],i)=>{const t=FB_TYPES[x.type]||FB_TYPES.feedback,v=Object.keys(x.votes||{}).length;
+    return [`## ${items.length>1?(i+1)+'. ':''}${t[1]}: ${x.title}`,
+      `- Reported by: ${x.name||'a member'} on ${(x.at||'').slice(0,10)} · ${v} member${v===1?'':'s'} +1'd it · status: ${(FB_STATUS[x.status||'new']||[])[0]} · id: ${id}`,
+      x.page?`- Where: ${x.page}`:'',x.version?`- Portal version: ${x.version}`:'',x.device?`- Device: ${x.device}`:'',
+      x.details?`\n${x.details}`:'',x.steps?`\n**Steps to reproduce**\n${x.steps}`:'',x.expected?`\n**Expected**\n${x.expected}`:'',
+      (x.photos||[]).length?`\n**Screenshots**\n${x.photos.map(p=>'- '+blobUrl(p)).join('\n')}`:'',x.adminNote?`\n**Admin note**\n${x.adminNote}`:''].filter(Boolean).join('\n')};
+  return `# VRC Rowers Portal – ${items.length===1?'change request':items.length+' change requests'}
+Repository: github.com/dlsl341/vrc-portal (read CLAUDE.md first). Please ${items.some(([,x])=>x.type==='bug')?'investigate and fix the bugs, and ':''}propose the changes below in plain language, then make them on a branch and open a pull request with a preview link, following the usual workflow. Ask me if anything is unclear before building.
+
+${items.map(one).join('\n\n---\n\n')}
+`;
+}
+async function fbCopy(ids,download){
+  const txt=fbClaudeText(ids);
+  if(download){const u=URL.createObjectURL(new Blob([txt],{type:'text/markdown'}));const a=document.createElement('a');a.href=u;a.download=`vrc-feedback-${today()}.md`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},500)}
+  else{try{await navigator.clipboard.writeText(txt);toast(`Copied ${ids.length===1?'':ids.length+' items '}for Claude – paste it into a chat`)}catch(e){openModal(`<h3>Copy for Claude</h3><textarea style="width:100%;height:50vh" readonly>${esc(txt)}</textarea><div class="actions"><button class="btn" id="mCancel">Close</button></div>`,()=>{$('#mCancel').onclick=closeModal})}}
+  const at=nowIso();for(const id of ids){try{await S.db.doc('feedback/'+id).update({exportedAt:at})}catch(e){}}
+}
+function bindFeedback(){
+  const m=$('#main');
+  m.querySelectorAll('[data-fbnew]').forEach(el=>el.onclick=()=>fbForm(el.dataset.fbnew));
+  m.querySelectorAll('[data-fbf]').forEach(el=>el.onclick=()=>{const [k,v]=el.dataset.fbf.split('|');S.fbFilter[k]=v;render()});
+  {const q=$('#fbQ');if(q)q.oninput=()=>{S.fbFilter.q=q.value;clearTimeout(S._fbq);S._fbq=setTimeout(()=>{render();const n=$('#fbQ');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}},250)}}
+  m.querySelectorAll('[data-fbvote]').forEach(el=>el.onclick=()=>{const id=el.dataset.fbvote,x=S.feedback[id];const on=!!(x.votes||{})[S.me];
+    const votes={...(x.votes||{})};if(on)delete votes[S.me];else votes[S.me]=nowIso();guarded(()=>S.db.doc('feedback/'+id).update({votes}),'')});
+  m.querySelectorAll('[data-fbstatus]').forEach(el=>el.onclick=()=>fbStatusForm(el.dataset.fbstatus));
+  m.querySelectorAll('[data-fbedit]').forEach(el=>el.onclick=()=>fbForm(null,el.dataset.fbedit));
+  m.querySelectorAll('[data-fbdel]').forEach(el=>el.onclick=()=>{if(confirm('Delete this report?'))guarded(()=>S.db.doc('feedback/'+el.dataset.fbdel).delete(),'Deleted')});
+  m.querySelectorAll('[data-fbclaude]').forEach(el=>el.onclick=()=>fbCopy([el.dataset.fbclaude]));
+  m.querySelectorAll('[data-fbsel]').forEach(el=>el.onchange=()=>{el.checked?S.fbSel.add(el.dataset.fbsel):S.fbSel.delete(el.dataset.fbsel);render()});
+  {const a=$('#fbAll');if(a)a.onchange=()=>{fbList().forEach(([id])=>a.checked?S.fbSel.add(id):S.fbSel.delete(id));render()}}
+  {const e=$('#fbExport');if(e)e.onclick=()=>fbCopy([...S.fbSel])}
+  {const e=$('#fbExportFile');if(e)e.onclick=()=>fbCopy([...S.fbSel],true)}
+}
 function viewCoxswains(){
   const me=myMemberId(),t=today(),cx=coxList(),iAmCox=!!me&&isCoxMember(me);
   if(!S.coxWho||!isCoxMember(S.coxWho))S.coxWho=iAmCox?me:(canAdmin()&&cx[0]?cx[0][0]:null);
@@ -2830,6 +2946,7 @@ function viewAdmin(){
     ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
     <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
   ${issueEmailToggle()}${claimEmailToggle()}
+  ${fbAdminHtml()}
   ${feesAdminHtml()}
   ${mailLogHtml()}
   ${versionHtml()}

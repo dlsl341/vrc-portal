@@ -271,6 +271,27 @@ test('regattas are admins-only; everyone can see which boats are away', async ()
   await assertFails(setDoc(doc(as('alice'), 'boatHolds/r1'), { boatIds: [] }));
 });
 
+// ---- developer feedback
+test('feedback: members post their own, +1 only for themselves, edit only while new; admins set status', async () => {
+  const f = { type: 'bug', title: 'Erg 14 not bookable', details: 'x', status: 'new', by: 'alice', votes: { alice: 'now' }, at: 'now' };
+  await assertSucceeds(setDoc(doc(as('alice'), 'feedback/f1'), f));
+  await assertFails(setDoc(doc(as('alice'), 'feedback/f2'), { ...f, by: 'bob' }));
+  await assertFails(setDoc(doc(as('alice'), 'feedback/f3'), { ...f, status: 'done' }));
+  await assertFails(setDoc(doc(as('alice'), 'feedback/f4'), { ...f, adminNote: 'hi' }));
+  await assertSucceeds(getDoc(doc(as('bob'), 'feedback/f1')));
+  await assertSucceeds(updateDoc(doc(as('bob'), 'feedback/f1'), { votes: { alice: 'now', bob: 'now' } }));
+  await assertFails(updateDoc(doc(as('bob'), 'feedback/f1'), { votes: {} }));                     // can't remove someone else's
+  await assertFails(updateDoc(doc(as('bob'), 'feedback/f1'), { title: 'hacked' }));
+  await assertSucceeds(updateDoc(doc(as('alice'), 'feedback/f1'), { title: 'Erg 14 can’t be booked' }));
+  await assertFails(updateDoc(doc(as('alice'), 'feedback/f1'), { status: 'done' }));
+  await assertSucceeds(updateDoc(doc(as('carol'), 'feedback/f1'), { status: 'planned', adminNote: 'On it' }));
+  await assertFails(updateDoc(doc(as('alice'), 'feedback/f1'), { title: 'again' }));              // no longer new
+  await assertFails(deleteDoc(doc(as('alice'), 'feedback/f1')));
+  await assertSucceeds(setDoc(doc(as('carol'), 'appSettings/features'), { feedback: false }));
+  await assertFails(setDoc(doc(as('alice'), 'appSettings/features'), { feedback: true }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'appSettings/features')));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));
