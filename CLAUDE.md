@@ -45,6 +45,15 @@ language, and keep the "propose → preview link → merge" workflow.
   Kilometres / Time (from `results`, by `program`), Sessions (every session taken part in, from `allActs()`:
   past bookings not cancelled/no-show, walk-ins, open erg (counted for the member's own programs), imported history) or Best 2k erg (2.000 km erg results); period + erg/water filters; podium for top 3.
 
+- **Club challenges** (Training ▾ Club challenges, `#challenges`, detail `#challenge-<id>`; tab bar Training): coaches +
+  admins build challenges (`challenges/{id}`: title, emoji, kind team|leaderboard|personal, metric km|min|pieces, goal,
+  start, end, types erg|water|all, includeCross, programs[] (names; empty = all), optIn + participants{memberId}, description,
+  milestones "Place | distance" per line). Progress is computed in the browser from `results` (incl. Concept2 imports) –
+  nothing separate to log (`chResults`/`chVal`/`chBoard`). Detail page: tiles (total vs goal, this week, rowers, you), a
+  journey track SVG with milestones for team goals (`chTrack`), leaderboard (this week / whole challenge, program
+  filter, mini bars for personal goals), program standings (tap → rowers), latest pieces, "+ Log a piece", Join/Leave
+  when optIn. Templates in `CH_TEMPLATES` (Erg to Hawaii 4,330 km – modelled on keeprowing.filetrack.com, monthly
+  km leaderboard, 100 km club, show-up challenge). Rules: coaches/admins write; members only their own participants key.
 - **Scheduled maintenance** (Maintenance tab, `maintJobs`): admins schedule a boat + task + time + crew.
   The form suggests free slots (07:00–21:00, avoiding every on-water session ±30 min, the boat's bookings
   and other jobs) and shows a day timeline + clash warnings ("Schedule anyway" to override). A scheduled
@@ -162,7 +171,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
 `openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` · `feeRules` · `fees` · `feeRuns` · `feeReports` ·
-`regattas` · `boatHolds` · `feedback` · `appSettings/features` ·
+`regattas` · `boatHolds` · `feedback` · `challenges` · `appSettings/features` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
@@ -191,7 +200,7 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 - UI smoke tests in previous sessions served `public/` and swapped the gstatic Firebase modules for
   in-memory fakes via Playwright request routing – a quick way to exercise flows without a project.
 - **Navigation**: Home first; desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
-  Training ▾ Results/Leaderboard · Fleet ▾ Boats/Issues/Maintenance/Regattas (admins) · Members · Feedback · Admin). ≤1020px: ☰ slide-in
+  Training ▾ Results/Leaderboard/Club challenges · Fleet ▾ Boats/Issues/Maintenance/Regattas (admins) · Members · Feedback · Admin). ≤1020px: ☰ slide-in
   menu (`#mnav`); ≤700px also a bottom tab bar (Home, Programs, Training, Fleet, Menu). Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
   `.nb-claims`; `[data-admin]` shows for admins. Add a new page to all three places.
 - Style: VRC red `#ea3c42` (`--red`), near-black `#231f20`, Libre Baskerville headings, Inter body.
