@@ -86,7 +86,8 @@ language, and keep the "propose → preview link → merge" workflow.
   report now" = `feeReports/request`. Rules: admins write feeRules and may only change fee status (waive / re-apply);
   members read their own fees. Session page shows the policy line; cancel/leave warn when it would be late.
   Scheduled functions need the deploy service account to have **Cloud Scheduler Admin**.
-- **Regattas** (`#regattas`, **admins only** – Fleet ▾ Regattas with `data-admin`; non-admins get a notice): a year
+- **Regattas** (`#regattas`, Fleet ▾ Regattas `[data-reg]`; planning = admins + Regatta committee + Dockmaster, everyone else
+  gets the member view – see slice 2 below; Coming up (all future regattas) sits left of the calendar): a year
   calendar (12 mini months, coloured days per regatta, click an empty day to add one there) + cards (Coming up / Earlier).
   `regattas/{id}` (admin-only: name, location, status planned|entered|done|cancelled, start, end, awayFrom/awayTo (default
   start−1 / end+1), link, notes, boatIds[], files[{name,url,size,type,at,by}]). Saving also writes the public
@@ -230,10 +231,12 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 - Branch → commit → push → open a PR. The PR gets a preview link; the user merges to go live.
 - Run `npm test` locally if Java + network are available; otherwise CI runs it. Add a rules test for
   any rules change.
+- **Regatta roles load late**: committee/dockmaster rights come from `members.roles`, so `render()` subscribes to
+  `regattas` once `canRegatta()` is true (`S._regSub`) – don't gate subscriptions on roles at start-up.
 - UI smoke tests in previous sessions served `public/` and swapped the gstatic Firebase modules for
   in-memory fakes via Playwright request routing – a quick way to exercise flows without a project.
 - **Navigation**: Home first; desktop header groups pages in dropdowns (Programs ▾ Weekly schedule/Open erg/Coxswains ·
-  Training ▾ Results/Leaderboard/Club challenges · Fleet ▾ Boats/Issues/Maintenance/Regattas (admins) · Members · Feedback · Admin). ≤1020px: ☰ slide-in
+  Training ▾ Results/Leaderboard/Club challenges · Fleet ▾ Boats/Issues/Maintenance/Regattas · Members · Feedback · Admin). ≤1020px: ☰ slide-in
   menu (`#mnav`); ≤700px also a bottom tab bar (Home, Programs, Training, Fleet, Menu). Any `[data-v]` link gets `.on`; badges use `.nb-issues` /
   `.nb-claims`; `[data-admin]` shows for admins. Add a new page to all three places.
 - Style: VRC red `#ea3c42` (`--red`), near-black `#231f20`, Libre Baskerville headings, Inter body.

@@ -529,7 +529,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('privateGear','gear',true);subDoc('appSettings/regatta','regCfgDoc');sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin||hasRole('regatta')||hasRole('dockmaster')){sub('regattas','regattas',true)}if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('privateGear','gear',true);subDoc('appSettings/regatta','regCfgDoc');sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -575,6 +575,7 @@ window.addEventListener('hashchange',route);
 
 /* ---------- render ---------- */
 function render(){
+  if(!S._regSub&&S.db&&!S.guest&&canRegatta()){S._regSub=1;sub('regattas','regattas',true)}   // roles come from members, so check on every render
   const curV=S.view==='manage'||S.view==='import'?'programs':S.view;
   document.querySelectorAll('[data-v]').forEach(a=>a.classList.toggle('on',a.dataset.v===curV));
   document.querySelectorAll('.topnav .grp').forEach(g=>g.classList.toggle('on',!!g.querySelector('a.on')));
@@ -2631,6 +2632,7 @@ function viewRegatta(id){
     <div class="chips reg-tabs">${REG_TABS.map(([k,l])=>`<button class="chip ${tab===k?'on':''}" data-regtab="${k}">${l}${k==='entries'?` <span class="tag">${(r.entries||[]).length}</span>`:''}${k==='entries'&&iss.filter(x=>x.lvl==='warn').length?' ⚠':''}</button>`).join('')}</div>
     ${tab==='trailer'?regTrailerHtml(id,r):tab==='dock'?regDockHtml(id,r):tab==='people'?regPeopleHtml(id,r):tab==='shifts'?regShiftsHtml(id,r):tab==='info'?regInfoHtml(id,r):tab==='entries'?regEntriesHtml(id,r,iss):tab==='reports'?regReportsHtml(id,r):tab==='costs'?regCostsHtml(id,r):regOverviewHtml(id,r)}`;
 }
+const fmtSize=n=>!n?'':n<1024*1024?Math.max(1,Math.round(n/1024))+' KB':(n/1048576).toFixed(1)+' MB';
 function regOverviewHtml(id,r){
   const boats=(r.boatIds||[]).filter(b=>S.boats[b]),cl=awayClashes(boats,r.awayFrom||r.start,r.awayTo||r.end||r.start);
   return `<div class="sec reg" style="--rc:${regColor(id)}">
