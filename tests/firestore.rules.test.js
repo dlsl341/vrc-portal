@@ -271,6 +271,14 @@ test('regattas are admins-only; everyone can see which boats are away', async ()
   await assertFails(setDoc(doc(as('alice'), 'boatHolds/r1'), { boatIds: [] }));
 });
 
+test('the regatta committee role can plan regattas', async () => {
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'members/m_alice'), { displayName: 'Alice', linkedUser: 'alice', roles: ['rower', 'regatta'] }));
+  await assertSucceeds(setDoc(doc(as('alice'), 'regattas/r3'), { name: 'Nicomekl', entries: [] }));
+  await assertSucceeds(setDoc(doc(as('alice'), 'boatHolds/r3'), { boatIds: ['b1'], from: '2026-06-05', to: '2026-06-08' }));
+  await assertFails(setDoc(doc(as('bob'), 'regattas/r4'), { name: 'x' }));
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'members/m_alice'), { displayName: 'Alice', linkedUser: 'alice' }));
+});
+
 // ---- developer feedback
 test('feedback: members post their own, +1 only for themselves, edit only while new; admins set status', async () => {
   const f = { type: 'bug', title: 'Erg 14 not bookable', details: 'x', status: 'new', by: 'alice', votes: { alice: 'now' }, at: 'now' };

@@ -94,6 +94,17 @@ language, and keep the "propose → preview link → merge" workflow.
   places as `boatInMaint`) and fleet cards show "🏁 Away / Going away" (next 21 days). Existing bookings that clash are
   listed on the form and the card (⚠ count) – not cancelled. Uploads go to Storage `docs/<id>/<name>` (pdf, office,
   csv, images ≤ 20 MB; adapter `upload(blob,{folder:'docs',name})`). "Add to calendar" downloads an all-day .ics.
+- **Regatta planning (Phase 3, slice 1)**: `Regatta committee` role (`roles` includes `regatta`; rules `isRegattaCommittee()`)
+  sees/edits regattas like admins (`canRegatta()`, nav `[data-reg]`). Cards open `#regatta-<id>` with tabs Overview /
+  Entries / Reports / Costs. `regattas/{id}.entries[]` {id, no, event, day, time, rig, crew[] bow→stroke, cox, boatId,
+  oars (set name), fee, notes}; "📋 Paste entries" reads tab/| rows (Event# | Event | Day | Time | Class | Boat | Crew |
+  Cox | Oars | Fee) matching names. Saving an entry adds its boat to `boatIds` + `boatHolds`. `entryIssues`: empty seats,
+  no boat, rig not possible, boat not available, boat/rower clashes (on-water window = race −before/+after min,
+  `regattas.settings`), re-rig between consecutive uses. Reports: `bladePeaks` (peak simultaneous sculls pairs and sweep
+  bow/stroke side – seat parity, seat 1 = bow – and per oar set, + spares), `loadList` (riggers = seats × per-seat
+  setting, extra riggers for other rig styles), printable allocation + loading checklist (`regPrint`, print CSS
+  `.print-area`), CSV. Costs: entry fees (from entries; actual total scales), cost lines est/actual, transport split
+  equally or by races; per-person CSV. Server `emailOnBoatHold` emails crews already booked in a boat that goes away.
 - **Developer feedback** (`#feedback`, top nav "Feedback" + ☰ Club ▸ "Developer feedback", `[data-fb]`): members report
   🐞 bugs / 💡 feature requests / 💬 feedback (`feedback/{id}`: type, page (prefilled from `S.prevView`), title, details,
   steps, expected, photos (≤3 via `uploadPhotos`), device + portal version auto-added, by, name, votes{uid}, status

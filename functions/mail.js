@@ -164,3 +164,13 @@ ${button(link, 'Accept invitation')}
   const text = `Hi ${hi},\n\n${inviter || 'A club admin'} has invited you to the Vancouver Rowing Club's rowers portal – book sessions, boats and ergs, log results and see what's on.\n\nAccept the invitation: ${link}\n\nSign in with Google or your email address; your account is linked to your member profile${memberName ? ` (${memberName})` : ''} automatically. The link works once and expires on ${expires}.\n\nSee you on the water!\nVancouver Rowing Club`;
   return { subject, html, text };
 }
+
+// A boat someone booked is going away to a regatta
+export function boatAwayEmail({ firstName, boat, regatta, date, session, from, to, link }) {
+  const subject = `Please pick another boat: ${boat} is away at ${regatta}`;
+  const html = frame('Your boat is going to a regatta', `<p>Hi ${esc(firstName || 'there')},</p>
+<p>You’re booked in <b>${esc(boat)}</b> for <b>${esc(session)}</b> on ${esc(dateLabel(date))}, but that boat will be away at <b>${esc(regatta)}</b> (${esc(dateLabel(from))} – ${esc(dateLabel(to))}).</p>
+<p>Please open your booking and choose another boat. Your spot in the session is kept.</p>
+${button(link || SITE + '/#programs', 'Change boat')}`);
+  return { subject, html, text: `Hi ${firstName || 'there'},\n\nYou're booked in ${boat} for ${session} on ${dateLabel(date)}, but it will be away at ${regatta} (${dateLabel(from)} – ${dateLabel(to)}). Please open your booking and choose another boat – your spot is kept.\n${link || SITE}` };
+}

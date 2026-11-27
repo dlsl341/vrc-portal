@@ -32,6 +32,9 @@ service cloud.firestore {
     function isCoach() {                  // a linked member with the Coach role
       return isMember() && 'coach' in get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []);
     }
+    function isRegattaCommittee() {       // a linked member with the Regatta committee role
+      return isMember() && 'regatta' in get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []);
+    }
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -143,11 +146,11 @@ service cloud.firestore {
 
     // ---- regattas (admins only); boatHolds = the public part that takes boats out of booking
     match /regattas/{id} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() || isRegattaCommittee();
     }
     match /boatHolds/{id} {
       allow read: if canUse();
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isRegattaCommittee();
     }
 
     // ---- developer feedback (bugs / ideas / feedback). Everyone using the portal reads and +1s; authors edit or delete

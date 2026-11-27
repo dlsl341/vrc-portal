@@ -14,7 +14,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, boatAwayEmail, smtpSettings, validEmail } from './mail.js';
 import { ruleOf, lateCancel, noShows, resolveLate, weekOf, weeklyReport, bcToday, addDays, dow, startMs, closeMs } from './fees.js';
 import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
 
@@ -549,4 +549,23 @@ export const inviteRedeem = onDocumentWritten({ document: 'claims/{uid}', region
   b.delete(claimRef);
   await b.commit();
   console.log('invite: linked', uid, '→', mid);
+});
+
+// ---------------------------------------------------------------------------------------------
+// Boats away on trips: when a regatta takes boats out of booking (boatHolds/{id}), email every crew that already
+// booked one of those boats in the away window, once per booking and boat, asking them to switch boats.
+export const emailOnBoatHold = onDocumentWritten({ document: 'boatHolds/{id}', region: REGION }, async (event) => {
+  const h = event.data.after && event.data.after.data(); if (!h || !(h.boatIds || []).length || !h.from || !h.to) return;
+  const today = new Date(Date.now() - 7 * 3600e3).toISOString().slice(0, 10);
+  const from = h.from > today ? h.from : today; if (from > h.to) return;
+  const bk = await db.collection('bookings').where('date', '>=', from).where('date', '<=', h.to).get();
+  for (const d of bk.docs) {
+    const b = d.data(); if (!b.boatId || !h.boatIds.includes(b.boatId)) continue;
+    const who = people(b); if (!who.length) continue;
+    const [boat, sess] = await Promise.all([db.doc('boats/' + b.boatId).get(), db.doc('sessions/' + b.sessionId).get()]);
+    const bcc = (await Promise.all(who.map(emailForMember))).filter(Boolean); if (!bcc.length) continue;
+    const s = sess.exists ? sess.data() : {};
+    await sendOnce(`boataway_${event.params.id}_${d.id}_${b.boatId}`, { bcc, label: 'crew' }, boatAwayEmail({ boat: boat.exists ? boat.data().name : 'your boat', regatta: h.name || 'a regatta',
+      date: b.date, session: s.title || 'your session', from: h.from, to: h.to, link: `${SITE}/#s-${b.sessionId}-${b.date.replace(/-/g, '')}` }));
+  }
 });
