@@ -105,6 +105,20 @@ language, and keep the "propose → preview link → merge" workflow.
   setting, extra riggers for other rig styles), printable allocation + loading checklist (`regPrint`, print CSS
   `.print-area`), CSV. Costs: entry fees (from entries; actual total scales), cost lines est/actual, transport split
   equally or by races; per-person CSV. Server `emailOnBoatHold` emails crews already booked in a boat that goes away.
+- **Regatta planning, slice 2 (people)**: committee tabs People / Shifts / Info pack. `regattas.pub` {published, programs
+  (recommend to), requiredShifts (default 1), sessions "name | date | start | end" lines, meet, address (→ Google Maps
+  link), directions, coxMeet{date,time,place}, videos (lines), album, notes}; `regattas.recommended{memberId: note|true}`;
+  `regattas.shifts[]` {id, kind (SHIFT_KINDS loadVRC|unloadVenue|loadVenue|unloadVRC|rigging|driver|helper|other), place
+  vrc|venue, date, start, end, need, notes, version, history[{at,by,from,to}]} – editing time/place bumps version.
+  Server `regattaMirror` copies published regattas to `regattaPublic/{id}` (no fees/costs/files; unpublished → deleted)
+  and on shift time/place change re-sends invites (same UID, higher SEQUENCE; removed shift → CANCEL + signup deleted).
+  `shiftSignups/{rid}_{shiftId}_{memberId}` {by uid, kind self|group|sub, subFor} → `shiftSignupInvite` emails an .ics
+  (nodemailer `icalEvent`, `functions/ics.js`, tests/ics.test.mjs); a sub counts toward `subFor`'s required shifts.
+  `regattaInterest/{rid}_{memberId}` {level yes|maybe|no, events, spectator}; `driverApprovals/{memberId}` {status
+  pending|approved|declined, note} – driver shifts need approval (UI). Attendees = entry crews + "Going"; People tab
+  lists who has fewer shifts than required (nobody is blocked). `regattaReminders` (daily 08:00 UTC-7): entry deadline
+  in 7 / 2 days → admins + members with the regatta role; shift tomorrow → everyone signed up. Members (nav Fleet ▾
+  Regattas, `[data-reg]` shown to all linked members) get `viewMemberRegattas` / `viewMemberRegatta`.
 - **Developer feedback** (`#feedback`, top nav "Feedback" + ☰ Club ▸ "Developer feedback", `[data-fb]`): members report
   🐞 bugs / 💡 feature requests / 💬 feedback (`feedback/{id}`: type, page (prefilled from `S.prevView`), title, details,
   steps, expected, photos (≤3 via `uploadPhotos`), device + portal version auto-added, by, name, votes{uid}, status
@@ -182,7 +196,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
 `openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` · `feeRules` · `fees` · `feeRuns` · `feeReports` ·
-`regattas` · `boatHolds` · `feedback` · `challenges` · `appSettings/features` ·
+`regattas` · `boatHolds` · `regattaPublic` · `regattaInterest` · `shiftSignups` · `driverApprovals` · `feedback` · `challenges` · `appSettings/features` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).

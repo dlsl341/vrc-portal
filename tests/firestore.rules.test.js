@@ -313,6 +313,21 @@ test('challenges: coaches/admins build them, members only join or leave themselv
   await assertFails(getDoc(doc(as('stranger'), 'challenges/c1')));
 });
 
+// ---- regattas for members
+test('members mark interest, sign up for shifts (self/group/sub) and ask to drive; only the committee approves drivers', async () => {
+  await assertFails(setDoc(doc(as('alice'), 'regattaPublic/r1'), { name: 'x' }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'regattaPublic/r1')));
+  await assertSucceeds(setDoc(doc(as('alice'), 'regattaInterest/r1_m_alice'), { regattaId: 'r1', memberId: 'm_alice', level: 'yes' }));
+  await assertFails(setDoc(doc(as('alice'), 'regattaInterest/r1_m_bob'), { regattaId: 'r1', memberId: 'm_bob', level: 'yes' }));
+  await assertSucceeds(setDoc(doc(as('alice'), 'shiftSignups/r1_s1_m_alice'), { regattaId: 'r1', shiftId: 's1', memberId: 'm_alice', by: 'alice', kind: 'self' }));
+  await assertFails(setDoc(doc(as('alice'), 'shiftSignups/r1_s1_m_bob'), { regattaId: 'r1', shiftId: 's1', memberId: 'm_bob', by: 'alice', kind: 'self' }));
+  await assertSucceeds(setDoc(doc(as('alice'), 'shiftSignups/r1_s2_m_bob'), { regattaId: 'r1', shiftId: 's2', memberId: 'm_bob', by: 'alice', kind: 'group' }));
+  await assertSucceeds(deleteDoc(doc(as('bob'), 'shiftSignups/r1_s2_m_bob')));                       // bob can take himself off
+  await assertSucceeds(setDoc(doc(as('alice'), 'driverApprovals/m_alice'), { status: 'pending' }));
+  await assertFails(setDoc(doc(as('alice'), 'driverApprovals/m_alice'), { status: 'approved' }));
+  await assertSucceeds(setDoc(doc(as('carol'), 'driverApprovals/m_alice'), { status: 'approved' }));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));

@@ -14,7 +14,8 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, boatAwayEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, boatAwayEmail, shiftEmail, deadlineEmail, shiftReminderEmail, smtpSettings, validEmail } from './mail.js';
+import { shiftIcs, shiftChanges, SHIFT_KINDS } from './ics.js';
 import { ruleOf, lateCancel, noShows, resolveLate, weekOf, weeklyReport, bcToday, addDays, dow, startMs, closeMs } from './fees.js';
 import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
 
@@ -195,7 +196,7 @@ async function sendOnce(key, to, msg) {
   try {
     const t = nodemailer.createTransport({ host: cfg.host, port: cfg.port, secure: cfg.secure, auth: cfg.auth });
     const rcpt = typeof to === 'string' ? { to } : { to: cfg.from, bcc: to.bcc };
-    const info = await t.sendMail({ from: cfg.from, ...rcpt, subject: msg.subject, text: msg.text, html: msg.html, ...(msg.attachments ? { attachments: msg.attachments } : {}) });
+    const info = await t.sendMail({ from: cfg.from, ...rcpt, subject: msg.subject, text: msg.text, html: msg.html, ...(msg.attachments ? { attachments: msg.attachments } : {}), ...(msg.icalEvent ? { icalEvent: msg.icalEvent } : {}) });
     await ref.update({ status: 'sent', messageId: info.messageId || null });
     return true;
   } catch (e) {
@@ -567,5 +568,80 @@ export const emailOnBoatHold = onDocumentWritten({ document: 'boatHolds/{id}', r
     const s = sess.exists ? sess.data() : {};
     await sendOnce(`boataway_${event.params.id}_${d.id}_${b.boatId}`, { bcc, label: 'crew' }, boatAwayEmail({ boat: boat.exists ? boat.data().name : 'your boat', regatta: h.name || 'a regatta',
       date: b.date, session: s.title || 'your session', from: h.from, to: h.to, link: `${SITE}/#s-${b.sessionId}-${b.date.replace(/-/g, '')}` }));
+  }
+});
+
+// ---------------------------------------------------------------------------------------------
+// Regattas for members. regattas/{id} is admin/committee-only; when it's published we mirror the member-facing part
+// to regattaPublic/{id} (no fees, costs or files). Shift sign-ups (shiftSignups/{rid}_{shiftId}_{memberId}) get a
+// calendar invite by email; changing a shift's time re-sends it with a higher SEQUENCE so calendars update the event,
+// and a removed shift sends a cancellation.
+const PUBLIC_KEYS = ['name', 'start', 'end', 'location', 'link', 'status', 'entryDeadline', 'shifts', 'recommended', 'pub'];
+function publicOf(r) {
+  const o = {}; PUBLIC_KEYS.forEach(k => { if (r[k] !== undefined) o[k] = r[k]; });
+  o.entries = (r.entries || []).map(({ fee, ...e }) => e);
+  o.updatedAt = new Date().toISOString();
+  return o;
+}
+async function shiftMail(rid, r, shift, memberId, method, note) {
+  const to = await emailForMember(memberId); if (!to) return;
+  const m = await db.doc('members/' + memberId).get(); const first = m.exists ? String(m.data().displayName || '').split(' ')[0] : '';
+  const kind = SHIFT_KINDS[shift.kind] || shift.label || 'Shift';
+  const where = shift.place === 'venue' ? (r.location || 'the regatta venue') : 'VRC';
+  const ics = shiftIcs({ uid: `shift-${rid}-${shift.id}-${memberId}@vrc-portal`, sequence: shift.version || 0, method, date: shift.date, start: shift.start, end: shift.end,
+    summary: `${kind} – ${r.name}`, location: where, description: (shift.notes || '') + `\n${SITE}/#regatta-${rid}`, organizer: (smtpSettings() || {}).user || undefined, attendee: to });
+  const v = shift.version || 0;
+  await sendOnce(`shift_${rid}_${shift.id}_${memberId}_${method}_v${v}`, to, {
+    ...shiftEmail({ firstName: first, kind, regatta: r.name, date: shift.date, start: shift.start, end: shift.end, where, notes: shift.notes, method, note, link: `${SITE}/#regatta-${rid}` }),
+    icalEvent: { method: method.toLowerCase(), filename: 'shift.ics', content: ics } });
+}
+export const regattaMirror = onDocumentWritten({ document: 'regattas/{id}', region: REGION }, async (event) => {
+  const rid = event.params.id, before = event.data.before && event.data.before.data(), r = event.data.after && event.data.after.data();
+  const pubRef = db.doc('regattaPublic/' + rid);
+  if (!r || !(r.pub && r.pub.published)) { await pubRef.delete().catch(() => {}); return; }
+  await pubRef.set(publicOf(r));
+  if (!before) return;
+  const ch = shiftChanges(before.shifts || [], r.shifts || []);
+  if (!ch.changed.length && !ch.removed.length) return;
+  const sign = await db.collection('shiftSignups').where('regattaId', '==', rid).get();
+  for (const d of sign.docs) {
+    const x = d.data(), c = ch.changed.find(s => s.id === x.shiftId), gone = ch.removed.find(s => s.id === x.shiftId);
+    if (c) await shiftMail(rid, r, c, x.memberId, 'REQUEST', 'The time or place of this shift has changed – your calendar has been updated.');
+    if (gone) { await shiftMail(rid, r, { ...gone, version: (gone.version || 0) + 1 }, x.memberId, 'CANCEL', 'This shift has been cancelled.'); await d.ref.delete(); }
+  }
+});
+export const shiftSignupInvite = onDocumentWritten({ document: 'shiftSignups/{id}', region: REGION }, async (event) => {
+  const before = event.data.before && event.data.before.data(), after = event.data.after && event.data.after.data();
+  const x = after || before; if (!x || !x.regattaId) return;
+  const r = (await db.doc('regattaPublic/' + x.regattaId).get()).data(); if (!r) return;
+  const shift = (r.shifts || []).find(s => s.id === x.shiftId); if (!shift) return;
+  if (after && !before) await shiftMail(x.regattaId, r, shift, x.memberId, 'REQUEST', x.kind === 'group' ? 'A crewmate signed you up for this shift.' : x.kind === 'sub' ? 'You’re covering this shift as a substitute.' : '');
+  if (before && !after) await shiftMail(x.regattaId, r, { ...shift, version: (shift.version || 0) + 1 }, x.memberId, 'CANCEL', 'You’re no longer on this shift.');
+});
+// Daily 08:00 (UTC-7): entry-deadline reminders to admins + regatta committee (7 and 2 days before), and a reminder
+// the day before each shift to everyone signed up.
+export const regattaReminders = onSchedule({ schedule: '0 8 * * *', region: REGION, timeZone: 'Etc/GMT+7' }, async () => {
+  const today = new Date(Date.now() - 7 * 3600e3).toISOString().slice(0, 10);
+  const add = (d, n) => new Date(Date.parse(d + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
+  const regs = await db.collection('regattas').get();
+  let committee = null;
+  for (const d of regs.docs) {
+    const r = d.data();
+    for (const n of [7, 2]) if (r.entryDeadline && r.entryDeadline === add(today, n)) {
+      if (!committee) {
+        const mem = await db.collection('members').where('roles', 'array-contains', 'regatta').get();
+        committee = [...new Set([...(await adminEmails('regattaEmails')), ...(await Promise.all(mem.docs.map(x => emailForMember(x.id)))).filter(Boolean)])];
+      }
+      if (committee.length) await sendOnce(`deadline_${d.id}_${n}`, { bcc: committee, label: 'regatta committee' }, deadlineEmail({ regatta: r.name, deadline: r.entryDeadline, days: n, entries: (r.entries || []).length, link: `${SITE}/#regatta-${d.id}` }));
+    }
+    const tomorrow = add(today, 1);
+    for (const sh of (r.shifts || []).filter(x => x.date === tomorrow)) {
+      const sign = await db.collection('shiftSignups').where('regattaId', '==', d.id).where('shiftId', '==', sh.id).get();
+      for (const x of sign.docs) {
+        const to = await emailForMember(x.data().memberId); if (!to) continue;
+        await sendOnce(`shiftrem_${d.id}_${sh.id}_${x.data().memberId}_${sh.date}`, to, shiftReminderEmail({ kind: SHIFT_KINDS[sh.kind] || 'Shift', regatta: r.name, date: sh.date, start: sh.start, end: sh.end,
+          where: sh.place === 'venue' ? (r.location || 'the venue') : 'VRC', notes: sh.notes, link: `${SITE}/#regatta-${d.id}` }));
+      }
+    }
   }
 });

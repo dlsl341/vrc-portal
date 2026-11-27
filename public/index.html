@@ -326,7 +326,9 @@ footer .ver{color:var(--ink3);font-size:11.5px}
 .ycd.has{background:var(--rc);color:#fff;font-weight:700}.ycd.today{outline:2px solid #231f20;outline-offset:-2px}
 .sec.reg{border-left:5px solid var(--rc)}a.sec.reg{display:block;text-decoration:none;color:inherit}a.sec.reg:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}.reg-tabs{margin:0 0 12px}
 .enttbl{border-collapse:collapse;width:100%;font-size:14px}.enttbl th{text-align:left;font-size:12px;color:var(--muted,#777);padding:4px 6px}.enttbl td{padding:6px;border-top:1px solid var(--line,#eee);vertical-align:top}.enttbl tr[data-entry]{cursor:pointer}.enttbl tr[data-entry]:hover{background:#faf8f5}.enttbl tr.warnrow{background:#fff4f4}.enttbl .str{font-weight:600}
-.ent-iss{font-size:13px;padding:2px 0;color:#555}.ent-iss.warn{color:#a1191e}.feetbl.cost input{width:120px}
+.ent-iss{font-size:13px;padding:2px 0;color:#555}.warnc{color:#a1191e}.sh-ppl{margin:8px 0}.sh-ppl .bchip{display:inline-block;margin:2px 4px 2px 0}
+.sh-m{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line,#eee)}.sh-act{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;flex:none;max-width:50%}
+@media(max-width:700px){.sh-m{flex-direction:column}.sh-act{max-width:none;justify-content:flex-start}}.ent-iss.warn{color:#a1191e}.feetbl.cost input{width:120px}
 .print-area{display:none}
 @media print{body.printing{background:#fff}body.printing>*:not(.print-area){display:none!important}body.printing .print-area{display:block;font:12px/1.4 Inter,Arial,sans-serif;color:#000}
 .print-area h1{font:700 20px 'Libre Baskerville',serif;margin:0}.print-area h2{font-size:15px;margin:16px 0 6px}.print-area table{border-collapse:collapse;width:100%}.print-area th,.print-area td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}.print-area tr{break-inside:avoid}}.reg-h{display:flex;justify-content:space-between;gap:10px;align-items:center;cursor:pointer}.reg-sh{margin:18px 0 8px;font-size:16px}
@@ -524,7 +526,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin||hasRole('regatta')){sub('regattas','regattas',true)}if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin||hasRole('regatta')){sub('regattas','regattas',true)}if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -580,7 +582,7 @@ function render(){
   else role.innerHTML=S.isAdmin?'<b>Admin</b> · full access':(canMember()?'<b>Member</b>':'<b>Welcome</b> · link your profile');
   const openIss=Object.values(S.issues).filter(i=>i.status!=='resolved').length;
   document.querySelectorAll('.nb-issues').forEach(x=>{x.hidden=!openIss;x.textContent=openIss});
-  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('[data-fb]').forEach(x=>x.hidden=!fbVisible());document.querySelectorAll('[data-reg]').forEach(x=>x.hidden=!canRegatta());document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
+  {const pc=S.isAdmin?pendingClaims().length:0;document.querySelectorAll('[data-admin]').forEach(x=>x.hidden=!S.isAdmin);document.querySelectorAll('[data-fb]').forEach(x=>x.hidden=!fbVisible());document.querySelectorAll('[data-reg]').forEach(x=>x.hidden=S.guest||!(canRegatta()||myMemberId()));document.querySelectorAll('.nb-claims').forEach(x=>{x.hidden=!pc;x.textContent=pc})}
   {const mr=$('#mnRole');if(mr)mr.textContent=$('#role').textContent}
   const m=$('#main');
   if(S.error==='nodb'){m.innerHTML=`<div class="banner"><h3>Club data isn't available</h3>Please sign in again to see the fleet and members.</div>`;return}
@@ -589,8 +591,8 @@ function render(){
   if(loading){m.innerHTML=`<div class="banner">${S.slow?'The fleet data can’t be reached yet. It will appear here once the connection recovers.':'Loading the fleet…'}</div>`;return}
   const stale=S.slow?`<div class="callout">Connection is slow – what you see may be out of date.</div>`:'';
   syncMyAdmin();
-  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='challenges'?viewChallenges():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canRegatta()?viewRegattas():`<div class="banner"><h3>Regattas are for club admins and the regatta committee</h3>Ask an admin if you need something changed for a regatta.</div>`):S.view==='home'?viewHome():viewFleet());
-  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas'&&canRegatta())bindRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='challenges')bindChallenges();else if(S.view==='home')bindHome();else bindMain();
+  m.innerHTML=adminNotice()+stale+(S.view==='issues'?viewIssues():S.view==='maintenance'?viewMaint():S.view==='members'?viewMembers():S.view==='me'?viewMe():S.view==='programs'?viewPrograms():S.view==='manage'?viewManage():S.view==='import'?viewImport():S.view==='admin'?viewAdmin():S.view==='results'?viewResults():S.view==='leaderboard'?viewLeaderboard():S.view==='openerg'?viewOpenErg():S.view==='coxswains'?viewCoxswains():S.view==='challenges'?viewChallenges():S.view==='feedback'?(fbVisible()?viewFeedback():`<div class="banner"><h3>Feedback is switched off</h3>An admin has hidden the feedback page for now.</div>`):S.view==='regattas'?(canRegatta()?viewRegattas():viewMemberRegattas()):S.view==='home'?viewHome():viewFleet());
+  if(S.view==='members'||S.view==='me'||S.view==='admin')bindMembers();else if(S.view==='programs')bindPrograms();else if(S.view==='manage')bindManage();else if(S.view==='import')bindImport();else if(S.view==='results')bindResults();else if(S.view==='leaderboard')bindLeaderboard();else if(S.view==='openerg')bindOpenErg();else if(S.view==='coxswains')bindCoxswains();else if(S.view==='regattas')canRegatta()?bindRegattas():bindMemberRegattas();else if(S.view==='feedback'&&fbVisible())bindFeedback();else if(S.view==='challenges')bindChallenges();else if(S.view==='home')bindHome();else bindMain();
   if(S.open)renderDrawer();else if(S.openM)renderMemberDrawer();
 }
 
@@ -2548,7 +2550,7 @@ function viewRegattas(){
 
 /* ----- regatta detail: tabs ----- */
 S.regTab='overview';
-const REG_TABS=[['overview','Overview'],['entries','Entries'],['reports','Reports'],['costs','Costs']];
+const REG_TABS=[['overview','Overview'],['entries','Entries'],['people','People'],['shifts','Shifts'],['info','Info pack'],['reports','Reports'],['costs','Costs']];
 const regDaysOf=r=>{const out=[];let d=r.start;for(let i=0;i<14&&d<=(r.end||r.start);i++,d=addDays(d,1))out.push(d);return out};
 const hm2m=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+(m||0)};
 const m2hm=n=>`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
@@ -2604,9 +2606,9 @@ function viewRegatta(id){
   const r=S.regattas[id],st=REG_STATUS[r.status||'planned']||REG_STATUS.planned,tab=S.regTab||'overview';
   const iss=entryIssues(r);
   return `<div class="page-h"><div><a class="lnk" href="#regattas">‹ All regattas</a><h2>${esc(r.name)}</h2><p>${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · <span class="pill ${st[1]}">${st[0]}</span></p></div>
-    <div class="actions" style="margin:0"><button class="btn" data-regedit="${esc(id)}">Edit details</button><button class="btn" data-regcal="${esc(id)}">📅 Add to calendar</button></div></div>
+    <div class="actions" style="margin:0">${(r.pub||{}).published?'<span class="pill s-available" style="align-self:center" title="Members can see this regatta">Published</span>':'<span class="pill s-retired" style="align-self:center" title="Members can’t see this yet – publish it under Info pack">Not published</span>'}<button class="btn" data-regedit="${esc(id)}">Edit details</button><button class="btn" data-regcal="${esc(id)}">📅 Add to calendar</button></div></div>
     <div class="chips reg-tabs">${REG_TABS.map(([k,l])=>`<button class="chip ${tab===k?'on':''}" data-regtab="${k}">${l}${k==='entries'?` <span class="tag">${(r.entries||[]).length}</span>`:''}${k==='entries'&&iss.filter(x=>x.lvl==='warn').length?' ⚠':''}</button>`).join('')}</div>
-    ${tab==='entries'?regEntriesHtml(id,r,iss):tab==='reports'?regReportsHtml(id,r):tab==='costs'?regCostsHtml(id,r):regOverviewHtml(id,r)}`;
+    ${tab==='people'?regPeopleHtml(id,r):tab==='shifts'?regShiftsHtml(id,r):tab==='info'?regInfoHtml(id,r):tab==='entries'?regEntriesHtml(id,r,iss):tab==='reports'?regReportsHtml(id,r):tab==='costs'?regCostsHtml(id,r):regOverviewHtml(id,r)}`;
 }
 function regOverviewHtml(id,r){
   const boats=(r.boatIds||[]).filter(b=>S.boats[b]),cl=awayClashes(boats,r.awayFrom||r.start,r.awayTo||r.end||r.start);
@@ -2729,6 +2731,7 @@ function bindRegattas(){
   m.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
   if(!r)return;
   on('#entAdd',()=>entryForm(id,null));
+  bindRegPeople(id,r);
   on('#entPaste',()=>entryPaste(id));
   m.querySelectorAll('#regSettings').forEach(el=>el.onclick=()=>regSettingsForm(id));
   m.querySelectorAll('[data-entry]').forEach(el=>el.onclick=()=>entryForm(id,el.dataset.entry));
@@ -2740,6 +2743,163 @@ function bindRegattas(){
     on('#clAdd',()=>{const c=read();c.lines.push({label:'',est:'',act:''});guarded(()=>S.db.doc('regattas/'+id).update({costs:c}),'')});
     cf.querySelectorAll('[data-cldel]').forEach(el=>el.onclick=()=>{const c=read();c.lines.splice(+el.dataset.cldel,1);guarded(()=>S.db.doc('regattas/'+id).update({costs:c}),'')});
   }
+}
+/* ----- slice 2: people, shifts, info pack (committee) + member view ----- */
+S.regPub={};S.regInt={};S.shSign={};S.drivers={};
+const SHIFT_KINDS={loadVRC:'Load the trailer at VRC',unloadVenue:'Unload at the venue',loadVenue:'Load at the venue',unloadVRC:'Unload at VRC',rigging:'Rigging help',driver:'Trailer driver',helper:'Spectator helper',other:'Other'};
+const INT_LV={yes:['Going','s-available'],maybe:['Maybe','s-repair'],no:['Not this time','s-retired']};
+const regInts=rid=>Object.values(S.regInt||{}).filter(x=>x.regattaId===rid);
+const shiftSigns=(rid,shid)=>Object.entries(S.shSign||{}).filter(([,x])=>x.regattaId===rid&&(!shid||x.shiftId===shid));
+const shiftCredit=(rid,mid)=>shiftSigns(rid).filter(([,x])=>x.kind==='sub'?x.subFor===mid:x.memberId===mid).length;
+const reqShifts=r=>+((r.pub||{}).requiredShifts??1);
+function regAttendees(rid,r){const s=new Set();(r.entries||[]).forEach(e=>entryPeople(e).forEach(m=>s.add(m)));regInts(rid).filter(x=>x.level==='yes').forEach(x=>s.add(x.memberId));return [...s]}
+const driverOk=mid=>((S.drivers||{})[mid]||{}).status==='approved';
+const shiftWhen=sh=>`${fmtDate(sh.date).replace(/, \d{4}$/,'')} ${fmtTime(sh.start)}${sh.end?'–'+fmtTime(sh.end):''}`;
+const shiftWhere=(sh,r)=>sh.place==='venue'?(r.location||'Venue'):'VRC';
+const isRecommended=(r,mid)=>!!((r.recommended||{})[mid])||((r.pub||{}).programs||[]).some(p=>((S.members[mid]||{}).programs||[]).includes(p));
+function regPeopleHtml(id,r){
+  const ints=regInts(id),att=regAttendees(id,r),need=reqShifts(r),pend=Object.entries(S.drivers||{}).filter(([,d])=>d.status==='pending'),appr=Object.entries(S.drivers||{}).filter(([,d])=>d.status==='approved');
+  const by=lv=>ints.filter(x=>x.level===lv);const rec=Object.entries(r.recommended||{});
+  return `<div class="sec"><h4>Interest</h4><div class="fee-h">${Object.entries(INT_LV).map(([k,v])=>`<span class="pill ${v[1]}">${v[0]}: ${by(k).length}</span>`).join(' ')}<span class="tag">${ints.filter(x=>x.spectator).length} spectator helper${ints.filter(x=>x.spectator).length===1?'':'s'}</span></div>
+      ${ints.length?`<table class="feetbl"><tr><th>Member</th><th>Answer</th><th>Wants to race</th><th>Spectator helper</th><th>Shifts</th></tr>${ints.sort((a,b)=>mName(a.memberId).localeCompare(mName(b.memberId))).map(x=>`<tr><td>${esc(mName(x.memberId))}${isRecommended(r,x.memberId)?' ⭐':''}</td><td><span class="pill ${INT_LV[x.level][1]}">${INT_LV[x.level][0]}</span></td><td>${esc(x.events||'')}</td><td>${x.spectator?'✓':''}</td><td>${shiftCredit(id,x.memberId)}</td></tr>`).join('')}</table>`:`<div class="empty">Nobody has answered yet${(r.pub||{}).published?'':' – publish the regatta under Info pack so members can see it'}.</div>`}</div>
+    <div class="sec"><h4>⭐ Recommended to race</h4><p class="tag" style="margin:0 0 6px">Members of ${((r.pub||{}).programs||[]).length?esc(r.pub.programs.join(', ')):'the programs you pick under Info pack'} see “Recommended for you”. You can also recommend individual members with a note.</p>
+      ${rec.length?rec.map(([m,n])=>`<div class="ch-lp"><span>${esc(mName(m))} <span class="tag">${esc(n===true?'':n)}</span></span><button class="btn sm" data-recdel="${esc(m)}">×</button></div>`).join(''):''}
+      <div class="fee-h"><select id="recWho">${memberOptsAll('')}</select><input id="recNote" placeholder="Note, e.g. Masters W 2x" style="max-width:220px"><button class="btn sm" id="recAdd">⭐ Recommend</button></div></div>
+    <div class="sec"><h4>Shifts – everyone attending (${att.length})</h4><p class="tag" style="margin:0 0 6px">Everyone attending should do ${need} shift${need===1?'':'s'} – nobody is blocked, this is just so you can nudge.</p>
+      ${att.length?att.sort((a,b)=>shiftCredit(id,a)-shiftCredit(id,b)||mName(a).localeCompare(mName(b))).map(m=>{const n=shiftCredit(id,m);return `<div class="ch-lp"><span>${esc(mName(m))}</span><b class="${n<need?'warnc':''}">${n} / ${need}${n<need?' ⚠':' ✓'}</b></div>`}).join(''):'<div class="empty">No attendees yet (people in entries + those who said “Going”).</div>'}
+      ${canAdmin()&&att.some(m=>shiftCredit(id,m)<need)?`<div class="actions"><a class="btn sm" href="mailto:?bcc=${encodeURIComponent(att.filter(m=>shiftCredit(id,m)<need).map(m=>(privOf(m)||{}).email).filter(Boolean).join(','))}&subject=${encodeURIComponent('Shift sign-up for '+r.name)}">✉ Email those without a shift</a></div>`:''}</div>
+    <div class="sec"><h4>🚚 Trailer drivers</h4>${pend.length?pend.map(([m,d])=>`<div class="ch-lp"><span>${esc(mName(m))} <span class="tag">${esc(d.note||'')}</span></span><span><button class="btn sm pri" data-drv="${esc(m)}|approved">Approve</button> <button class="btn sm" data-drv="${esc(m)}|declined">Decline</button></span></div>`).join(''):'<p class="tag" style="margin:0">No requests waiting.</p>'}
+      ${appr.length?`<p class="tag" style="margin:8px 0 0">Approved: ${appr.map(([m])=>`${esc(mName(m))} <span class="lnk" data-drv="${esc(m)}|declined" title="Remove approval">×</span>`).join(', ')}</p>`:''}</div>`;
+}
+function regShiftsHtml(id,r){
+  const L=[...(r.shifts||[])].sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start));
+  return `<div class="actions" style="margin:0 0 10px"><button class="btn pri" id="shAdd">+ Add shift</button>${L.length?'':'<button class="btn" id="shUsual">Add the usual 4 shifts</button>'}</div>
+    ${L.length?L.map(sh=>{const sg=shiftSigns(id,sh.id),n=sg.length,need=+sh.need||0;
+      return `<div class="sec sh"><div class="ch-ct"><div><b>${esc(SHIFT_KINDS[sh.kind]||sh.label||'Shift')}</b> · ${shiftWhen(sh)} · ${esc(shiftWhere(sh,r))}${sh.notes?`<div class="tag">${esc(sh.notes)}</div>`:''}
+        ${(sh.history||[]).length?`<div class="tag">🕒 ${sh.history.slice(-2).map(hh=>`changed ${esc(hh.from)} → ${esc(hh.to)} (${fmtDate(hh.at.slice(0,10))})`).join('; ')} – calendars updated</div>`:''}</div>
+        <span class="pill ${need&&n>=need?'s-available':'s-repair'}">${n}${need?' / '+need:''}</span></div>
+        <div class="sh-ppl">${sg.map(([k,x])=>`<span class="bchip">${esc(mName(x.memberId))}${x.kind==='sub'?` <i class="tag">for ${esc(mName(x.subFor))}</i>`:x.kind==='group'?' <i class="tag">group</i>':''}${sh.kind==='driver'&&!driverOk(x.memberId)?' ⚠ not approved':''} <span class="lnk" data-shrm="${esc(k)}" title="Take off this shift">×</span></span>`).join('')||'<span class="muted">Nobody yet</span>'}</div>
+        <div class="fee-h"><select data-shwho="${esc(sh.id)}">${memberOptsAll('')}</select><button class="btn sm" data-shput="${esc(sh.id)}">+ Add person</button><span style="flex:1"></span><button class="btn sm" data-shedit="${esc(sh.id)}">Edit</button><button class="btn sm dan" data-shdel="${esc(sh.id)}">Delete</button></div></div>`}).join('')
+      :`<div class="banner">No shifts yet. “Add the usual 4 shifts” creates loading at VRC the evening before, unloading and loading at the venue, and unloading back at VRC – then adjust the times.</div>`}
+    <p class="tag">Everyone signed up gets a calendar invite by email; if you change a shift’s time or place, their calendars update automatically and they get a note. Members see shifts once the regatta is published.</p>`;
+}
+function shiftForm(id,shid){
+  const r=S.regattas[id],sh=shid?(r.shifts||[]).find(x=>x.id===shid):{kind:'loadVRC',place:'vrc',date:addDays(r.start,-1),start:'17:00',end:'19:00',need:4};
+  openModal(`<h3>${shid?'Edit shift':'Add shift'}</h3><form id="mform"><div class="fg">
+    ${fld('What',`<select name="kind">${Object.entries(SHIFT_KINDS).map(([k,v])=>`<option value="${k}" ${sh.kind===k?'selected':''}>${v}</option>`).join('')}</select>`)}
+    ${fld('Where',`<select name="place"><option value="vrc" ${sh.place!=='venue'?'selected':''}>VRC</option><option value="venue" ${sh.place==='venue'?'selected':''}>At the venue${r.location?' ('+esc(r.location)+')':''}</option></select>`)}
+    ${fld('Date',`<input type="date" name="date" required value="${esc(sh.date||'')}">`)}
+    ${fld('From',`<input type="time" name="start" required value="${esc(sh.start||'')}">`)}
+    ${fld('To',`<input type="time" name="end" value="${esc(sh.end||'')}">`)}
+    ${fld('People needed',`<input type="number" name="need" min="0" value="${esc(sh.need??'')}">`)}
+    ${fld('Notes',`<input name="notes" value="${esc(sh.notes||'')}" placeholder="e.g. bring gloves; meet at the boat bay">`,'full')}
+  </div>${formFoot(shid?'Save':'Add shift')}</form>`,()=>wireForm({msg:shid?'Shift saved – anyone signed up gets an updated invite if the time changed':'Shift added',
+    save:fd=>{const nx={...sh,id:sh.id||'sh'+Date.now().toString(36),kind:fd.kind,place:fd.place,date:fd.date,start:fd.start,end:fd.end,need:fd.need===''?null:+fd.need,notes:fd.notes.trim()};
+      if(shid&&(sh.date!==nx.date||sh.start!==nx.start||sh.end!==nx.end||(sh.place||'')!==nx.place)){nx.version=(sh.version||0)+1;nx.history=[...(sh.history||[]),{at:nowIso(),by:S.me,from:`${sh.date} ${sh.start}${sh.end?'–'+sh.end:''} ${sh.place==='venue'?'venue':'VRC'}`,to:`${nx.date} ${nx.start}${nx.end?'–'+nx.end:''} ${nx.place==='venue'?'venue':'VRC'}`}]}
+      return S.db.doc('regattas/'+id).update({shifts:[...(r.shifts||[]).filter(x=>x.id!==nx.id),nx],updatedAt:nowIso()})}}));
+}
+function regInfoHtml(id,r){const p=r.pub||{},cm=p.coxMeet||{};
+  return `<form id="infoForm" class="sec"><label class="tog" style="display:flex;gap:8px;align-items:center;font-size:15px"><input type="checkbox" name="published" ${p.published?'checked':''}> <b>Published to members</b> – they can see the regatta, say if they’re going, see their races, sign up for shifts and read this info pack</label>
+    <div class="fg" style="margin-top:12px">
+    ${fld('Recommend to programs',`<div class="chips" style="flex-wrap:wrap">${Object.values(S.programs).filter(x=>x.active!==false).map(x=>`<label class="chip"><input type="checkbox" name="programs" value="${esc(x.name)}" ${(p.programs||[]).includes(x.name)?'checked':''}> ${esc(x.name)}</label>`).join('')}</div>`,'full','Members of these programs see “Recommended for you”.')}
+    ${fld('Shifts each attendee should do',`<input type="number" name="requiredShifts" min="0" value="${esc(p.requiredShifts??1)}">`)}
+    ${fld('Regatta sessions',`<textarea name="sessions" rows="3" placeholder="Saturday heats | 2027-06-05 | 07:30 | 12:00&#10;Saturday finals | 2027-06-05 | 13:00 | 17:00">${esc(p.sessions||'')}</textarea>`,'full','One per line: name | date | start | end.')}
+    ${fld('Meeting point & time',`<input name="meet" value="${esc(p.meet||'')}" placeholder="e.g. VRC tent by the dock, 1 h before your race">`,'full')}
+    ${fld('Venue address',`<input name="address" value="${esc(p.address||'')}" placeholder="e.g. 16521 32 Ave, Surrey BC">`,'full','A map link is added automatically.')}
+    ${fld('Parking & directions',`<textarea name="directions" rows="2">${esc(p.directions||'')}</textarea>`,'full')}
+    ${fld('Cox meeting – date',`<input type="date" name="coxDate" value="${esc(cm.date||'')}">`)}
+    ${fld('Cox meeting – time',`<input type="time" name="coxTime" value="${esc(cm.time||'')}">`)}
+    ${fld('Cox meeting – where',`<input name="coxPlace" value="${esc(cm.place||'')}">`,'full')}
+    ${fld('Course / safety videos',`<textarea name="videos" rows="2" placeholder="One link per line">${esc(p.videos||'')}</textarea>`,'full')}
+    ${fld('Photo album link',`<input name="album" type="url" value="${esc(p.album||'')}">`,'full')}
+    ${fld('Anything else',`<textarea name="notes" rows="3">${esc(p.notes||'')}</textarea>`,'full')}
+    </div><div class="actions"><button class="btn pri" type="submit">Save info pack</button></div></form>`;
+}
+function bindRegPeople(id,r){
+  const m=$('#main'),on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};
+  const recs=()=>({...(r.recommended||{})});
+  on('#recAdd',()=>{const w=$('#recWho').value;if(!w)return toast('Pick a member');const x=recs();x[w]=$('#recNote').value.trim()||true;guarded(()=>S.db.doc('regattas/'+id).update({recommended:x}),'Recommended')});
+  m.querySelectorAll('[data-recdel]').forEach(el=>el.onclick=()=>{const x=recs();delete x[el.dataset.recdel];guarded(()=>S.db.doc('regattas/'+id).update({recommended:x}),'')});
+  m.querySelectorAll('[data-drv]').forEach(el=>el.onclick=()=>{const [mid,st]=el.dataset.drv.split('|');guarded(()=>S.db.doc('driverApprovals/'+mid).set({...((S.drivers||{})[mid]||{}),status:st,decidedBy:S.me,decidedAt:nowIso()}),st==='approved'?'Driver approved':'Updated')});
+  on('#shAdd',()=>shiftForm(id,null));
+  on('#shUsual',()=>{const st=r.start,en=r.end||r.start,mk=(kind,place,date,start,end,need)=>({id:'sh'+Math.random().toString(36).slice(2,9),kind,place,date,start,end,need});
+    guarded(()=>S.db.doc('regattas/'+id).update({shifts:[mk('loadVRC','vrc',addDays(st,-1),'17:00','19:00',6),mk('unloadVenue','venue',st,'06:30','07:30',6),mk('loadVenue','venue',en,'15:00','16:30',6),mk('unloadVRC','vrc',en,'18:00','19:30',6),mk('driver','vrc',addDays(st,-1),'19:00','21:00',1)],updatedAt:nowIso()}),'Added – adjust the times to suit')});
+  m.querySelectorAll('[data-shedit]').forEach(el=>el.onclick=()=>shiftForm(id,el.dataset.shedit));
+  m.querySelectorAll('[data-shdel]').forEach(el=>el.onclick=()=>{const n=shiftSigns(id,el.dataset.shdel).length;if(!confirm(`Delete this shift?${n?` The ${n} people signed up get a cancellation.`:''}`))return;
+    guarded(()=>S.db.doc('regattas/'+id).update({shifts:(r.shifts||[]).filter(x=>x.id!==el.dataset.shdel),updatedAt:nowIso()}),'Shift deleted')});
+  m.querySelectorAll('[data-shput]').forEach(el=>el.onclick=()=>{const shid=el.dataset.shput,w=m.querySelector(`[data-shwho="${shid}"]`).value;if(!w)return toast('Pick a member');
+    guarded(()=>S.db.doc(`shiftSignups/${id}_${shid}_${w}`).set({regattaId:id,shiftId:shid,memberId:w,by:S.me,kind:'self',addedByCommittee:true,at:nowIso()}),'Added – they get a calendar invite')});
+  m.querySelectorAll('[data-shrm]').forEach(el=>el.onclick=()=>{if(confirm('Take them off this shift? They get a cancellation.'))guarded(()=>S.db.doc('shiftSignups/'+el.dataset.shrm).delete(),'Removed')});
+  const f=$('#infoForm');if(f)f.onsubmit=e=>{e.preventDefault();const g=n=>f.querySelector(`[name=${n}]`).value.trim();
+    const pub={published:f.published.checked,programs:[...f.querySelectorAll('[name=programs]:checked')].map(x=>x.value),requiredShifts:+g('requiredShifts')||0,sessions:g('sessions'),meet:g('meet'),address:g('address'),directions:g('directions'),
+      coxMeet:{date:g('coxDate'),time:g('coxTime'),place:g('coxPlace')},videos:g('videos'),album:g('album'),notes:g('notes')};
+    guarded(()=>S.db.doc('regattas/'+id).update({pub,updatedAt:nowIso()}),pub.published?'Saved – members can see it':'Saved (not published)')};
+}
+/* ----- member view ----- */
+function regSessionsOf(p){return String((p&&p.sessions)||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]).map(([name,date,start,end])=>({name,date,start,end}))}
+function viewMemberRegattas(){
+  const me=myMemberId(),id=S.regOpen;
+  if(id&&S.regPub[id])return viewMemberRegatta(id);
+  const t=today(),L=Object.entries(S.regPub||{}).sort((a,b)=>a[1].start.localeCompare(b[1].start));
+  const up=L.filter(([,r])=>(r.end||r.start)>=t),past=L.filter(([,r])=>(r.end||r.start)<t).reverse().slice(0,8);
+  const card=([rid,r])=>{const mine=(r.entries||[]).filter(e=>entryPeople(e).includes(me)).length,int=(S.regInt||{})[rid+'_'+me],need=reqShifts(r),cr=shiftCredit(rid,me),att=mine||(int&&int.level==='yes');
+    return `<a class="sec reg" href="#regatta-${esc(rid)}" style="--rc:${regColor(rid)}"><div class="reg-h"><div><h4 style="margin:0">${esc(r.name)}</h4><div class="tag">${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''}${mine?` · you’re in ${mine} race${mine===1?'':'s'}`:''}</div></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${isRecommended(r,me)?'<span class="pill s-repair">⭐ Recommended for you</span>':''}${int?`<span class="pill ${INT_LV[int.level][1]}">${INT_LV[int.level][0]}</span>`:'<span class="pill s-retired">Going?</span>'}${att&&need?`<span class="pill ${cr>=need?'s-available':'s-dnr'}">Shifts ${cr}/${need}</span>`:''}<span class="chev">›</span></div></div></a>`};
+  return `<div class="page-h"><div><h2>Regattas</h2><p>See what’s coming up, tell the regatta committee if you’re going, check your races and sign up for loading shifts.</p></div></div>
+    ${up.length?up.map(card).join(''):'<div class="banner">No regattas published yet – check back soon.</div>'}
+    ${past.length?`<h3 class="reg-sh">Earlier</h3>${past.map(card).join('')}`:''}`;
+}
+function viewMemberRegatta(id){
+  const r=S.regPub[id],me=myMemberId(),p=r.pub||{},int=(S.regInt||{})[id+'_'+me]||{},mine=entriesSorted(r).filter(e=>entryPeople(e).includes(me));
+  const need=reqShifts(r),cr=shiftCredit(id,me),going=mine.length||int.level==='yes';
+  const crewmates=[...new Set(mine.flatMap(entryPeople))].filter(m=>m!==me);
+  const L=[...(r.shifts||[])].sort((a,b)=>(a.date+a.start).localeCompare(b.date+b.start));
+  const sess=regSessionsOf(p),amCox=mine.some(e=>e.cox===me),vids=String(p.videos||'').split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//.test(x));
+  const goingList=regInts(id).filter(x=>x.level==='yes').map(x=>x.memberId);
+  return `<div class="page-h"><div><a class="lnk" href="#regattas">‹ All regattas</a><h2>${esc(r.name)}</h2><p>${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''}${r.link?` · <a class="lnk" href="${esc(r.link)}" target="_blank" rel="noopener">Regatta website ↗</a>`:''}</p></div></div>
+    ${isRecommended(r,me)?`<div class="callout" style="margin-bottom:12px">⭐ <b>Recommended for you</b>${typeof (r.recommended||{})[me]==='string'?' – '+esc(r.recommended[me]):''}. Talk to your coach about entering.</div>`:''}
+    <div class="sec"><h4>Are you going?</h4><div class="chips">${Object.entries(INT_LV).map(([k,v])=>`<button class="chip ${int.level===k?'on':''}" data-int="${k}">${v[0]}</button>`).join('')}</div>
+      <div class="fee-h" style="margin-top:8px"><input id="intEvents" placeholder="Events you’d like to race (optional)" value="${esc(int.events||'')}" style="flex:1;min-width:200px"><label class="tog"><input type="checkbox" id="intSpect" ${int.spectator?'checked':''}> I’m coming to help / spectate</label><button class="btn sm" id="intSave">Save</button></div>
+      ${r.entryDeadline?`<p class="tag" style="margin:6px 0 0">Entries close ${fmtDate(r.entryDeadline)}.</p>`:''}</div>
+    ${mine.length?`<div class="sec"><h4>Your races</h4><table class="feetbl"><tr><th>Day</th><th>Race</th><th>Event</th><th>Boat</th><th>Crew (bow → stroke)</th></tr>${mine.map(e=>`<tr><td>${fmtDate(e.day).replace(/, \d{4}$/,'')}</td><td>${esc(e.time||'tbc')}</td><td><b>${esc(e.event)}</b></td><td>${esc((S.boats[e.boatId]||{}).name||'tbc')} <span class="tag">${esc(e.rig||'')}</span></td><td>${(e.crew||[]).map(m=>m?(m===me?'<b>'+esc(mName(m))+'</b>':esc(mName(m))):'—').join(', ')}${e.cox?' · cox '+(e.cox===me?'<b>'+esc(mName(e.cox))+'</b>':esc(mName(e.cox))):''}</td></tr>`).join('')}</table></div>`:''}
+    <div class="sec"><div class="ch-ct"><h4 style="margin:0">Loading shifts</h4>${need?`<span class="pill ${cr>=need?'s-available':going?'s-dnr':'s-retired'}">${cr>=need?'✓ ':''}You: ${cr} / ${need}</span>`:''}</div>
+      ${need&&going&&cr<need?`<p class="callout" style="margin:8px 0">Everyone going should do ${need} shift${need===1?'':'s'} – please pick ${need-cr===1?'one':need-cr} below.</p>`:''}
+      ${L.length?L.map(sh=>{const sg=shiftSigns(id,sh.id),on=sg.find(([,x])=>x.memberId===me),n=sg.length,full=sh.need&&n>=sh.need,drv=sh.kind==='driver';
+        const others=crewmates.filter(c=>!sg.some(([,x])=>x.memberId===c));const coverable=sg.filter(([,x])=>x.memberId!==me&&x.kind!=='sub');
+        return `<div class="sh-m"><div><b>${esc(SHIFT_KINDS[sh.kind]||'Shift')}</b> · ${shiftWhen(sh)} · ${esc(shiftWhere(sh,r))} <span class="tag">${n}${sh.need?'/'+sh.need:''} signed up</span>
+            ${(sh.history||[]).length?`<span class="tag">🕒 time changed</span>`:''}${sh.notes?`<div class="tag">${esc(sh.notes)}</div>`:''}
+            <div class="tag">${sg.map(([,x])=>esc(mName(x.memberId))+(x.kind==='sub'?' (for '+esc(mName(x.subFor))+')':'')).join(', ')}</div></div>
+          <div class="sh-act">${on?`<span class="pill s-available">✓ You’re on it</span> <button class="btn sm" data-shleave="${esc(on[0])}">Can’t make it</button>`
+            :drv&&!driverOk(me)?`<button class="btn sm" id="drvAsk">${((S.drivers||{})[me]||{}).status==='pending'?'Driver approval requested':'Ask to be an approved driver'}</button>`
+            :`<button class="btn sm ${full?'':'pri'}" data-shme="${esc(sh.id)}">${full?'Join anyway':'Sign me up'}</button>${others.length&&!drv?` <button class="btn sm" data-shcrew="${esc(sh.id)}" title="${esc(others.map(mName).join(', '))}">+ my crew (${others.length})</button>`:''}${coverable.length?` <select data-shsub="${esc(sh.id)}"><option value="">Cover for…</option>${coverable.map(([,x])=>`<option value="${esc(x.memberId)}">${esc(mName(x.memberId))}</option>`).join('')}</select>`:''}`}</div></div>`}).join(''):'<div class="empty">Shifts haven’t been posted yet.</div>'}
+      <p class="tag" style="margin:8px 0 0">You get a calendar invite by email for each shift, and it updates by itself if the time changes.</p></div>
+    <div class="sec"><h4>Info pack</h4>
+      ${sess.length?`<p><b>Schedule</b><br>${sess.map(x=>`${esc(x.name)} – ${x.date?fmtDate(x.date).replace(/, \d{4}$/,''):''} ${x.start?fmtTime(x.start):''}${x.end?'–'+fmtTime(x.end):''}`).join('<br>')}</p>`:''}
+      ${p.meet?`<p><b>Meeting point</b><br>${esc(p.meet)}</p>`:''}
+      ${p.address?`<p><b>Venue</b><br>${esc(p.address)} · <a class="lnk" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}" target="_blank" rel="noopener">Map ↗</a></p>`:''}
+      ${p.directions?`<p style="white-space:pre-wrap"><b>Parking & directions</b><br>${esc(p.directions)}</p>`:''}
+      ${p.coxMeet&&(p.coxMeet.date||p.coxMeet.time)?`<p class="${amCox?'callout':''}"><b>Cox meeting${amCox?' – you’re coxing, please attend':''}</b><br>${p.coxMeet.date?fmtDate(p.coxMeet.date):''} ${p.coxMeet.time?fmtTime(p.coxMeet.time):''}${p.coxMeet.place?' · '+esc(p.coxMeet.place):''}</p>`:''}
+      ${vids.length?`<p><b>Videos</b><br>${vids.map((v,i)=>`<a class="lnk" href="${esc(v)}" target="_blank" rel="noopener">▶ Video ${i+1}</a>`).join(' · ')}</p>`:''}
+      ${p.album?`<p><b>Photos</b><br><a class="lnk" href="${esc(p.album)}" target="_blank" rel="noopener">📷 Photo album ↗</a></p>`:''}
+      ${p.notes?`<p style="white-space:pre-wrap">${esc(p.notes)}</p>`:''}
+      ${!sess.length&&!p.meet&&!p.address&&!p.notes&&!vids.length?'<div class="empty">The regatta committee hasn’t added details yet.</div>':''}</div>
+    ${goingList.length?`<div class="sec"><h4>Who’s going (${goingList.length})</h4><p style="margin:0">${goingList.map(m=>esc(mName(m))).join(', ')}</p></div>`:''}`;
+}
+function bindMemberRegattas(){
+  const id=S.regOpen,r=id&&S.regPub[id],me=myMemberId();if(!r||!me)return;
+  const m=$('#main'),on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f},key=id+'_'+me,cur=(S.regInt||{})[key]||{};
+  const saveInt=lv=>guarded(()=>S.db.doc('regattaInterest/'+key).set({regattaId:id,memberId:me,level:lv||cur.level||'maybe',events:$('#intEvents').value.trim(),spectator:$('#intSpect').checked,at:nowIso()}),lv==='yes'?'Great – see you there!':'Saved');
+  m.querySelectorAll('[data-int]').forEach(el=>el.onclick=()=>saveInt(el.dataset.int));
+  on('#intSave',()=>saveInt(null));
+  const put=(shid,mid,kind,subFor)=>S.db.doc(`shiftSignups/${id}_${shid}_${mid}`).set({regattaId:id,shiftId:shid,memberId:mid,by:S.me,kind,...(subFor?{subFor}:{}),at:nowIso()});
+  m.querySelectorAll('[data-shme]').forEach(el=>el.onclick=()=>guarded(()=>put(el.dataset.shme,me,'self'),'You’re signed up – a calendar invite is on its way'));
+  m.querySelectorAll('[data-shcrew]').forEach(el=>el.onclick=()=>{const shid=el.dataset.shcrew,sg=shiftSigns(id,shid);const crew=[...new Set(entriesSorted(r).filter(e=>entryPeople(e).includes(me)).flatMap(entryPeople))].filter(x=>!sg.some(([,y])=>y.memberId===x));
+    if(!confirm(`Sign up ${crew.map(mName).join(', ')}? They each get a calendar invite.`))return;guarded(async()=>{for(const x of crew)await put(shid,x,x===me?'self':'group')},'Crew signed up')});
+  m.querySelectorAll('[data-shsub]').forEach(el=>el.onchange=()=>{const who=el.value;if(!who)return;if(!confirm(`Cover this shift for ${mName(who)}? They’ll be taken off it.`)){el.value='';return}
+    guarded(async()=>{await put(el.dataset.shsub,me,'sub',who);try{await S.db.doc(`shiftSignups/${id}_${el.dataset.shsub}_${who}`).delete()}catch(e){toast('Ask '+mName(who)+' or the committee to take themselves off')}},'Thanks for covering!')});
+  m.querySelectorAll('[data-shleave]').forEach(el=>el.onclick=()=>{if(confirm('Take yourself off this shift? Please find a substitute if you can.'))guarded(()=>S.db.doc('shiftSignups/'+el.dataset.shleave).delete(),'You’re off this shift')});
+  on('#drvAsk',()=>{if(((S.drivers||{})[me]||{}).status==='pending')return toast('Already requested – the committee will approve it');const note=prompt('To be approved as a trailer driver, tell the committee about your licence (e.g. Class 5 + trailer experience):','');if(note===null)return;
+    guarded(()=>S.db.doc('driverApprovals/'+me).set({status:'pending',note:note.trim(),at:nowIso()}),'Request sent to the regatta committee')});
 }
 function memberOptsAll(sel){return `<option value="">—</option>`+Object.entries(S.members).filter(([,m])=>m.status!=='inactive').sort((a,b)=>String(a[1].displayName).localeCompare(String(b[1].displayName))).map(([k,m])=>`<option value="${esc(k)}" ${k===sel?'selected':''}>${esc(m.displayName)}</option>`).join('')}
 async function saveEntries(id,entries,extra={}){

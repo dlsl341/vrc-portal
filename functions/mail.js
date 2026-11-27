@@ -174,3 +174,26 @@ export function boatAwayEmail({ firstName, boat, regatta, date, session, from, t
 ${button(link || SITE + '/#programs', 'Change boat')}`);
   return { subject, html, text: `Hi ${firstName || 'there'},\n\nYou're booked in ${boat} for ${session} on ${dateLabel(date)}, but it will be away at ${regatta} (${dateLabel(from)} – ${dateLabel(to)}). Please open your booking and choose another boat – your spot is kept.\n${link || SITE}` };
 }
+
+const hmRange = (a, b) => a ? fmtHM(a) + (b ? '–' + fmtHM(b) : '') : '';
+export function shiftEmail({ firstName, kind, regatta, date, start, end, where, notes, method, note, link }) {
+  const cancel = method === 'CANCEL';
+  const subject = `${cancel ? 'Cancelled: ' : note && /changed/.test(note) ? 'Time changed: ' : ''}${kind} – ${regatta}, ${dateLabel(date)} ${hmRange(start, end)}`;
+  const html = frame(cancel ? 'Shift cancelled' : 'Your regatta shift', `<p>Hi ${esc(firstName || 'there')},</p>
+${note ? `<p><b>${esc(note)}</b></p>` : ''}
+<p><b>${esc(kind)}</b> for <b>${esc(regatta)}</b><br>${esc(dateLabel(date))}, ${esc(hmRange(start, end))} · ${esc(where)}</p>
+${notes ? `<p>${esc(notes)}</p>` : ''}
+<p style="color:#555">${cancel ? 'It has been removed from your calendar.' : 'The calendar invite is attached – it updates automatically if the time changes.'}</p>
+${button(link, 'Open the regatta')}`);
+  return { subject, html, text: `Hi ${firstName || 'there'},\n${note ? note + '\n' : ''}\n${kind} for ${regatta}\n${dateLabel(date)}, ${hmRange(start, end)} · ${where}\n${notes || ''}\n${link}` };
+}
+export function shiftReminderEmail({ kind, regatta, date, start, end, where, notes, link }) {
+  const subject = `Tomorrow: ${kind} – ${regatta} ${hmRange(start, end)}`;
+  return { subject, html: frame('Your shift is tomorrow', `<p><b>${esc(kind)}</b> for <b>${esc(regatta)}</b><br>${esc(dateLabel(date))}, ${esc(hmRange(start, end))} · ${esc(where)}</p>${notes ? `<p>${esc(notes)}</p>` : ''}<p>Can’t make it? Find a substitute in the portal.</p>${button(link, 'Open the regatta')}`),
+    text: `${kind} for ${regatta} – ${dateLabel(date)}, ${hmRange(start, end)} · ${where}\n${notes || ''}\nCan't make it? Find a substitute in the portal: ${link}` };
+}
+export function deadlineEmail({ regatta, deadline, days, entries, link }) {
+  const subject = `Entry deadline in ${days} days: ${regatta} (${dateLabel(deadline)})`;
+  return { subject, html: frame('Regatta entry deadline', `<p>Entries for <b>${esc(regatta)}</b> close on <b>${esc(dateLabel(deadline))}</b> – in ${days} days.</p><p>${entries} entr${entries === 1 ? 'y is' : 'ies are'} in the portal so far.</p>${button(link, 'Open the regatta')}`),
+    text: `Entries for ${regatta} close on ${dateLabel(deadline)} – in ${days} days. ${entries} entries in the portal so far.\n${link}` };
+}
