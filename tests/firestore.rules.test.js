@@ -328,6 +328,19 @@ test('members mark interest, sign up for shifts (self/group/sub) and ask to driv
   await assertSucceeds(setDoc(doc(as('carol'), 'driverApprovals/m_alice'), { status: 'approved' }));
 });
 
+// ---- private equipment + dockmaster
+test('members list their own private gear; dockmaster role can plan regattas and club regatta settings', async () => {
+  await assertSucceeds(setDoc(doc(as('alice'), 'privateGear/g1'), { regattaId: 'r1', memberId: 'm_alice', by: 'alice', item: 'Single' }));
+  await assertFails(setDoc(doc(as('alice'), 'privateGear/g2'), { regattaId: 'r1', memberId: 'm_bob', by: 'alice', item: 'x' }));
+  await assertFails(deleteDoc(doc(as('bob'), 'privateGear/g1')));
+  await assertFails(setDoc(doc(as('alice'), 'appSettings/regatta'), { mixedRule: 'any' }));
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'members/m_alice'), { displayName: 'Alice', linkedUser: 'alice', roles: ['dockmaster'] }));
+  await assertSucceeds(setDoc(doc(as('alice'), 'appSettings/regatta'), { mixedRule: 'any' }));
+  await assertFails(setDoc(doc(as('alice'), 'appSettings/features'), { feedback: false }));
+  await assertSucceeds(setDoc(doc(as('alice'), 'regattas/r5'), { name: 'x' }));
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'members/m_alice'), { displayName: 'Alice', linkedUser: 'alice' }));
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));

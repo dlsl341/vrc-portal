@@ -119,6 +119,14 @@ language, and keep the "propose → preview link → merge" workflow.
   lists who has fewer shifts than required (nobody is blocked). `regattaReminders` (daily 08:00 UTC-7): entry deadline
   in 7 / 2 days → admins + members with the regatta role; shift tomorrow → everyone signed up. Members (nav Fleet ▾
   Regattas, `[data-reg]` shown to all linked members) get `viewMemberRegattas` / `viewMemberRegatta`.
+- **Regatta planning, slice 3 (equipment)**: crew categories from `memberPrefs.gender` (W/M/X) + `birthYear` (profile +
+  member form) → `crewCat` (W / M / Mix; Masters band by average rower age in the race year, `MASTERS_BANDS` A 27 … M 89;
+  warns on invalid mixed (`appSettings/regatta.mixedRule` half|any, `coxCounts`), gender vs event name, or band too young
+  for the event letter). Tabs "Trailer & checklist" (`regattas.trailers[]` {id,name,racks,driver,boats[]} from club
+  `appSettings/regatta.trailers`, checklist copied from the club template, private gear list, 🖨 load list by trailer)
+  and "Dockmaster" (`dockItems`: boats, oar sets, blades, spare riggers, private gear → `regattas.dock{key:{out,back}}`).
+  `privateGear/{id}` {regattaId, memberId, by, item, qty, notes} – members add their own from the member regatta page.
+  Role `dockmaster` = same rights as the committee. Fleet page has a "📅 Boats away" 12-week timeline from `boatHolds`.
 - **Developer feedback** (`#feedback`, top nav "Feedback" + ☰ Club ▸ "Developer feedback", `[data-fb]`): members report
   🐞 bugs / 💡 feature requests / 💬 feedback (`feedback/{id}`: type, page (prefilled from `S.prevView`), title, details,
   steps, expected, photos (≤3 via `uploadPhotos`), device + portal version auto-added, by, name, votes{uid}, status
@@ -196,7 +204,7 @@ language, and keep the "propose → preview link → merge" workflow.
 `bookings` (sessionId, date, boatId, rig, crew[] seat order bow→stroke with nulls for open seats, cox, erg, open, crewMix, pcoc, captain, createdBy) ·
 `results` (memberId, by uid, date, type erg|water, machine?, program, sessionId?, bookingId?, workout, km, timeSec, watts?, cals?, spm?, hr?, notes, likes{uid:iso}) ·
 `openErg` (memberId, by, date, start, end, erg, notes) · `coxAvail/{memberId}` · `waitlist` · `feeRules` · `fees` · `feeRuns` · `feeReports` ·
-`regattas` · `boatHolds` · `regattaPublic` · `regattaInterest` · `shiftSignups` · `driverApprovals` · `feedback` · `challenges` · `appSettings/features` ·
+`regattas` · `boatHolds` · `regattaPublic` · `regattaInterest` · `shiftSignups` · `driverApprovals` · `privateGear` · `appSettings/regatta` · `feedback` · `challenges` · `appSettings/features` ·
 `maintJobs` (boatId, task, date, start, end, crew[], crewNeeded, notes, status scheduled|done|cancelled) ·
 `activity` (imported pre-portal history) · `crews` (designated crews) · `issues` · `maintenance` · `events`.
 Private/prefs docs are keyed by **member id** until the member links an account, then moved to the **uid** (see `approveClaim`, `unlinkForm`, `mergeForm`).
