@@ -185,6 +185,34 @@ service cloud.firestore {
                         && partsOf(request.resource.data).diff(partsOf(resource.data)).affectedKeys().hasOnly([myMemberId()]));
     }
 
+    // ---- regattas for members: the server mirrors published regattas to regattaPublic. Members say if they're going,
+    // sign up for load/unload shifts (themselves, their crew, or as a substitute) and ask to be an approved trailer driver.
+    match /regattaPublic/{id} {
+      allow read: if canUse();
+      allow write: if false;
+    }
+    match /regattaInterest/{id} {
+      allow read: if canUse();
+      allow create, update: if isAdmin() || isRegattaCommittee()
+        || (isMember() && request.resource.data.memberId == myMemberId() && id == request.resource.data.regattaId + '_' + myMemberId());
+      allow delete: if isAdmin() || isRegattaCommittee() || (isMember() && resource.data.memberId == myMemberId());
+    }
+    match /shiftSignups/{id} {
+      allow read: if canUse();
+      allow create: if isAdmin() || isRegattaCommittee()
+        || (isMember() && request.resource.data.by == uid()
+            && id == request.resource.data.regattaId + '_' + request.resource.data.shiftId + '_' + request.resource.data.memberId
+            && (request.resource.data.memberId == myMemberId() || request.resource.data.kind in ['group', 'sub']));
+      allow update: if false;
+      allow delete: if isAdmin() || isRegattaCommittee() || (isMember() && (resource.data.by == uid() || resource.data.memberId == myMemberId()));
+    }
+    match /driverApprovals/{mid} {
+      allow read: if canUse();
+      allow create, update: if isAdmin() || isRegattaCommittee()
+        || (isMember() && mid == myMemberId() && request.resource.data.status == 'pending');
+      allow delete: if isAdmin() || isRegattaCommittee() || (isMember() && mid == myMemberId());
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {
