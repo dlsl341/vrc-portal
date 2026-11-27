@@ -33,7 +33,7 @@ service cloud.firestore {
       return isMember() && 'coach' in get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []);
     }
     function isRegattaCommittee() {       // a linked member with the Regatta committee role
-      return isMember() && 'regatta' in get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []);
+      return isMember() && get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []).hasAny(['regatta', 'dockmaster']);
     }
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
@@ -172,7 +172,13 @@ service cloud.firestore {
     }
     match /appSettings/{id} {
       allow read: if canUse();
-      allow write: if isAdmin();
+      allow write: if isAdmin() || (id == 'regatta' && isRegattaCommittee());
+    }
+    // members' own equipment going on the regatta trailer
+    match /privateGear/{id} {
+      allow read: if canUse();
+      allow create: if isAdmin() || isRegattaCommittee() || (isMember() && request.resource.data.memberId == myMemberId() && request.resource.data.by == uid());
+      allow update, delete: if isAdmin() || isRegattaCommittee() || (isMember() && resource.data.memberId == myMemberId());
     }
 
     // ---- club challenges: coaches and admins build them; members may only join/leave (their own key in participants)

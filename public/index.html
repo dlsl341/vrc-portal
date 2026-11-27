@@ -326,7 +326,10 @@ footer .ver{color:var(--ink3);font-size:11.5px}
 .ycd.has{background:var(--rc);color:#fff;font-weight:700}.ycd.today{outline:2px solid #231f20;outline-offset:-2px}
 .sec.reg{border-left:5px solid var(--rc)}a.sec.reg{display:block;text-decoration:none;color:inherit}a.sec.reg:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}.reg-tabs{margin:0 0 12px}
 .enttbl{border-collapse:collapse;width:100%;font-size:14px}.enttbl th{text-align:left;font-size:12px;color:var(--muted,#777);padding:4px 6px}.enttbl td{padding:6px;border-top:1px solid var(--line,#eee);vertical-align:top}.enttbl tr[data-entry]{cursor:pointer}.enttbl tr[data-entry]:hover{background:#faf8f5}.enttbl tr.warnrow{background:#fff4f4}.enttbl .str{font-weight:600}
-.ent-iss{font-size:13px;padding:2px 0;color:#555}.warnc{color:#a1191e}.sh-ppl{margin:8px 0}.sh-ppl .bchip{display:inline-block;margin:2px 4px 2px 0}
+.ent-iss{font-size:13px;padding:2px 0;color:#555}.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:10px}.tr-c{border:1px solid var(--line,#e5e2dc);border-radius:10px;padding:10px 12px}.tr-boats{max-height:260px;overflow:auto;margin-top:6px}.rb.cl{padding:4px 0}
+.feetbl.dock tr.outrow td{background:#fff4f4}.awaycal summary{cursor:pointer}.ac-g{margin-top:10px;font-size:12px}.ac-h,.ac-r{display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center}.ac-h>div,.ac-r>div{position:relative;height:22px}
+.ac-h i{position:absolute;font-style:normal;color:#999;transform:translateX(-2px);white-space:nowrap}.ac-r{border-top:1px solid var(--line,#eee)}.ac-r>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-r b{position:absolute;top:3px;height:16px;border-radius:4px;background:var(--rc);color:#fff;font-size:10px;line-height:16px;padding:0 4px;overflow:hidden;white-space:nowrap}.warnc{color:#a1191e}.sh-ppl{margin:8px 0}.sh-ppl .bchip{display:inline-block;margin:2px 4px 2px 0}
 .sh-m{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line,#eee)}.sh-act{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;flex:none;max-width:50%}
 @media(max-width:700px){.sh-m{flex-direction:column}.sh-act{max-width:none;justify-content:flex-start}}.ent-iss.warn{color:#a1191e}.feetbl.cost input{width:120px}
 .print-area{display:none}
@@ -526,7 +529,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin||hasRole('regatta')){sub('regattas','regattas',true)}if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('privateGear','gear',true);subDoc('appSettings/regatta','regCfgDoc');sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin||hasRole('regatta')||hasRole('dockmaster')){sub('regattas','regattas',true)}if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -629,6 +632,7 @@ function viewFleet(){
       return `<section class="group"><h2>${c.t}<span>${g.length}</span></h2><div class="grid">${g.map(([id,b])=>card(id,b)).join('')}</div></section>`}).join('');
   }
   return `
+  ${awayCalendarHtml()}
   <div class="stats">${stats.map(([k,l,v,c])=>`<div class="stat ${S.status===k?'sel':''}" data-stat="${k}"><div class="v">${v}</div><div class="l"><span class="dot" style="background:${c}"></span>${l}</div></div>`).join('')}</div>
   <div class="toolbar">
     <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="q" placeholder="Search boats, rigs, programs…" value="${esc(S.q)}"></div>
@@ -876,7 +880,7 @@ function maintForm(id){
 const M_PROGRAMS=['Juniors','Novice','Intermediate','Rec','Masters','Para'];
 const SIDES=['Port','Starboard','Sculling','Cox'];
 const EXPERIENCE=['Learn to Row','Novice','Intermediate','Experienced','Competitive'];
-const ROLES={rower:'Rower',coach:'Coach',cox:'Cox',regatta:'Regatta committee'};
+const ROLES={rower:'Rower',coach:'Coach',cox:'Cox',regatta:'Regatta committee',dockmaster:'Dockmaster'};
 const M_STATUS={active:'Active',review:'Needs details',inactive:'Inactive'};
 Object.assign(S,{members:{},activity:{},crews:{},claims:{},mpriv:{},mprefs:{},openM:null,mq:'',mprog:'all',mstatus:'current',mlayout:'grid',claimQ:''});
 Object.assign(S.loaded,{members:false,activity:false,crews:false});
@@ -1083,6 +1087,8 @@ function memberForm(id){
     ${fld('Roles',checks('roles',Object.entries(ROLES),m.roles||['rower']),'')}
     ${fld('Status',`<select name="status">${Object.entries(M_STATUS).map(([k,l])=>`<option value="${k}" ${m.status===k?'selected':''}>${l}</option>`).join('')}</select>`)}
     ${fld('Sides / seats',checks('sides',SIDES,pr.sides),'')}
+    ${fld('Racing category',`<select name="gender"><option value="">—</option><option value="W" ${pr.gender==='W'?'selected':''}>Women</option><option value="M" ${pr.gender==='M'?'selected':''}>Men</option><option value="X" ${pr.gender==='X'?'selected':''}>Open / non-binary</option></select>`,'','Used to work out W / M / Mixed for regatta crews.')}
+    ${fld('Birth year',`<input name="birthYear" type="number" min="1920" max="2015" value="${esc(pr.birthYear||'')}" placeholder="e.g. 1972">`,'','For Masters age categories. Others only see your age band, e.g. “D”.')}
     ${fld('Experience',`<select name="experience"><option value="">—</option>${EXPERIENCE.map(x=>`<option ${pr.experience===x?'selected':''}>${x}</option>`).join('')}</select>`)}
     ${fld('PCOC registered',`<label class="tog" style="padding-top:6px"><input type="checkbox" name="pcoc" value="1" ${m.pcoc?'checked':''}> Cleared for off-program rowing</label>`)}
     ${fld('PCOC date',`<input type="date" name="pcocDate" value="${esc(m.pcocDate||'')}">`)}
@@ -1102,7 +1108,7 @@ function memberForm(id){
       else{mid='m_'+slugify(dn);if(S.members[mid])mid+='-'+Date.now().toString(36);await S.db.doc('members/'+mid).set({...data,linkedUser:null,createdAt:nowIso(),source:'Added by admin'})}
       const key=id?mKey(id):mid;
       const ph=id?await savePhoto(av,pr.photo):undefined;
-      await S.db.doc('memberPrefs/'+key).set({...(id?prefsOf(id):{}),sides:fd._c.sides||[],experience:fd.experience,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
+      await S.db.doc('memberPrefs/'+key).set({...(id?prefsOf(id):{}),sides:fd._c.sides||[],experience:fd.experience,gender:fd.gender||null,birthYear:fd.birthYear?+fd.birthYear:null,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
       const p=privFrom(fd);if(Object.values(p).some(v=>v&&v!==p.updatedAt)||privOf(mid))await S.db.doc('memberPrivate/'+key).set({...(privOf(mid)||{}),...p});
       if((fd._c.invite||[]).length){await createInvite(mid,fd.email);toast(`Invitation emailed to ${fd.email.trim()}`)}
     }})});
@@ -1112,6 +1118,8 @@ function selfForm(id){
   openModal(`<h3>My details</h3><form id="mform"><div class="fg">
     ${avatarField(id)}
     ${fld('Sides / seats I row',checks('sides',SIDES,pr.sides),'full')}
+    ${fld('Racing category',`<select name="gender"><option value="">—</option><option value="W" ${pr.gender==='W'?'selected':''}>Women</option><option value="M" ${pr.gender==='M'?'selected':''}>Men</option><option value="X" ${pr.gender==='X'?'selected':''}>Open / non-binary</option></select>`,'','Used to work out W / M / Mixed for regatta crews.')}
+    ${fld('Birth year',`<input name="birthYear" type="number" min="1920" max="2015" value="${esc(pr.birthYear||'')}" placeholder="e.g. 1972">`,'','For Masters age categories. Others only see your age band, e.g. “D”.')}
     ${fld('Experience',`<select name="experience"><option value="">—</option>${EXPERIENCE.map(x=>`<option ${pr.experience===x?'selected':''}>${x}</option>`).join('')}</select>`)}
     ${fld('About me',`<input name="bio" value="${esc(pr.bio||'')}" placeholder="Optional, shown to members">`)}
     ${fld('Calendar',`<label class="tog" style="padding-top:4px"><input type="checkbox" name="calPrompt" value="1" ${pr.calPrompt!==false?'checked':''}> Offer to add sessions to my calendar when I book</label>`,'full','Your email decides which calendar is suggested first.')}
@@ -1120,7 +1128,7 @@ function selfForm(id){
   </div><p class="muted" style="font-size:12px;margin:10px 0 0">Your name, programs and PCOC status are managed by admins. Ask a coach if they need updating.</p>${formFoot('Save')}</form>`,()=>{wireAvatarField(id).then(x=>av=x);wireForm({msg:'Your details are saved',
     save:async fd=>{
       const ph=await savePhoto(av,pr.photo);
-      await S.db.doc('memberPrefs/'+S.me).set({...prefsOf(id),sides:fd._c.sides||[],experience:fd.experience,bio:fd.bio.trim(),calPrompt:!!(fd._c.calPrompt||[]).length,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
+      await S.db.doc('memberPrefs/'+S.me).set({...prefsOf(id),sides:fd._c.sides||[],experience:fd.experience,gender:fd.gender||null,birthYear:fd.birthYear?+fd.birthYear:null,bio:fd.bio.trim(),calPrompt:!!(fd._c.calPrompt||[]).length,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
       await S.db.doc('memberPrivate/'+S.me).set({...(privOf(id)||{}),...privFrom(fd)});
     }})});
 }
@@ -2050,7 +2058,7 @@ const attOf=(sid,d)=>S.attendance[attKey(sid,d)]||null;
 const markOf=(sid,d,mid)=>((attOf(sid,d)||{}).marks||{})[mid]||null;
 const isCoach=()=>{const me=myMemberId();return !!me&&((S.members[me]||{}).roles||[]).includes('coach')};
 const hasRole=r=>{const me=myMemberId();return !!me&&((S.members[me]||{}).roles||[]).includes(r)};
-const canRegatta=()=>canAdmin()||hasRole('regatta');
+const canRegatta=()=>canAdmin()||hasRole('regatta')||hasRole('dockmaster');
 const canCheckIn=()=>canAdmin()||(canMember()&&isCoach());
 const MARKS={present:['✓','Present','ok'],late:['⏱','Late','warn'],absent:['✗','No-show','bad']};
 function markBadge(mk){if(!mk||!MARKS[mk])return '';const [i,l,c]=MARKS[mk];return ` <span class="mk mk-${c}" title="${l}">${i}</span>`}
@@ -2513,6 +2521,15 @@ const REG_STATUS={planned:['Planned','s-available'],entered:['Entered','s-repair
 const holdsFor=(bid,from,to)=>Object.entries(S.holds||{}).filter(([,h])=>(h.boatIds||[]).includes(bid)&&h.from<=(to||from)&&h.to>=from);
 const boatHeld=(bid,d)=>holdsFor(bid,d).length>0;
 const rangeTxt=(a,b)=>!b||a===b?fmtDate(a):fmtDate(a).replace(/, \d{4}$/,'')+' – '+fmtDate(b);
+function awayCalendarHtml(){
+  const t=today(),end=addDays(t,83),H=Object.values(S.holds||{}).filter(h=>h.to>=t&&h.from<=end);if(!H.length)return '';
+  const rows={};H.forEach(h=>(h.boatIds||[]).forEach(b=>{if(S.boats[b])(rows[b]=rows[b]||[]).push(h)}));
+  const x=d=>Math.max(0,Math.min(84,Math.round((pd(d)-pd(t))/864e5)))/84*100;
+  const weeks=Array.from({length:12},(_,i)=>addDays(t,i*7));
+  return `<details class="sec awaycal"><summary><b>📅 Boats away</b> <span class="tag">next 12 weeks · ${Object.keys(rows).length} boat${Object.keys(rows).length===1?'':'s'}</span></summary>
+    <div class="ac-g"><div class="ac-h"><span></span><div>${weeks.map(w=>`<i style="left:${x(w)}%">${fmtDate(w).replace(/, \d{4}$/,'')}</i>`).join('')}</div></div>
+    ${Object.entries(rows).sort((a,b)=>S.boats[a[0]].name.localeCompare(S.boats[b[0]].name)).map(([b,L])=>`<div class="ac-r"><span>${esc(S.boats[b].name)}</span><div>${L.map(h=>`<b style="left:${x(h.from)}%;width:${Math.max(1.5,x(addDays(h.to,1))-x(h.from))}%;--rc:${regColor(h.name||'x')}" title="${esc(h.name||'Away')}: ${rangeTxt(h.from,h.to)}">${esc(h.name||'Away')}</b>`).join('')}</div></div>`).join('')}</div></details>`;
+}
 function awayTag(bid){const t=today(),h=holdsFor(bid,t,addDays(t,21)).sort((a,b)=>a[1].from.localeCompare(b[1].from))[0];if(!h)return '';
   const now=h[1].from<=t;return `<div class="away ${now?'now':''}">🏁 ${now?'Away':'Going away'} · ${esc(h[1].name||'Regatta')} · ${rangeTxt(h[1].from,h[1].to)}</div>`}
 // bookings that use a boat while it's away
@@ -2550,7 +2567,7 @@ function viewRegattas(){
 
 /* ----- regatta detail: tabs ----- */
 S.regTab='overview';
-const REG_TABS=[['overview','Overview'],['entries','Entries'],['people','People'],['shifts','Shifts'],['info','Info pack'],['reports','Reports'],['costs','Costs']];
+const REG_TABS=[['overview','Overview'],['entries','Entries'],['people','People'],['shifts','Shifts'],['info','Info pack'],['trailer','Trailer & checklist'],['dock','Dockmaster'],['reports','Reports'],['costs','Costs']];
 const regDaysOf=r=>{const out=[];let d=r.start;for(let i=0;i<14&&d<=(r.end||r.start);i++,d=addDays(d,1))out.push(d);return out};
 const hm2m=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+(m||0)};
 const m2hm=n=>`${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;
@@ -2573,6 +2590,8 @@ function entryIssues(r){
       if(overlap&&a.boatId&&a.boatId===c.boatId)out.push({id:c.id,lvl:'warn',t:`Boat clash: ${S.boats[a.boatId]?S.boats[a.boatId].name:'boat'} is in ${eLabel(a)} (${a.time}) and ${eLabel(c)} (${c.time}) at the same time`});
       if(overlap){const both=entryPeople(a).filter(x=>entryPeople(c).includes(x));both.forEach(m=>out.push({id:c.id,lvl:'warn',t:`Rower clash: ${mName(m)} is in ${eLabel(a)} (${a.time}) and ${eLabel(c)} (${c.time})`}))}}
   }
+  // crew categories vs the event name
+  E.forEach(e=>{const c=crewCat(r,e);if(c.warn)out.push({id:e.id,lvl:'warn',t:`${eLabel(e)}: ${c.warn}`})});
   // re-rig: same boat, consecutive uses with a different rig
   const byBoat={};E.filter(e=>e.boatId).forEach(e=>(byBoat[e.boatId]=byBoat[e.boatId]||[]).push(e));
   Object.entries(byBoat).forEach(([bid,L])=>{for(let i=1;i<L.length;i++){const p=L[i-1],c=L[i];if(p.rig&&c.rig&&p.rig!==c.rig&&isScullRig(p.rig)!==isScullRig(c.rig)||p.rig&&c.rig&&p.rig!==c.rig&&seatsFor(p.rig).cox!==seatsFor(c.rig).cox){
@@ -2608,7 +2627,7 @@ function viewRegatta(id){
   return `<div class="page-h"><div><a class="lnk" href="#regattas">‹ All regattas</a><h2>${esc(r.name)}</h2><p>${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · <span class="pill ${st[1]}">${st[0]}</span></p></div>
     <div class="actions" style="margin:0">${(r.pub||{}).published?'<span class="pill s-available" style="align-self:center" title="Members can see this regatta">Published</span>':'<span class="pill s-retired" style="align-self:center" title="Members can’t see this yet – publish it under Info pack">Not published</span>'}<button class="btn" data-regedit="${esc(id)}">Edit details</button><button class="btn" data-regcal="${esc(id)}">📅 Add to calendar</button></div></div>
     <div class="chips reg-tabs">${REG_TABS.map(([k,l])=>`<button class="chip ${tab===k?'on':''}" data-regtab="${k}">${l}${k==='entries'?` <span class="tag">${(r.entries||[]).length}</span>`:''}${k==='entries'&&iss.filter(x=>x.lvl==='warn').length?' ⚠':''}</button>`).join('')}</div>
-    ${tab==='people'?regPeopleHtml(id,r):tab==='shifts'?regShiftsHtml(id,r):tab==='info'?regInfoHtml(id,r):tab==='entries'?regEntriesHtml(id,r,iss):tab==='reports'?regReportsHtml(id,r):tab==='costs'?regCostsHtml(id,r):regOverviewHtml(id,r)}`;
+    ${tab==='trailer'?regTrailerHtml(id,r):tab==='dock'?regDockHtml(id,r):tab==='people'?regPeopleHtml(id,r):tab==='shifts'?regShiftsHtml(id,r):tab==='info'?regInfoHtml(id,r):tab==='entries'?regEntriesHtml(id,r,iss):tab==='reports'?regReportsHtml(id,r):tab==='costs'?regCostsHtml(id,r):regOverviewHtml(id,r)}`;
 }
 function regOverviewHtml(id,r){
   const boats=(r.boatIds||[]).filter(b=>S.boats[b]),cl=awayClashes(boats,r.awayFrom||r.start,r.awayTo||r.end||r.start);
@@ -2625,7 +2644,7 @@ function regEntriesHtml(id,r,iss){
   const E=entriesSorted(r),byDay={};E.forEach(e=>(byDay[e.day]=byDay[e.day]||[]).push(e));
   const warn=iss.filter(x=>x.lvl==='warn'),info=iss.filter(x=>x.lvl!=='warn');
   const row=e=>{const b=S.boats[e.boatId],mine=iss.filter(x=>x.id===e.id);
-    return `<tr data-entry="${esc(e.id)}" class="${mine.some(x=>x.lvl==='warn')?'warnrow':''}"><td>${esc(e.no||'')}</td><td>${esc(e.time||'—')}</td><td><b>${esc(e.event||'')}</b>${e.category?` <span class="tag">${esc(e.category)}</span>`:''}</td>
+    return `<tr data-entry="${esc(e.id)}" class="${mine.some(x=>x.lvl==='warn')?'warnrow':''}"><td>${esc(e.no||'')}</td><td>${esc(e.time||'—')}</td><td><b>${esc(e.event||'')}</b> <span class="tag" title="Worked out from the crew">${esc(crewCat(r,e).label)}</span></td>
       <td>${(e.crew||[]).map((m,i)=>m?`<span class="${i===(e.crew.length-1)?'str':''}">${esc(mName(m))}</span>`:'<i class="muted">open</i>').join(', ')}${e.cox?` · <span class="tag">cox</span> ${esc(mName(e.cox))}`:''}</td>
       <td>${b?esc(b.name):'<i class="muted">—</i>'}</td><td>${esc(e.rig||'')}</td><td>${esc(e.oars||'')}</td><td>${mine.length?`<span title="${esc(mine.map(x=>x.t).join('\n'))}">⚠</span>`:''}</td></tr>`};
   return `<div class="actions" style="margin:0 0 10px"><button class="btn pri" id="entAdd">+ Add entry</button><button class="btn" id="entPaste">📋 Paste entries</button><button class="btn" id="regSettings">⚙ Timing & spares</button></div>
@@ -2731,7 +2750,7 @@ function bindRegattas(){
   m.querySelectorAll('[data-gosess]').forEach(el=>el.onclick=e=>{e.stopPropagation();const [a,b]=el.dataset.gosess.split('|');goSession(a,b)});
   if(!r)return;
   on('#entAdd',()=>entryForm(id,null));
-  bindRegPeople(id,r);
+  bindRegPeople(id,r);bindRegGear(id,r);
   on('#entPaste',()=>entryPaste(id));
   m.querySelectorAll('#regSettings').forEach(el=>el.onclick=()=>regSettingsForm(id));
   m.querySelectorAll('[data-entry]').forEach(el=>el.onclick=()=>entryForm(id,el.dataset.entry));
@@ -2873,6 +2892,7 @@ function viewMemberRegatta(id){
             :drv&&!driverOk(me)?`<button class="btn sm" id="drvAsk">${((S.drivers||{})[me]||{}).status==='pending'?'Driver approval requested':'Ask to be an approved driver'}</button>`
             :`<button class="btn sm ${full?'':'pri'}" data-shme="${esc(sh.id)}">${full?'Join anyway':'Sign me up'}</button>${others.length&&!drv?` <button class="btn sm" data-shcrew="${esc(sh.id)}" title="${esc(others.map(mName).join(', '))}">+ my crew (${others.length})</button>`:''}${coverable.length?` <select data-shsub="${esc(sh.id)}"><option value="">Cover for…</option>${coverable.map(([,x])=>`<option value="${esc(x.memberId)}">${esc(mName(x.memberId))}</option>`).join('')}</select>`:''}`}</div></div>`}).join(''):'<div class="empty">Shifts haven’t been posted yet.</div>'}
       <p class="tag" style="margin:8px 0 0">You get a calendar invite by email for each shift, and it updates by itself if the time changes.</p></div>
+    ${going?gearMemberHtml(id,r):''}
     <div class="sec"><h4>Info pack</h4>
       ${sess.length?`<p><b>Schedule</b><br>${sess.map(x=>`${esc(x.name)} – ${x.date?fmtDate(x.date).replace(/, \d{4}$/,''):''} ${x.start?fmtTime(x.start):''}${x.end?'–'+fmtTime(x.end):''}`).join('<br>')}</p>`:''}
       ${p.meet?`<p><b>Meeting point</b><br>${esc(p.meet)}</p>`:''}
@@ -2898,8 +2918,93 @@ function bindMemberRegattas(){
   m.querySelectorAll('[data-shsub]').forEach(el=>el.onchange=()=>{const who=el.value;if(!who)return;if(!confirm(`Cover this shift for ${mName(who)}? They’ll be taken off it.`)){el.value='';return}
     guarded(async()=>{await put(el.dataset.shsub,me,'sub',who);try{await S.db.doc(`shiftSignups/${id}_${el.dataset.shsub}_${who}`).delete()}catch(e){toast('Ask '+mName(who)+' or the committee to take themselves off')}},'Thanks for covering!')});
   m.querySelectorAll('[data-shleave]').forEach(el=>el.onclick=()=>{if(confirm('Take yourself off this shift? Please find a substitute if you can.'))guarded(()=>S.db.doc('shiftSignups/'+el.dataset.shleave).delete(),'You’re off this shift')});
+  bindGearMember(id,r);
   on('#drvAsk',()=>{if(((S.drivers||{})[me]||{}).status==='pending')return toast('Already requested – the committee will approve it');const note=prompt('To be approved as a trailer driver, tell the committee about your licence (e.g. Class 5 + trailer experience):','');if(note===null)return;
     guarded(()=>S.db.doc('driverApprovals/'+me).set({status:'pending',note:note.trim(),at:nowIso()}),'Request sent to the regatta committee')});
+}
+/* ----- slice 3: crew categories, trailers & checklist, private gear, dockmaster ----- */
+S.gear={};S.regCfgDoc={};
+const regCfg=()=>{const c=(S.regCfgDoc||{}).regatta||{};return {mixedRule:c.mixedRule||'half',coxCounts:!!c.coxCounts,trailers:c.trailers||[{id:'t1',name:'Big trailer',racks:''},{id:'t2',name:'Small trailer',racks:''}],
+  checklist:c.checklist||'Boats strapped at 3 points, padding on riggers\nRiggers bagged and labelled by boat\nTool kit (spanners 10/13 mm, spare nuts, spacers, tape)\nBlades tied and padded\nSlings / trestles\nTrailer lights & brake checked\nTrailer flags and red rag on overhang\nFirst-aid kit\nVRC tent & flags\nDrinking water'}};
+const MASTERS_BANDS=[['A',27],['B',36],['C',43],['D',50],['E',55],['F',60],['G',65],['H',70],['I',75],['J',80],['K',83],['L',86],['M',89]];
+function crewCat(r,e){
+  const yr=+String(e.day||r.start).slice(0,4),cfg=regCfg(),rowers=(e.crew||[]).filter(Boolean),who=cfg.coxCounts&&e.cox?[...rowers,e.cox]:rowers;
+  const g=who.map(m=>prefsOf(m).gender||'?'),known=g.filter(x=>x!=='?');
+  const w=known.filter(x=>x==='W').length,mm=known.filter(x=>x==='M').length;
+  let gc=!known.length?'':w===known.length?'W':mm===known.length?'M':'Mix';
+  let warn='';
+  if(gc==='Mix'&&cfg.mixedRule==='half'&&known.length===who.length&&w!==mm)warn=`not a valid mixed crew (${w}W/${mm}M – mixed needs half and half)`;
+  const ages=rowers.map(m=>prefsOf(m).birthYear).filter(Boolean).map(b=>yr-b);
+  const avg=ages.length===rowers.length&&ages.length?ages.reduce((a,b)=>a+b,0)/ages.length:null;
+  let band='';if(avg!=null){for(const [l,min] of MASTERS_BANDS)if(avg>=min)band=l}
+  const ev=String(e.event||'');const evG=/\bmix(ed)?\b/i.test(ev)?'Mix':/\b(W|women'?s?|womens)\b/i.test(ev)?'W':/\b(M|men'?s?|mens)\b/i.test(ev)?'M':'';
+  if(gc&&evG&&gc!==evG&&known.length===who.length)warn=warn||`crew is ${gc==='Mix'?'mixed':gc==='W'?'women':'men'} but the event is ${evG==='Mix'?'mixed':evG==='W'?'women':'men'}`;
+  const evB=(ev.match(/\b([A-M])\s*$/)||[])[1];
+  if(band&&evB&&band<evB)warn=warn||`crew average age ${Math.floor(avg)} is band ${band} – too young for ${evB}`;
+  const missing=who.length-known.length+(rowers.length-ages.length);
+  return {label:[gc,band?'Masters '+band:'',avg!=null?`avg ${Math.floor(avg)}`:''].filter(Boolean).join(' · ')||(missing?'category ?':''),gc,band,avg,warn};
+}
+function regTrailerHtml(id,r){
+  const cfg=regCfg(),L=loadList(r),tr=r.trailers||cfg.trailers.map(t=>({...t,boats:[]})),assigned=new Set(tr.flatMap(t=>t.boats||[]));
+  const un=L.filter(x=>!assigned.has(x.bid));const cl=r.checklist||cfg.checklist.split('\n').filter(Boolean).map(t=>({t,done:false}));
+  const gear=Object.entries(S.gear||{}).filter(([,g])=>g.regattaId===id);
+  return `<div class="sec"><div class="ch-ct"><h4 style="margin:0">Trailer plan</h4><span>${canAdmin()?'<button class="btn sm" id="trCfg">⚙ Club trailers & checklist template</button>':''} <button class="btn sm pri" data-regprint="trailer">🖨 Load list</button></span></div>
+      ${un.length?`<div class="callout bad" style="margin:8px 0">Not on a trailer yet: ${un.map(x=>esc(x.name)).join(', ')}</div>`:''}
+      <div class="tr-grid">${tr.map((t,i)=>{const drv=t.driver;return `<div class="tr-c"><b>🚚 ${esc(t.name)}</b>${t.racks?` <span class="tag">${(t.boats||[]).length}/${esc(t.racks)} racks</span>`:''}
+        <div class="fld"><label>Driver</label><select data-trdrv="${i}">${memberOptsAll(drv||'')}</select>${drv&&!driverOk(drv)?'<div class="warnc tag">⚠ not an approved trailer driver</div>':''}</div>
+        <div class="tr-boats">${L.map(x=>`<label class="rb"><input type="checkbox" data-trboat="${i}|${esc(x.bid)}" ${(t.boats||[]).includes(x.bid)?'checked':''} ${assigned.has(x.bid)&&!(t.boats||[]).includes(x.bid)?'disabled':''}> ${esc(x.name)} <span class="tag">${esc(x.travel)}</span></label>`).join('')||'<span class="muted">No boats yet</span>'}</div></div>`}).join('')}</div></div>
+    <div class="sec"><div class="ch-ct"><h4 style="margin:0">Checklist</h4><span class="tag">${cl.filter(x=>x.done).length}/${cl.length} done</span></div>
+      ${cl.map((c,i)=>`<label class="rb cl"><input type="checkbox" data-clk="${i}" ${c.done?'checked':''}> ${esc(c.t)}${c.done&&c.by?` <span class="tag">✓ ${esc(c.by)}</span>`:''}</label>`).join('')}
+      <div class="fee-h"><input id="clNew" placeholder="Add an item for this regatta" style="flex:1"><button class="btn sm" id="clAdd2">+ Add</button></div></div>
+    <div class="sec"><h4>Private equipment going (${gear.length})</h4><p class="tag" style="margin:0 0 6px">Members add their own boats, blades or kit from the regatta page. They go on the load list and the dockmaster checks them out and back.</p>
+      ${gear.length?`<table class="feetbl"><tr><th>Owner</th><th>Item</th><th>Qty</th><th>Notes</th></tr>${gear.map(([,g])=>`<tr><td>${esc(mName(g.memberId))}</td><td>${esc(g.item)}</td><td>${esc(g.qty||1)}</td><td>${esc(g.notes||'')}</td></tr>`).join('')}</table>`:'<div class="empty">None yet.</div>'}</div>`;
+}
+// everything that leaves the club: boats, blade sets, riggers, private gear – checked out and back by the dockmaster
+function dockItems(id,r){
+  const pk=bladePeaks(r),st=regSet(r),items=[];
+  loadList(r).forEach(x=>items.push({key:'boat:'+x.bid,lab:`${x.name} (${x.travel})`,kind:'Boat'}));
+  Object.entries(pk).filter(([k])=>k.startsWith('set:')&&!/no set named/.test(k)).forEach(([k,v])=>items.push({key:k,lab:`${k.slice(4)} – ${v.n} blades`,kind:'Blades'}));
+  if(pk.sculls&&pk.sculls.n)items.push({key:'blades:sculls',lab:`Sculls – ${pk.sculls.n+(+st.spareSculls||0)} pairs in total`,kind:'Blades'});
+  const sw=(pk.bow?pk.bow.n:0)+(pk.stroke?pk.stroke.n:0);if(sw)items.push({key:'blades:sweep',lab:`Sweep oars – ${sw+(+st.spareSweep||0)} in total`,kind:'Blades'});
+  items.push({key:'riggers:spare',lab:`Spare riggers – ${st.spareRiggers}`,kind:'Riggers'});
+  Object.entries(S.gear||{}).filter(([,g])=>g.regattaId===id).forEach(([gid,g])=>items.push({key:'gear:'+gid,lab:`${g.item}${g.qty>1?' ×'+g.qty:''} – ${mName(g.memberId)}`,kind:'Private'}));
+  return items;
+}
+function regDockHtml(id,r){
+  const items=dockItems(id,r),d=r.dock||{},n=k=>items.filter(i=>d[i.key]&&d[i.key][k]).length,who=x=>x?`${esc(x.name||'')} ${new Date(x.at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}`:'';
+  return `<div class="sec"><div class="ch-ct"><h4 style="margin:0">Dockmaster – check out and back</h4><span class="tag">Out ${n('out')}/${items.length} · Back ${n('back')}/${items.length}</span></div>
+    <p class="tag" style="margin:4px 0 8px">Tick each item as it leaves VRC and when it’s back. Anything out but not back shows in red.</p>
+    <table class="feetbl dock"><tr><th></th><th>Item</th><th>Out</th><th>Back</th></tr>${items.map(i=>{const x=d[i.key]||{};return `<tr class="${x.out&&!x.back?'outrow':''}"><td class="tag">${i.kind}</td><td>${esc(i.lab)}</td>
+      <td><label><input type="checkbox" data-dock="${esc(i.key)}|out" ${x.out?'checked':''}> <span class="tag">${who(x.out)}</span></label></td><td><label><input type="checkbox" data-dock="${esc(i.key)}|back" ${x.back?'checked':''} ${x.out?'':'disabled'}> <span class="tag">${who(x.back)}</span></label></td></tr>`}).join('')}</table></div>`;
+}
+function bindRegGear(id,r){
+  const m=$('#main'),cfg=regCfg(),me=myMemberId();
+  const trs=()=>(r.trailers||cfg.trailers.map(t=>({...t,boats:[]}))).map(t=>({...t,boats:[...(t.boats||[])]}));
+  m.querySelectorAll('[data-trboat]').forEach(el=>el.onchange=()=>{const [i,b]=el.dataset.trboat.split('|');const t=trs();t[+i].boats=el.checked?[...t[+i].boats,b]:t[+i].boats.filter(x=>x!==b);guarded(()=>S.db.doc('regattas/'+id).update({trailers:t}),'')});
+  m.querySelectorAll('[data-trdrv]').forEach(el=>el.onchange=()=>{const t=trs();t[+el.dataset.trdrv].driver=el.value||null;guarded(()=>S.db.doc('regattas/'+id).update({trailers:t}),el.value&&!driverOk(el.value)?'Saved – note: not an approved driver yet':'Driver saved')});
+  const cls=()=>(r.checklist||cfg.checklist.split('\n').filter(Boolean).map(t=>({t,done:false}))).map(x=>({...x}));
+  m.querySelectorAll('[data-clk]').forEach(el=>el.onchange=()=>{const c=cls(),x=c[+el.dataset.clk];x.done=el.checked;x.by=el.checked?(me&&S.members[me]?mName(me):'Admin'):null;guarded(()=>S.db.doc('regattas/'+id).update({checklist:c}),'')});
+  {const b=$('#clAdd2');if(b)b.onclick=()=>{const v=$('#clNew').value.trim();if(!v)return;guarded(()=>S.db.doc('regattas/'+id).update({checklist:[...cls(),{t:v,done:false}]}),'Added')}}
+  {const b=$('#trCfg');if(b)b.onclick=()=>regCfgForm()}
+  m.querySelectorAll('[data-dock]').forEach(el=>el.onchange=()=>{const [k,w]=el.dataset.dock.split('|');const d={...(r.dock||{})};d[k]={...(d[k]||{})};
+    d[k][w]=el.checked?{by:S.me,name:(me&&S.members[me]?mName(me):'Admin'),at:nowIso()}:null;if(w==='out'&&!el.checked)d[k].back=null;guarded(()=>S.db.doc('regattas/'+id).update({dock:d}),'')});
+}
+function regCfgForm(){const c=regCfg();
+  openModal(`<h3>Club regatta settings</h3><form id="mform"><div class="fg">
+    ${fld('Club trailers',`<textarea name="trailers" rows="3" placeholder="Big trailer | 12&#10;Small trailer | 4">${esc(c.trailers.map(t=>t.name+(t.racks?' | '+t.racks:'')).join('\n'))}</textarea>`,'full','One per line: name | number of boat racks.')}
+    ${fld('Checklist template',`<textarea name="checklist" rows="9">${esc(c.checklist)}</textarea>`,'full','Copied into each new regatta’s checklist (one item per line).')}
+    ${fld('Mixed crews',`<select name="mixedRule"><option value="half" ${c.mixedRule==='half'?'selected':''}>Must be half women, half men</option><option value="any" ${c.mixedRule==='any'?'selected':''}>Any mix of women and men</option></select>`)}
+    ${fld('Cox counts towards the category',`<select name="coxCounts"><option value="" ${c.coxCounts?'':'selected'}>No</option><option value="1" ${c.coxCounts?'selected':''}>Yes</option></select>`)}
+  </div>${formFoot('Save')}</form>`,()=>wireForm({msg:'Saved',save:fd=>S.db.doc('appSettings/regatta').set({mixedRule:fd.mixedRule,coxCounts:!!fd.coxCounts,checklist:fd.checklist.trim(),
+    trailers:fd.trailers.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]).map(([name,racks],i)=>({id:'t'+(i+1),name,racks:racks||''})),updatedAt:nowIso()})}));
+}
+function gearMemberHtml(id,r){const me=myMemberId(),mine=Object.entries(S.gear||{}).filter(([,g])=>g.regattaId===id&&g.memberId===me);
+  return `<div class="sec"><h4>Your own equipment on the trailer</h4><p class="tag" style="margin:0 0 6px">Bringing your own boat, blades or kit on the club trailer? Add it so it’s on the load list and checked out and back.</p>
+    ${mine.map(([gid,g])=>`<div class="ch-lp"><span>${esc(g.item)}${g.qty>1?' ×'+g.qty:''} <span class="tag">${esc(g.notes||'')}</span></span><button class="btn sm" data-geardel="${esc(gid)}">×</button></div>`).join('')}
+    <div class="fee-h"><input id="gItem" placeholder="e.g. My single (Filippi 1x), pair of sculls" style="flex:1;min-width:200px"><input id="gQty" type="number" min="1" value="1" style="width:70px"><input id="gNotes" placeholder="Notes" style="max-width:180px"><button class="btn sm" id="gAdd">+ Add</button></div></div>`}
+function bindGearMember(id,r){const me=myMemberId(),on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};
+  on('#gAdd',()=>{const it=$('#gItem').value.trim();if(!it)return toast('What are you bringing?');guarded(()=>S.db.collection('privateGear').add({regattaId:id,memberId:me,by:S.me,item:it,qty:Math.max(1,+$('#gQty').value||1),notes:$('#gNotes').value.trim(),at:nowIso()}),'Added to the load list')});
+  $('#main').querySelectorAll('[data-geardel]').forEach(el=>el.onclick=()=>guarded(()=>S.db.doc('privateGear/'+el.dataset.geardel).delete(),'Removed'));
 }
 function memberOptsAll(sel){return `<option value="">—</option>`+Object.entries(S.members).filter(([,m])=>m.status!=='inactive').sort((a,b)=>String(a[1].displayName).localeCompare(String(b[1].displayName))).map(([k,m])=>`<option value="${esc(k)}" ${k===sel?'selected':''}>${esc(m.displayName)}</option>`).join('')}
 async function saveEntries(id,entries,extra={}){
@@ -2975,6 +3080,10 @@ function regSettingsForm(id){const r=S.regattas[id],st=regSet(r);
 function regReportDoc(id,kind){
   const r=S.regattas[id],E=entriesSorted(r),st=regSet(r),pk=bladePeaks(r),L=loadList(r);
   const head=`<h1>${esc(r.name)}</h1><p>${rangeTxt(r.start,r.end)}${r.location?' · '+esc(r.location):''} · printed ${fmtDate(today())}</p>`;
+  if(kind==='trailer'){const cfg=regCfg(),tr=r.trailers||cfg.trailers.map(t=>({...t,boats:[]})),byB=Object.fromEntries(L.map(x=>[x.bid,x])),gear=Object.values(S.gear||{}).filter(g=>g.regattaId===id),cl=r.checklist||cfg.checklist.split('\n').filter(Boolean).map(t=>({t}));
+    return head+`<h2>Load list by trailer</h2>${tr.map(t=>`<h3>${esc(t.name)}${t.driver?' – driver '+esc(mName(t.driver)):''}</h3><table><tr><th>✓</th><th>Boat</th><th>Rig</th><th>Riggers on boat</th><th>Extra riggers</th></tr>${(t.boats||[]).map(b=>byB[b]).filter(Boolean).map(x=>`<tr><td>☐</td><td><b>${esc(x.name)}</b></td><td>${esc(x.travel)}</td><td>${x.riggersOn}</td><td>${esc(x.extraRiggers||'')}</td></tr>`).join('')||'<tr><td colspan="5">—</td></tr>'}</table>`).join('')}
+      ${gear.length?`<h2>Private equipment</h2><table><tr><th>✓</th><th>Item</th><th>Qty</th><th>Owner</th><th>Notes</th></tr>${gear.map(g=>`<tr><td>☐</td><td>${esc(g.item)}</td><td>${esc(g.qty||1)}</td><td>${esc(mName(g.memberId))}</td><td>${esc(g.notes||'')}</td></tr>`).join('')}</table>`:''}
+      <h2>Checklist</h2><table>${cl.map(c=>`<tr><td style="width:24px">☐</td><td>${esc(c.t)}</td></tr>`).join('')}</table>`}
   if(kind==='alloc')return head+`<h2>Equipment allocation by event</h2><table><tr><th>#</th><th>Day</th><th>Race</th><th>Event</th><th>Boat</th><th>Rig</th><th>Oars</th><th>Crew (bow → stroke)</th><th>Cox</th></tr>${E.map(e=>`<tr><td>${esc(e.no||'')}</td><td>${fmtDate(e.day).replace(/, \d{4}$/,'')}</td><td>${esc(e.time||'')}</td><td>${esc(e.event)}</td><td>${esc((S.boats[e.boatId]||{}).name||'')}</td><td>${esc(e.rig||'')}</td><td>${esc(e.oars||'')}</td><td>${(e.crew||[]).map(m=>m?esc(mName(m)):'—').join(', ')}</td><td>${e.cox?esc(mName(e.cox)):''}</td></tr>`).join('')}</table>`;
   const bl=(lab,k,sp)=>pk[k]&&pk[k].n?`<tr><td>☐</td><td>${lab}</td><td><b>${pk[k].n+(+sp||0)}</b> (${pk[k].n} at once + ${sp} spare)</td></tr>`:'';
   return head+`<h2>Boat loading checklist</h2><table><tr><th>✓</th><th>Boat</th><th>Travels as</th><th>Races</th><th>Riggers on boat</th><th>Extra riggers</th><th>Slings / straps</th></tr>${L.map(x=>`<tr><td>☐</td><td><b>${esc(x.name)}</b></td><td>${esc(x.travel)}</td><td>${x.races}</td><td>${x.riggersOn}</td><td>${esc(x.extraRiggers||'')}</td><td>☐</td></tr>`).join('')}</table>
