@@ -688,7 +688,7 @@ export const registrationSync = onDocumentWritten({ document: 'registrations/{id
     const keepUntil = m.bookableUntil && m.bookableUntil > cutoff ? m.bookableUntil : cutoff;
     const cancelled = await cancelAfter(mid, keepUntil, 'Registration ended');
     const to = await emailForMember(mid);
-    if (to) await sendOnce(`regend_${event.params.id}_${after.endedOn}`, to, regEndedEmail({ firstName: String(m.displayName || '').split(' ')[0], program: after.program, season: after.season, endedOn: after.endedOn, cancelled, link: SITE + '/#me' }));
+    if (to && !after.moved) await sendOnce(`regend_${event.params.id}_${after.endedOn}`, to, regEndedEmail({ firstName: String(m.displayName || '').split(' ')[0], program: after.program, season: after.season, endedOn: after.endedOn, cancelled, link: SITE + '/#me' }));
   }
 });
 async function syncAll() {
