@@ -201,7 +201,8 @@ language, and keep the "propose → preview link → merge" workflow.
   + Register / Edit / +1 quarter / End early), Admin page "Program registrations" (season switch, counts, payments due,
   not-renewed list, bulk register, one-time "Register current members for <season>", ↻ recalculate); + Add member and
   join-request approval register new members.
-  **One program at a time**: `LEVELS` Junior < Novice < Intermediate < Masters (`lvlRank`, `highestProg`); registering in
+  **One program at a time**: `LEVELS` Junior < Novice < Intermediate < Masters (`lvlRank`, `highestProg`); programs
+  outside the ladder (Rec, Para) run independently and **win** if registered; registering in
   another program ends overlapping ones the day before (`moved:true` → no email) or removes ones not yet started;
   migration / approvals use the highest program; Admin page offers "Keep the highest" for duplicates. `levelOf(m)` =
   `m.level` or the highest program on file (current or past regs), editable under Edit member.
