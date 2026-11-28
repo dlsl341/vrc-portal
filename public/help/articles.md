@@ -40,9 +40,18 @@ Home is your personal dashboard:
 3. Erg sessions: tap **Sign me up** – you get the next free erg in your program's block.
 4. Add it to your calendar when asked (Google, Outlook or a calendar file).
 
+- You can book a program's sessions while you're **registered** in that program for the date (see *Programs, seasons and registration*).
 - Booking opens **6 days before** (some programs differ) and closes when the session starts.
 - See a boat with an **open seat**? Tap **Join**. Changed your mind? **Leave** keeps the rest of the crew booked.
 - Boats that are out of service, being maintained or **away at a regatta** don't appear in the list.
+
+## membership | Programs, seasons and registration | all | me
+Programs like **Novice, Intermediate and Masters** run for a season from **1 October to 30 September** – written as e.g. **2026/27 Masters**.
+- You can book a program's sessions (and open erg) only while you're **registered** in it for that date. Your results, leaderboards and history always stay visible.
+- Your **Level** (e.g. Masters) is your rowing level – separate from the programs you're registered in this season.
+- **My profile → Membership** shows your registrations, their dates and, if you pay by the quarter, the **paid-through** date. Booking pauses after it until an admin records your next payment.
+- If you leave a program early, any bookings after your last day are cancelled with no fee and you get an email.
+- Not registered or want to renew? Talk to a club admin.
 
 ## ergs | Erg sessions, erg numbers and the waitlist | all | session
 Masters erg nights have two waves and 18 ergs, shared out by program:
@@ -55,7 +64,7 @@ Masters erg nights have two waves and 18 ergs, shared out by program:
 ## openerg | Open erg (outside programs) | all | openerg
 Want to erg when there's no class? **Programs ▾ Open erg** (or **+ Open erg** on the schedule):
 1. Pick a day (up to 6 days ahead) and a time between 06:00 and 21:30.
-2. Choose how long (30 min to 2 h) – you get the lowest free erg (erg 18 is kept for Para).
+2. Choose how long (30 min to 2 h) – you get the lowest free erg (erg 18 is kept for Para). You need to be registered in a program for that date.
 3. Add it to your calendar, and **Log result** afterwards. It counts in your history as *Open erg*.
 
 ## cancel | Cancelling, late cancels and no-shows | all | session
@@ -183,8 +192,18 @@ Each regatta has tabs:
 ## admin-members | Adding & inviting members, roles | admin | members
 - **Members → + Add member**: fill in the name, programs and email, and leave **Email an invitation** ticked – they get a one-time link that signs them straight in (valid 14 days).
 - On anyone not signed in yet: **✉ Invite to the portal / Resend invitation**.
+- **Edit member → Level** (Novice / Intermediate / Masters…) – programs come from their registrations.
 - **Edit member → Roles**: Rower, **Coach** (check-in, cancel classes, challenges), Cox, **Regatta committee**, **Dockmaster**.
 - Admins can search the directory by **member number**, merge duplicates and unlink accounts.
+
+## admin-registrations | Registering members each season | admin | admin
+Members can only book programs they're registered in. **Admin page → Program registrations**:
+- **Register several members**: pick the program (and a *paid-through* date for quarterly payers), tick the names, **Register**.
+- **Payments due or lapsed** lists quarterly payers whose paid-through date is within 14 days or past – **+1 quarter** extends to the next quarter end (31 Dec, 31 Mar, 30 Jun, 30 Sep).
+- **Registered last season but not this one** helps with renewals at the start of October.
+- On a member's profile, **Membership → + Register**, **Edit**, **+1 quarter** or **End early** (last day + reason – their later bookings are cancelled with no fee and they're emailed).
+- New members: **+ Add member** has *Register for 2026/27*; approving a join request registers them in the programs they asked for.
+- A member's **Level** is set under Edit member and is separate from their registrations. Who can book is recalculated every night (or **↻ Recalculate who can book now**).
 
 ## admin-programs | Programs, sessions and erg blocks | admin | manage
 **Programs ▾ Weekly schedule → Manage programs** to add or edit programs (colour, how many days ahead sign-ups open, boat required, PCOC) and their weekly sessions (day, time, type, capacity, who's eligible, coach). Use **Edit this date** to change one date's coach or capacity. Erg sessions have **erg blocks** (e.g. `Masters 1-12; Intermediate 13-17; Para 18 only`) and the time they open to everyone.

@@ -14,8 +14,9 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { mapResult, parseWebhook } from './c2map.js';
-import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, boatAwayEmail, shiftEmail, deadlineEmail, shiftReminderEmail, smtpSettings, validEmail } from './mail.js';
+import { welcomeEmail, declinedEmail, issueEmail, cancelEmail, claimAdminEmail, waitlistEmail, feeEmail, feeWaivedEmail, feeReportEmail, inviteEmail, boatAwayEmail, regEndedEmail, shiftEmail, deadlineEmail, shiftReminderEmail, smtpSettings, validEmail } from './mail.js';
 import { shiftIcs, shiftChanges, SHIFT_KINDS } from './ics.js';
+import { summarize, effectiveEnd } from './membership.js';
 import { ruleOf, lateCancel, noShows, resolveLate, weekOf, weeklyReport, bcToday, addDays, dow, startMs, closeMs } from './fees.js';
 import { ergGroupsText, parseErgGroups, pickPromotion, bcTime } from './waitlist.js';
 
@@ -644,4 +645,67 @@ export const regattaReminders = onSchedule({ schedule: '0 8 * * *', region: REGI
       }
     }
   }
+});
+
+// ---------------------------------------------------------------------------------------------
+// Program registrations. registrations/{id} {memberId, program, season, start, end, paidThrough?, endedOn?, endReason?}
+// → members/{id} gets {regs, programs (current), bookableFrom, bookableUntil} – the app and the security rules use these.
+// Ending a registration early cancels the member's bookings after that date (no fee) and emails them.
+const todayBC = () => new Date(Date.now() - 7 * 3600e3).toISOString().slice(0, 10);
+async function syncMember(mid, today = todayBC()) {
+  const regs = (await db.collection('registrations').where('memberId', '==', mid).get()).docs.map(d => d.data());
+  const sum = summarize(regs, today), ref = db.doc('members/' + mid), m = await ref.get();
+  if (!m.exists) return;
+  const cur = m.data(), same = JSON.stringify([cur.regs || [], cur.programs || [], cur.bookableFrom ?? null, cur.bookableUntil ?? null]) === JSON.stringify([sum.regs, sum.programs, sum.bookableFrom, sum.bookableUntil]);
+  if (!same) await ref.update({ ...sum, regsAt: new Date().toISOString() });
+}
+async function cancelAfter(mid, after, why) {
+  const out = [], now = new Date().toISOString();
+  const bk = await db.collection('bookings').where('date', '>', after).get();
+  for (const d of bk.docs) {
+    const b = d.data(); if (!people(b).includes(mid)) continue;
+    // a waived fee record first, so the late-cancel check never charges for this
+    await db.doc(`fees/late_${b.sessionId}_${b.date.replace(/-/g, '')}_${mid}`).create({ memberId: mid, type: 'late', sessionId: b.sessionId, date: b.date, amount: 0, status: 'waived', waiveNote: why, at: now }).catch(() => {});
+    const crew = (b.crew || []).map(x => x === mid ? null : x), cox = b.cox === mid ? null : b.cox;
+    if (!crew.some(Boolean) && !cox) await d.ref.delete(); else await d.ref.update({ crew, cox, open: true, updatedAt: now });
+    const s = await db.doc('sessions/' + b.sessionId).get();
+    out.push(`${b.date} – ${s.exists ? s.data().title : 'session'}`);
+  }
+  for (const col of ['openErg', 'waitlist']) {
+    const q = await db.collection(col).where('memberId', '==', mid).get();
+    for (const d of q.docs) if ((d.data().date || '') > after) { await d.ref.delete(); if (col === 'openErg') out.push(`${d.data().date} – Open erg`); }
+  }
+  return out.sort();
+}
+export const registrationSync = onDocumentWritten({ document: 'registrations/{id}', region: REGION }, async (event) => {
+  const before = event.data.before && event.data.before.data(), after = event.data.after && event.data.after.data();
+  const mid = (after || before).memberId; if (!mid) return;
+  await syncMember(mid);
+  if (after && after.endedOn && (!before || before.endedOn !== after.endedOn)) {
+    const cutoff = effectiveEnd(after);
+    // only cancel if no other registration still covers those dates
+    const m = (await db.doc('members/' + mid).get()).data() || {};
+    const keepUntil = m.bookableUntil && m.bookableUntil > cutoff ? m.bookableUntil : cutoff;
+    const cancelled = await cancelAfter(mid, keepUntil, 'Registration ended');
+    const to = await emailForMember(mid);
+    if (to) await sendOnce(`regend_${event.params.id}_${after.endedOn}`, to, regEndedEmail({ firstName: String(m.displayName || '').split(' ')[0], program: after.program, season: after.season, endedOn: after.endedOn, cancelled, link: SITE + '/#me' }));
+  }
+});
+async function syncAll() {
+  const today = todayBC(), regs = (await db.collection('registrations').get()).docs.map(d => d.data());
+  const by = {}; regs.forEach(r => (by[r.memberId] = by[r.memberId] || []).push(r));
+  const members = await db.collection('members').get();
+  let n = 0;
+  for (const m of members.docs) {
+    const sum = summarize(by[m.id] || [], today), cur = m.data();
+    if (JSON.stringify([cur.regs || [], cur.programs || [], cur.bookableFrom ?? null, cur.bookableUntil ?? null]) !== JSON.stringify([sum.regs, sum.programs, sum.bookableFrom, sum.bookableUntil])) { await m.ref.update({ ...sum, regsAt: new Date().toISOString() }); n++; }
+  }
+  return n;
+}
+// Every night (dates move on: paid-through dates lapse, new seasons start) and when an admin asks.
+export const registrationsNightly = onSchedule({ schedule: '15 3 * * *', region: REGION, timeZone: 'Etc/GMT+7', timeoutSeconds: 300 }, async () => { console.log('registrations: updated', await syncAll()); });
+export const registrationsOnRequest = onDocumentWritten({ document: 'regJobs/request', region: REGION, timeoutSeconds: 300 }, async (event) => {
+  if (!event.data.after || !event.data.after.exists) return;
+  const n = await syncAll();
+  await db.doc('regJobs/state').set({ at: new Date().toISOString(), updated: n });
 });

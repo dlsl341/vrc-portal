@@ -35,6 +35,13 @@ service cloud.firestore {
     function isRegattaCommittee() {       // a linked member with the Regatta committee role
       return isMember() && get(/databases/$(database)/documents/members/$(myMemberId())).data.get('roles', []).hasAny(['regatta', 'dockmaster']);
     }
+    // Programs are booked only while the member has a registration covering that date. The server keeps
+    // members/{id}.bookableFrom / bookableUntil ("YYYY-MM-DD", '' = not registered) up to date from registrations/.
+    // Members the server hasn't processed yet (no field) are let through so nobody is locked out mid-migration.
+    function registeredOn(d) {
+      let m = get(/databases/$(database)/documents/members/$(myMemberId())).data;
+      return !('bookableUntil' in m) || (m.bookableUntil != '' && m.get('bookableFrom', '') <= d && d <= m.bookableUntil);
+    }
     function onlyChanges(keys) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
@@ -219,12 +226,24 @@ service cloud.firestore {
       allow delete: if isAdmin() || isRegattaCommittee() || (isMember() && mid == myMemberId());
     }
 
+    // ---- program registrations (one per member per program per season). Admins manage them; members read their own.
+    // The server mirrors a summary onto members/{id} (regs, programs, bookableFrom/Until) for everyone else.
+    match /registrations/{id} {
+      allow read: if isAdmin() || (isMember() && resource.data.memberId == myMemberId());
+      allow write: if isAdmin();
+    }
+    match /regJobs/{id} {                  // admin asks the server to recalculate everyone now
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && id == 'request';
+    }
+
     // ---- erg waitlist: one entry per member per session date, id = {sessionId}_{YYYYMMDD}_{memberId}.
     // The server (functions) gives a freed erg to the first in line and deletes the entry.
     match /waitlist/{id} {
       allow read: if canUse();
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
                                       && request.resource.data.memberId == myMemberId()
+                                      && registeredOn(request.resource.data.date)
                                       && id == request.resource.data.sessionId + '_' + request.resource.data.date.replace('-', '') + '_' + myMemberId()
                                       && request.resource.data.group is string
                                       && request.resource.data.t is int        // place in line = time joined (ms)
@@ -238,6 +257,7 @@ service cloud.firestore {
       allow read: if canUse();
       allow create: if isAdmin() || (isMember() && request.resource.data.by == uid()
                                       && request.resource.data.memberId == myMemberId()
+                                      && registeredOn(request.resource.data.date)
                                       && request.resource.data.erg is int
                                       && request.resource.data.erg >= 1 && request.resource.data.erg <= 18);
       allow update, delete: if isAdmin() || (isMember() && resource.data.by == uid());
@@ -307,14 +327,15 @@ service cloud.firestore {
       allow read: if canUse();
       allow create: if isAdmin() || (isMember()
                        && request.resource.data.createdBy == uid()
-                       && inCrew(request.resource.data));
+                       && inCrew(request.resource.data)
+                       && registeredOn(request.resource.data.date));
       allow update: if isAdmin()
                     || (isMember() && isBooker()
                         && request.resource.data.createdBy == resource.data.createdBy
                         && request.resource.data.captain == resource.data.captain)
                     || (isMember() && onlyChanges(['crew', 'cox', 'open', 'updatedAt'])
                         && (inCrew(resource.data)                                         // leaving / swapping out
-                            || (resource.data.open == true && inCrew(request.resource.data)))); // joining an open seat
+                            || (resource.data.open == true && inCrew(request.resource.data) && registeredOn(resource.data.date)))); // joining an open seat
       allow delete: if isAdmin() || (isMember() && isBooker());
     }
 

@@ -341,6 +341,23 @@ test('members list their own private gear; dockmaster role can plan regattas and
   await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'members/m_alice'), { displayName: 'Alice', linkedUser: 'alice' }));
 });
 
+// ---- registrations gate booking
+test('members can only book dates their registration covers; admins manage registrations', async () => {
+  const seed = (d) => env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'members/m_alice'), { displayName: 'Alice', linkedUser: 'alice', ...d }));
+  const bk = (date) => ({ sessionId: 's', date, crew: ['m_alice'], createdBy: 'alice', captain: 'm_alice' });
+  await seed({ bookableFrom: '2026-10-01', bookableUntil: '2027-09-30' });
+  await assertSucceeds(setDoc(doc(as('alice'), 'bookings/rg1'), bk('2026-12-01')));
+  await assertFails(setDoc(doc(as('alice'), 'bookings/rg2'), bk('2027-10-05')));
+  await assertFails(setDoc(doc(as('alice'), 'openErg/rg3'), { memberId: 'm_alice', by: 'alice', date: '2027-10-05', start: '07:00', end: '08:00', erg: 2 }));
+  await seed({ bookableFrom: '', bookableUntil: '' });                       // not registered
+  await assertFails(setDoc(doc(as('alice'), 'bookings/rg4'), bk('2026-12-01')));
+  await assertSucceeds(setDoc(doc(as('carol'), 'registrations/m_alice_2026-27_Masters'), { memberId: 'm_alice', program: 'Masters', season: '2026/27', start: '2026-10-01', end: '2027-09-30' }));
+  await assertSucceeds(getDoc(doc(as('alice'), 'registrations/m_alice_2026-27_Masters')));
+  await assertFails(getDoc(doc(as('bob'), 'registrations/m_alice_2026-27_Masters')));
+  await assertFails(setDoc(doc(as('alice'), 'registrations/x'), { memberId: 'm_alice' }));
+  await seed({});                                                             // back to "not processed yet"
+});
+
 // ---- member emails log
 test('only admins can see the email log; nobody can write it from the browser', async () => {
   await assertSucceeds(getDoc(doc(as('carol'), 'mailLog/welcome_x')));
