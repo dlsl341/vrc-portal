@@ -197,3 +197,13 @@ export function deadlineEmail({ regatta, deadline, days, entries, link }) {
   return { subject, html: frame('Regatta entry deadline', `<p>Entries for <b>${esc(regatta)}</b> close on <b>${esc(dateLabel(deadline))}</b> – in ${days} days.</p><p>${entries} entr${entries === 1 ? 'y is' : 'ies are'} in the portal so far.</p>${button(link, 'Open the regatta')}`),
     text: `Entries for ${regatta} close on ${dateLabel(deadline)} – in ${days} days. ${entries} entries in the portal so far.\n${link}` };
 }
+
+// A member's program registration was ended early
+export function regEndedEmail({ firstName, program, season, endedOn, cancelled = [], link }) {
+  const subject = `Your ${season} ${program} registration has ended`;
+  const list = cancelled.length ? `<p>These bookings after ${esc(dateLabel(endedOn))} have been cancelled (no fee):</p><ul>${cancelled.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : '';
+  const html = frame('Registration ended', `<p>Hi ${esc(firstName || 'there')},</p>
+<p>Your registration in <b>${esc(season)} ${esc(program)}</b> ends on <b>${esc(dateLabel(endedOn))}</b>. After that you won’t be able to book this program, but your results and history stay in the portal.</p>${list}
+<p>Questions or want to come back? Talk to a club admin.</p>${button(link, 'Open the portal')}`);
+  return { subject, html, text: `Hi ${firstName || 'there'},\n\nYour ${season} ${program} registration ends on ${dateLabel(endedOn)}. You can't book this program after that; your results and history stay in the portal.\n${cancelled.length ? 'Cancelled (no fee): ' + cancelled.join('; ') + '\n' : ''}${link}` };
+}

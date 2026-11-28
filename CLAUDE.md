@@ -187,6 +187,20 @@ language, and keep the "propose → preview link → merge" workflow.
   invite used and deletes the claim; problems → claim `status:'invite_failed'` + `inviteError` (guest sees it, falls back
   to "Find your profile"). Fallback: a normal "This is me" request for a member with a pending invite to the same
   sign-in email is linked automatically. No admin "new request" email or welcome email for invite links.
+- **Program registrations / seasons** (seasons run 1 Oct – 30 Sep, label "2026/27"; `SEASON_START`, `seasonOf`,
+  `seasonRange` in the app and `functions/membership.js`, tests/membership.test.mjs): `registrations/{memberId_2026-27_prog}`
+  {memberId, program, season, start, end, paidThrough?, endedOn?, endReason, by} – admin write, member reads own.
+  Server `registrationSync` / `registrationsNightly` (03:15 UTC-7) / `registrationsOnRequest` (`regJobs/request`) write the
+  member summary onto `members/{id}`: `regs[]` {program, season, from, to = earliest of end/paidThrough/endedOn, end,
+  paidThrough, ended}, **`programs` = currently registered programs** (no longer edited by hand), `bookableFrom/Until`.
+  Rules `registeredOn(date)` gate bookings create/join, openErg and waitlist (members without the field yet = allowed).
+  App: `regOk(mid,d)` hides booking/join/reserve/waitlist and shows `regNote`; crew pickers mark "(not registered)".
+  Ending early (`endedOn`) → server cancels the member's bookings/open erg/waitlist after that date (pre-writes a waived
+  fee so no late-cancel fee) and emails them (`regEndedEmail`). Paid-through lapse only blocks new bookings. Member
+  `level` (Novice/Intermediate/Masters…) is separate from registrations. UI: profile "Membership" (self + admins; admins
+  + Register / Edit / +1 quarter / End early), Admin page "Program registrations" (season switch, counts, payments due,
+  not-renewed list, bulk register, one-time "Register current members for <season>", ↻ recalculate); + Add member and
+  join-request approval register new members.
 - **Join-request email**: trigger `emailAdminsOnClaim` (claims → pending) BCCs admins; opt-out
   `memberPrefs/{uid}.claimEmails = false` (Admin-page toggle).
 
@@ -200,10 +214,10 @@ language, and keep the "propose → preview link → merge" workflow.
   deletes – empty bookings are filtered out in the UI.
 
 ## Data model (Firestore collections)
-`boats` · `members` (displayName, programs[], status active|review|inactive, linkedUser, siteAdmin…) ·
+`boats` · `members` (displayName, level, programs[] (server: current registrations), regs[], bookableFrom/Until, status active|review|inactive, linkedUser, siteAdmin…) ·
 `memberPrefs/{uid or memberId}` (sides, experience, bio, photo, calPrompt – public to members) ·
 `memberPrivate/{uid or memberId}` (email, phone, emergency, weightKg, medical – self + admins) ·
-`claims/{uid}` · `accounts/{uid}` · `invites/{token}` · `admins/{uid}` · `profiles/{uid}` · `config/settings` ·
+`claims/{uid}` · `accounts/{uid}` · `invites/{token}` · `registrations` · `regJobs` · `admins/{uid}` · `profiles/{uid}` · `config/settings` ·
 `programs` (name, color, opensDays, boatRequired, pcocAllowed) ·
 `sessions` (programId, weekday 0=Mon, start/end "HH:MM", type water|erg, capacity, eligible[] program names, coach, safety, season, active) ·
 `occurrences/{sessionId_YYYYMMDD}` (per-date cancel/coach/capacity overrides) ·

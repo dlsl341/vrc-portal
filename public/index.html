@@ -306,7 +306,7 @@ footer{color:#cfcfd0;font-size:12px;padding:26px 20px 30px;text-align:center;bac
 .rig.rg-scull{border-color:#b9cfe9}.rig.rg-sweep{border-color:#ebcfa9}.rig.rg-scull.cur{background:#1f4f8a;border-color:#1f4f8a;color:#fff}.rig.rg-sweep.cur{background:#8a4b00;border-color:#8a4b00;color:#fff}
 .ro{padding:8px 0;font-weight:600}
 footer .ver{color:var(--ink3);font-size:11.5px}
-.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}
+.sec.policy{border-left:4px solid var(--pc,var(--red));margin-bottom:14px}.sec.wl{margin-top:14px}.nowrap{white-space:nowrap}.reg-adm h5{margin:10px 0 4px;font-size:13px}
 .help-q{width:100%;max-width:640px;font-size:16px;padding:12px 14px;margin:0 0 14px}.help-cols{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}@media(max-width:860px){.help-cols{grid-template-columns:1fr}}
 a.help-card{display:block;text-decoration:none;color:inherit;padding:12px 14px;margin-bottom:8px}a.help-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}a.help-card .tag{display:block;margin-top:3px}
 .help-link{display:block;padding:6px 0;text-decoration:none;color:var(--red);font-weight:600}.help-here{border-left:4px solid var(--red)}.help-new{display:flex;flex-direction:column;padding:6px 0;border-bottom:1px solid var(--line,#eee)}
@@ -538,7 +538,7 @@ async function init(){
   S._slowT=setTimeout(()=>{S.slow=true;render()},10000);
   sub('boats','boats');sub('issues','issues');sub('maintenance','maint');sub('events','events');
   sub('members','members');sub('activity','activity');sub('crews','crews');
-  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('privateGear','gear',true);subDoc('appSettings/regatta','regCfgDoc');sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
+  sub('programs','programs');sub('results','results',true);sub('attendance','attendance',true);sub('maintJobs','mjobs',true);sub('openErg','openErg',true);sub('coxAvail','coxAvail',true);sub('waitlist','waitlist',true);sub('regattaPublic','regPub',true);sub('regattaInterest','regInt',true);sub('shiftSignups','shSign',true);sub('driverApprovals','drivers',true);sub('privateGear','gear',true);subDoc('appSettings/regatta','regCfgDoc');sub('challenges','challenges',true);sub('feedback','feedback',true);subDoc('appSettings/features','features');sub('boatHolds','holds',true);sub('feeRules','feeRules',true);if(S.isAdmin){sub('registrations','regs',true);subDoc('regJobs/state','regJob');sub('invites','invites',true);sub('fees','fees',true);sub('feeRuns','feeRuns',true)}if(S.isAdmin)sub('mailLog','mailLog',true);sub('sessions','sessions');sub('bookings','bookings');sub('occurrences','occ',true);
   sub('memberPrefs','mprefs',true);sub('admins','admins',true);subDoc('config/settings','settings');
   if(S.isAdmin){sub('memberPrivate','mpriv',true);sub('claims','claims',true)}
   else if(S.me){subDoc('memberPrivate/'+S.me,'mpriv')}
@@ -975,7 +975,8 @@ function memberDetail(id,inPage){
    ${self&&!inPage?'':''}
    <div class="tiles">${tile(st.past.length,'Sessions')}${tile(st.d30,'Last 30 days')}${tile(st.up.length,'Booked')}${tile(st.last?fmtDate(st.last.date):'—','Last on water',true)}</div>
    <div class="sec"><h4>Rowing profile</h4><dl class="kv">
-     <dt>Programs</dt><dd>${esc((m.programs||[]).join(', ')||'—')}</dd>
+     <dt>Level</dt><dd>${esc(m.level||'—')}</dd>
+     <dt>Registered</dt><dd>${(m.programs||[]).length?m.programs.map(x=>`<span class="pill s-available">${esc(seasonOf(today()))} ${esc(x)}</span>`).join(' '):'<span class="muted">Not in a program right now</span>'}</dd>
      <dt>Roles</dt><dd>${esc((m.roles||['rower']).map(r=>ROLES[r]||r).join(', '))}</dd>
      <dt>Sides / seats</dt><dd>${esc((pr.sides||[]).join(', ')||'—')}</dd>
      <dt>Experience</dt><dd>${esc(pr.experience||'—')}</dd>
@@ -993,6 +994,7 @@ function memberDetail(id,inPage){
      ${pv&&pv.medical?`<dt>Medical notes</dt><dd>${esc(pv.medical)}</dd>`:''}
      ${canAdmin()&&m.linkedUser?`<dt>Sign-in account</dt><dd>${esc((S.profiles[m.linkedUser]&&S.profiles[m.linkedUser].name)||'Linked')}</dd>`:''}
    </dl></div>`:''}
+   ${self||canAdmin()?membershipHtml(id,self):''}
    ${memberAttendanceHtml(id)}
    ${coxProfileHtml(id,self)}
    ${self?c2Html():''}
@@ -1012,6 +1014,7 @@ function bindMemberDetail(root,id){
   {const o=root.querySelector('#cxOffer');if(o)o.onchange=e=>{e.stopPropagation();const me=myMemberId();if(me)setCoxAvail(me,{offered:o.checked}).then(()=>toast(o.checked?'You’re listed as a coxswain':'Removed from the coxswain list'))}}
   root.querySelectorAll('[data-reslog]').forEach(el=>el.onclick=e=>{e.stopPropagation();resultForm(null)});
   root.querySelectorAll('[data-resall]').forEach(el=>el.onclick=e=>{e.stopPropagation();S.resAll=S.resAll===id?null:id;render()});
+  bindMembership(root,id);
   root.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{const a=el.dataset.act;
     if(a==='admin')makeAdminForm(id);else if(a==='unadmin')removeAdminForm(id);else if(a==='editSelf')selfForm(id);else if(a==='edit')memberForm(id);else if(a==='merge')mergeForm(id);else if(a==='unlink')unlinkForm(id);else if(a==='invite')inviteForm(id);
     else if(a==='inactive'||a==='active')guarded(()=>S.db.doc('members/'+id).update({status:a==='active'?'active':'inactive',updatedAt:nowIso()}),a==='active'?'Member reactivated':'Marked inactive')});
@@ -1053,7 +1056,7 @@ function bindMembers(){
   m.querySelectorAll('[data-mstat]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.mstat;render()});
   m.querySelectorAll('[data-gomembers]').forEach(el=>el.onclick=()=>{S.mstatus=el.dataset.gomembers;location.hash='members'});
   m.querySelectorAll('[data-goissues]').forEach(el=>el.onclick=()=>{location.hash='issues'});
-  bindFees();
+  bindFees();bindRegAdmin();
   {const t=$('#fbTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('appSettings/features').set({...feat(),feedback:t.checked,updatedBy:S.me,updatedAt:nowIso()}),t.checked?'Feedback tab shown to everyone':'Feedback tab hidden from members')}
   {const t=$('#claimMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({claimEmails:t.checked},{merge:true}),t.checked?'You’ll get join request emails':'Join request emails off')}
   {const t=$('#issueMailTog');if(t)t.onchange=()=>guarded(()=>S.db.doc('memberPrefs/'+S.me).set({issueEmails:t.checked},{merge:true}),t.checked?'You’ll get damage report emails':'Damage report emails off')}
@@ -1094,7 +1097,8 @@ function memberForm(id){
     ${fld('First name',`<input name="firstName" required value="${esc(m.firstName||'')}">`)}
     ${fld('Last name',`<input name="lastName" value="${esc(m.lastName||'')}">`)}
     ${fld('Display name',`<input name="displayName" value="${esc(m.displayName||'')}" placeholder="e.g. Alice C">`,'full','Shown in the directory and on sign-ups. Leave blank to use first name + last initial.')}
-    ${fld('Programs',checks('programs',progNames(),m.programs),'full')}
+    ${fld('Level',`<select name="level"><option value="">—</option>${progNames().map(x=>`<option ${(m.level||'')===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`,'','Their rowing level / status. Separate from the programs they’re registered in.')}
+    ${id?fld('Registered programs',`<div style="padding-top:6px">${(m.programs||[]).length?m.programs.map(x=>`<span class="pill s-available">${esc(seasonOf(today()))} ${esc(x)}</span>`).join(' '):'<span class="muted">None this season</span>'} <span class="tag">– manage under Membership on their profile</span></div>`,'full'):fld('Register for '+seasonOf(today()),checks('regs',progNames(),[]),'full','They can book these programs from today until '+fmtDate(seasonRange(seasonOf(today())).to)+'.')}
     ${fld('Roles',checks('roles',Object.entries(ROLES),m.roles||['rower']),'')}
     ${fld('Status',`<select name="status">${Object.entries(M_STATUS).map(([k,l])=>`<option value="${k}" ${m.status===k?'selected':''}>${l}</option>`).join('')}</select>`)}
     ${fld('Sides / seats',checks('sides',SIDES,pr.sides),'')}
@@ -1112,7 +1116,7 @@ function memberForm(id){
     msg:id?'Member updated':'Member added',
     save:async fd=>{
       const dn=fd.displayName.trim()||dispName(fd.firstName,fd.lastName);
-      const data={firstName:fd.firstName.trim(),lastName:fd.lastName.trim(),displayName:dn,programs:fd._c.programs||[],roles:(fd._c.roles||[]).length?fd._c.roles:['rower'],
+      const data={firstName:fd.firstName.trim(),lastName:fd.lastName.trim(),displayName:dn,level:fd.level||'',roles:(fd._c.roles||[]).length?fd._c.roles:['rower'],
         status:fd.status,pcoc:!!(fd._c.pcoc||[]).length,pcocDate:fd.pcocDate||'',updatedAt:nowIso()};
       let mid=id;
       if(id){if(data.status==='review'&&data.lastName&&m.status==='review')data.status='active';await S.db.doc('members/'+id).update(data)}
@@ -1121,6 +1125,7 @@ function memberForm(id){
       const ph=id?await savePhoto(av,pr.photo):undefined;
       await S.db.doc('memberPrefs/'+key).set({...(id?prefsOf(id):{}),sides:fd._c.sides||[],experience:fd.experience,gender:fd.gender||null,birthYear:fd.birthYear?+fd.birthYear:null,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
       const p=privFrom(fd);if(Object.values(p).some(v=>v&&v!==p.updatedAt)||privOf(mid))await S.db.doc('memberPrivate/'+key).set({...(privOf(mid)||{}),...p});
+      for(const pg of (fd._c.regs||[]))await registerMember(mid,pg,seasonOf(today()),{});
       if((fd._c.invite||[]).length){await createInvite(mid,fd.email);toast(`Invitation emailed to ${fd.email.trim()}`)}
     }})});
 }
@@ -1201,7 +1206,7 @@ async function approveClaim(uid,btn){
       await S.db.doc('members/'+mid).update(upd);
     } else {
       const dn=dispName(c.firstName,c.lastName);mid='m_'+slugify(dn);if(S.members[mid])mid+='-'+Date.now().toString(36);
-      await S.db.doc('members/'+mid).set({displayName:dn,firstName:c.firstName||'',lastName:c.lastName||'',programs:c.programs||[],roles:['rower'],status:'active',pcoc:false,linkedUser:uid,linkedAt:nowIso(),createdAt:nowIso(),source:'Created from a member request'});
+      await S.db.doc('members/'+mid).set({displayName:dn,firstName:c.firstName||'',lastName:c.lastName||'',level:(c.programs||[])[0]||'',programs:c.programs||[],roles:['rower'],status:'active',pcoc:false,linkedUser:uid,linkedAt:nowIso(),createdAt:nowIso(),source:'Created from a member request'});
     }
     const oldP=S.mpriv[mid],oldPr=S.mprefs[mid];
     const priv={...(oldP||{})};if(c.email)priv.email=c.email;if(c.phone)priv.phone=c.phone;if(c.memberNo&&!priv.memberNo)priv.memberNo=c.memberNo;
@@ -1209,6 +1214,7 @@ async function approveClaim(uid,btn){
     if(oldP)await S.db.doc('memberPrivate/'+mid).delete();
     if(oldPr){await S.db.doc('memberPrefs/'+uid).set(oldPr);await S.db.doc('memberPrefs/'+mid).delete()}
     await S.db.doc('accounts/'+uid).set({memberId:mid,linkedAt:nowIso()});
+    if(c.type!=='existing')for(const pg of (c.programs||[]))await registerMember(mid,pg,seasonOf(today()),{});   // new people: register in what they asked for
     if(S.members[mid]&&S.members[mid].siteAdmin)await S.db.doc('admins/'+uid).set({memberId:mid,since:nowIso()});
     await S.db.doc('claims/'+uid).delete();
   },'Approved – account linked');
@@ -1286,6 +1292,16 @@ const occ=(sid,d)=>S.occ[occKey(sid,d)]||{};
 const progOf=sid=>{const s=S.sessions[sid];return (s&&S.programs[s.programId])||{}};
 const eligNames=sid=>{const s=S.sessions[sid];return s&&s.eligible&&s.eligible.length?s.eligible:[progOf(sid).name]};
 const eligible=(mid,sid)=>{const m=S.members[mid];return !!m&&(m.programs||[]).some(p=>eligNames(sid).includes(p))};
+/* ---------- program registrations (seasons start 1 October: "2026/27"). The server writes each member's summary
+   (regs[], programs = current, bookableFrom/Until) from registrations/{id}; booking needs a registration covering the date. ---------- */
+const SEASON_START='10-01';
+const seasonOf=d=>{const y=+d.slice(0,4),y0=d.slice(5)>=SEASON_START?y:y-1;return `${y0}/${String((y0+1)%100).padStart(2,'0')}`};
+const seasonRange=l=>{const y0=+l.slice(0,4);return {from:`${y0}-${SEASON_START}`,to:addDays(`${y0+1}-${SEASON_START}`,-1)}};
+const regId=(mid,season,prog)=>`${mid}_${season.replace('/','-')}_${slugify(prog)}`;
+// may this member book on date d? (members not yet processed by the server keep their old access)
+const regOk=(mid,d)=>{const m=S.members[mid];if(!m)return false;if(!('bookableUntil' in m))return true;return (m.regs||[]).some(r=>r.from<=d&&d<=r.to)};
+const regNote=(mid,d)=>{const m=S.members[mid]||{},L=(m.regs||[]);const lapsed=L.find(r=>r.to<d&&!r.ended&&r.paidThrough&&r.paidThrough===r.to);
+  return lapsed?`Your ${esc(lapsed.season)} ${esc(lapsed.program)} registration is paid through ${fmtDate(lapsed.paidThrough)}.`:`You’re not registered in a program for ${fmtDate(d)}.`};
 const capacity=(sid,d)=>occ(sid,d).capacity||(S.sessions[sid]||{}).capacity||0;
 const coachOf=(sid,d)=>occ(sid,d).coach||(S.sessions[sid]||{}).coach||'';
 const safetyOf=(sid,d)=>occ(sid,d).safety||(S.sessions[sid]||{}).safety||'';
@@ -1405,17 +1421,19 @@ function viewSession(){
   const p=progOf(id),o=occ(id,d),bk=sessBookings(id,d),cap=capacity(id,d),w=windowState(id,d),me=myMemberId(),mine=myBookingIn(id,d),erg=s.type==='erg';
   const full=!!cap&&bk.length>=cap;
   const ergNone=erg&&!full&&!!me&&!mine&&!canAdmin()&&ergGroups(id).length&&!nextErg(id,d,me);
-  const canBook=!o.cancelled&&(canAdmin()||(w.state==='open'&&!!me&&eligible(me,id)&&canMember()&&!full&&!ergNone));
+  const regd=!me||regOk(me,d);
+  const canBook=!o.cancelled&&(canAdmin()||(w.state==='open'&&!!me&&regd&&eligible(me,id)&&canMember()&&!full&&!ergNone));
   let notice='';
   if(o.cancelled)notice=`<div class="callout bad cancel-note"><b>Cancelled${o.reasonCode||o.reason?' – '+esc(CANCEL_REASONS[o.reasonCode]||o.reason):''}.</b>${o.cancelNotes?`<div style="margin-top:4px">${esc(o.cancelNotes)}</div>`:''}${o.cancelledBy?`<div class="tag" style="margin-top:4px">Cancelled by ${esc(o.cancelledBy)}${o.notified?` · ${o.notified} signed-up member${o.notified===1?' was':'s were'} emailed`:''}</div>`:''}</div>`;
   else if(w.state==='soon')notice=`<div class="callout">Sign-ups open ${dayLabel(w.at,true)}.</div>`;
   else if(w.state==='closed')notice=`<div class="callout">This session has started or finished. Sign-ups are closed${canAdmin()?' (admins can still edit)':''}.</div>`;
   else if(!S.me)notice='';
   else if(!me)notice=`<div class="callout">Link your member profile to book. <a href="#me">Go to My profile →</a></div>`;
+  else if(me&&!regd&&!canAdmin())notice=`<div class="callout">${regNote(me,d)} You can still see your results and history – talk to a club admin to register or renew.</div>`;
   else if(!eligible(me,id))notice=`<div class="callout">This session is for ${esc(eligNames(id).join(', '))}. ${s.guestNote?esc(s.guestNote):'Contact the coach if you’d like to join.'}</div>`;
   else if(full&&!mine)notice=`<div class="callout">This session is full (${cap} ${erg?'ergs':'boats'}).${!erg?' Look for open seats below.':''}</div>`;
   else if(ergNone)notice=`<div class="callout">${ergFullMsg(id,d,me)}</div>`;
-  const myW=erg?myWait(id,d):null,wlLive=erg&&!o.cancelled&&w.state==='open'&&!!me&&!mine&&eligible(me,id)&&canMember();
+  const myW=erg?myWait(id,d):null,wlLive=erg&&!o.cancelled&&w.state==='open'&&!!me&&!mine&&regd&&eligible(me,id)&&canMember();
   const wlGroup=wlLive&&!myW?waitGroupFor(id,d,me):null;
   if(myW&&!mine&&!o.cancelled&&w.state!=='closed')notice=`<div class="callout wl-me">You’re <b>#${waitPos(id,d,me)}</b> on the <b>${esc(myW.group)}</b> waitlist. If an erg in your block is cancelled, it’s yours automatically – we’ll email you.${ergOverflow(id,d)?' Ergs left free are now open to everyone – grab one if you see it.':` Any erg still free opens to everyone at ${esc(ergOpenLabel(id))}.`} <button class="btn sm" id="wlLeave">Leave waitlist</button></div>`;
   else if(wlGroup)notice=`<div class="callout">${full?`This session is full (${cap} ergs).`:ergFullMsg(id,d,me)} <button class="btn sm pri" id="wlJoin">Join the ${esc(wlGroup.name)} waitlist</button>${waitLine(id,d,wlGroup.name).length?` <span class="tag">${waitLine(id,d,wlGroup.name).length} already waiting</span>`:''}</div>`;
@@ -1432,7 +1450,7 @@ function viewSession(){
   const rows=bk.map(([bid,b],i)=>{
     const boat=S.boats[b.boatId];const rerig=boat&&b.rig&&b.rig!==boat.currentRig;const amIn=!!me&&bMembers(b).includes(me);
     const isCapt=(!!me&&b.captain===me)||(!!S.me&&b.createdBy===S.me);const live=w.state!=='closed'&&!o.cancelled;
-    const canJoin=live&&!!me&&!amIn&&!mine&&b.open&&(b.crew||[]).some(x=>!x)&&canMember()&&(eligible(me,id)||canAdmin());
+    const canJoin=live&&!!me&&!amIn&&!mine&&b.open&&(b.crew||[]).some(x=>!x)&&canMember()&&((eligible(me,id)&&regd)||canAdmin());
     const crew=(b.crew||[]).map(x=>x?`<span class="lnk" data-member="${esc(x)}">${esc(mName(x))}</span>${markBadge(markOf(id,d,x))}`:'<span class="oseat">open seat</span>').join(', ')+(b.cox?` <span class="tag">· cox</span> <span class="lnk" data-member="${esc(b.cox)}">${esc(mName(b.cox))}</span>${markBadge(markOf(id,d,b.cox))}`:(boat&&/\+/.test(b.rig||'')?' <span class="tag">· cox</span> <span class="oseat">needed</span>':''));
     const logged=amIn&&Object.values(S.results).some(r=>r.bookingId===bid&&r.memberId===me);
     const acts=[amIn&&b.date<=today()&&!o.cancelled&&(b.date<today()||w.state==='closed')?(logged?'<span class="tag">✓ Result logged</span>':`<button class="btn sm pri" data-logres="${esc(bid)}">Log result</button>`):'',amIn&&b.date>=today()?`<button class="btn sm" data-bcal="${esc(bid)}" title="Add to my calendar">📅 Calendar</button>`:'',(isCapt||canAdmin())&&(live||canAdmin())?`<button class="btn sm" data-bedit="${esc(bid)}">Edit</button><button class="btn sm dan" data-bcancel="${esc(bid)}">Cancel</button>`:'',amIn&&!isCapt&&live?`<button class="btn sm" data-bleave="${esc(bid)}">Leave</button>`:'',canJoin?`<button class="btn sm pri" data-bjoin="${esc(bid)}">Join</button>`:''].join('');
@@ -1445,7 +1463,7 @@ function viewSession(){
     const byN={},placed=new Set();bk.forEach(e=>{const n=e[1].erg;if(n&&n<=cap&&!byN[n]){byN[n]=e;placed.add(e[0])}});const html=rows.split('</tr>');const at={};bk.forEach((e,i)=>at[e[0]]=html[i]+'</tr>');
     const live=w.state!=='closed'&&!o.cancelled;const meIn=!!me&&!!mine;const myOk=me?ergChoices(id,d,me):[];
     ergRows=[...Array(cap)].map((_,i)=>{const n=i+1;if(byN[n])return at[byN[n][0]];const g=ergGroupOf(id,n);
-      const canRes=!o.cancelled&&(canAdmin()||(live&&w.state==='open'&&!!me&&!meIn&&eligible(me,id)&&canMember()&&myOk.includes(n)));
+      const canRes=!o.cancelled&&(canAdmin()||(live&&w.state==='open'&&!!me&&!meIn&&regd&&eligible(me,id)&&canMember()&&myOk.includes(n)));
       return `<tr class="free"><td class="num">${n}${g?`<div class="tag">${esc(g.name)}</div>`:''}</td><td><span class="oseat">Free</span>${g&&(g.only||!ergOverflow(id,d))?` <span class="tag">· ${g.only?esc(g.name)+' only':'reserved for '+esc(g.name)}</span>`:''}</td><td class="hide-s"></td><td class="ra">${canRes?`<button class="btn sm pri" data-ergres="${n}">Reserve</button>`:''}</td></tr>`}).join('')
       +bk.filter(e=>!placed.has(e[0])).map(e=>at[e[0]]).join(''); // no number, beyond the limit, or a duplicate number
   }
@@ -1502,7 +1520,7 @@ function memberOpts(sid,d,sel,exclBid){
   const busy=new Set();sessBookings(sid,d).forEach(([bid,b])=>{if(bid!==exclBid)bMembers(b).forEach(x=>busy.add(x))});
   const all=Object.entries(S.members).filter(([,m])=>m.status!=='inactive').sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
   const inP=all.filter(([x])=>eligible(x,sid)),out=all.filter(([x])=>!eligible(x,sid));
-  const o=([x,m])=>`<option value="${esc(x)}" ${x===sel?'selected':''} ${busy.has(x)&&x!==sel?'disabled':''}>${esc(m.displayName)}${busy.has(x)&&x!==sel?' (already booked)':''}</option>`;
+  const o=([x,m])=>{const nr=!regOk(x,d)&&!canAdmin(),off=(busy.has(x)||nr)&&x!==sel;return `<option value="${esc(x)}" ${x===sel?'selected':''} ${off?'disabled':''}>${esc(m.displayName)}${busy.has(x)&&x!==sel?' (already booked)':nr&&x!==sel?' (not registered)':''}</option>`};
   return `<option value="">— Open seat —</option><optgroup label="${esc(eligNames(sid).join(' / '))}">${inP.map(o).join('')}</optgroup><optgroup label="Other members (guests)">${out.map(o).join('')}</optgroup>`;
 }
 function bookingForm(sid,d,bid,preBoat){
@@ -2469,6 +2487,7 @@ function bindOpenErg(){
   m.querySelectorAll('[data-oelog]').forEach(el=>el.onclick=()=>{const o=S.openErg[el.dataset.oelog];resultForm(null,{date:o.date,bookingId:'oe_'+el.dataset.oelog,type:'erg',workout:o.notes||'Open erg'})});
   m.querySelectorAll('[data-oecancel]').forEach(el=>el.onclick=()=>guarded(()=>S.db.doc('openErg/'+el.dataset.oecancel).delete(),'Open erg booking cancelled'));
   {const b=$('#oeBook');if(b)b.onclick=async()=>{const me=myMemberId(),d=S.oeDate,a=toMin(S.oeStart),e=a+S.oeDur;
+    if(!canAdmin()&&!regOk(me,d))return toast(regNote(me,d).replace(/<[^>]+>/g,'')+' Talk to a club admin to register.');
     if(oeBlocked(d,a,e))return toast('That time is now programmed – pick another slot');
     if(oeOn(d).some(([,o])=>o.memberId===me&&overlaps(a,e,toMin(o.start),toMin(o.end))))return toast('You already have an erg booked then');
     const free=oeErgsFree(d,a,e,me);if(!free.length)return toast('All ergs are taken for that time');
@@ -3408,6 +3427,94 @@ function viewHelp(){
       <div class="sec"><h4>Still stuck?</h4><p style="margin:0">Ask your coach, or <a class="lnk" href="#feedback">report it on Feedback</a> – your device details are added for you.</p></div></div>`:''}</div>`;
 }
 function bindHelp(){const q=$('#helpQ');if(q){q.oninput=()=>{S.helpQ=q.value;clearTimeout(S._hq);S._hq=setTimeout(()=>{render();const n=$('#helpQ');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}},200)};if(!S.helpOpen&&!('ontouchstart' in window))q.focus()}}
+/* ----- membership UI ----- */
+S.regs={};S.regJob={};S.regAdminSeason=null;S.regPick=new Set();S.regQ='';
+const quarterEnd=d=>{const y=+d.slice(0,4),m=+d.slice(5,7);return m<=3?`${y}-03-31`:m<=6?`${y}-06-30`:m<=9?`${y}-09-30`:`${y}-12-31`};
+const nextQuarter=d=>quarterEnd(addDays(quarterEnd(d),1));
+const effEnd=r=>[r.end,r.paidThrough,r.endedOn].filter(Boolean).sort()[0]||r.end;
+function regState(r){const t=today(),e=effEnd(r);if(r.endedOn&&r.endedOn<t)return ['Ended early','s-retired'];if(r.endedOn)return ['Ending '+fmtDate(r.endedOn),'s-repair'];
+  if(r.start>t)return ['Starts '+fmtDate(r.start),'s-repair'];if(e<t)return r.paidThrough&&r.paidThrough<r.end?['Payment lapsed','s-dnr']:['Finished','s-retired'];
+  if(r.paidThrough&&r.paidThrough<r.end&&pd(r.paidThrough)-pd(t)<=14*864e5)return ['Due '+fmtDate(r.paidThrough),'s-repair'];return ['Active','s-available']}
+async function registerMember(mid,prog,season,o){const rg=seasonRange(season),t=today();
+  const start=o.start||(t>rg.from&&t<=rg.to?t:rg.from);
+  await S.db.doc('registrations/'+regId(mid,season,prog)).set({memberId:mid,program:prog,season,start,end:o.end||rg.to,paidThrough:o.paidThrough||null,endedOn:null,endReason:'',by:S.me,at:nowIso()},{merge:true});
+}
+function membershipHtml(id,self){
+  const m=S.members[id]||{},adm=canAdmin();
+  const L=adm?Object.entries(S.regs||{}).filter(([,r])=>r.memberId===id).map(([k,r])=>[k,r]):(m.regs||[]).map((r,i)=>[null,{program:r.program,season:r.season,start:r.from,end:r.end||r.to,paidThrough:r.paidThrough,endedOn:r.ended?r.to:null}]);
+  L.sort((a,b)=>String(b[1].start).localeCompare(String(a[1].start)));
+  return `<div class="sec"><div class="ch-ct"><h4 style="margin:0">Membership</h4>${adm?`<button class="btn sm pri" data-mregnew="${esc(id)}">+ Register</button>`:''}</div>
+    ${L.length?`<table class="feetbl" style="margin-top:6px"><tr><th>Season</th><th>Program</th><th>Dates</th><th>Paid through</th><th></th>${adm?'<th></th>':''}</tr>${L.map(([k,r])=>{const st=regState(r);
+      return `<tr><td>${esc(r.season)}</td><td><b>${esc(r.program)}</b></td><td>${fmtDate(r.start).replace(/, \d{4}$/,'')} – ${fmtDate(effEnd(r))}${r.endReason?`<div class="tag">${esc(r.endReason)}</div>`:''}</td><td>${r.paidThrough?fmtDate(r.paidThrough):'<span class="muted">full season</span>'}</td><td><span class="pill ${st[1]}">${st[0]}</span></td>
+        ${adm?`<td class="nowrap">${!r.endedOn&&r.paidThrough&&r.paidThrough<r.end?`<button class="btn sm" data-mregq="${esc(k)}" title="Paid through the next quarter">+1 quarter</button> `:''}<button class="btn sm" data-mregedit="${esc(k)}">Edit</button>${!r.endedOn&&effEnd(r)>=today()?` <button class="btn sm dan" data-mregend="${esc(k)}">End early</button>`:''}</td>`:''}</tr>`}).join('')}</table>`
+      :`<p class="muted" style="margin:4px 0 0">${self?'You’re not registered in a program yet – talk to a club admin.':'Not registered in any program.'}</p>`}
+    ${self&&!adm?'<p class="tag" style="margin:6px 0 0">You can book a program’s sessions while your registration covers the date. Your results and history always stay visible.</p>':''}</div>`;
+}
+function regForm(mid,key){
+  const r=key?S.regs[key]:null,cur=seasonOf(today()),seasons=[cur,seasonOf(addDays(seasonRange(cur).to,1)),seasonOf(addDays(seasonRange(cur).from,-1))];
+  openModal(`<h3>${r?'Edit registration':'Register '+esc(mName(mid))}</h3><form id="mform"><div class="fg">
+    ${fld('Program',`<select name="program" ${r?'disabled':''}>${progNames().map(x=>`<option ${r&&r.program===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`)}
+    ${fld('Season',`<select name="season" ${r?'disabled':''}>${[...new Set(seasons)].map(x=>`<option ${(r?r.season:cur)===x?'selected':''}>${x}</option>`).join('')}</select>`)}
+    ${fld('Starts',`<input type="date" name="start" value="${esc(r?r.start:'')}">`,'','Blank = today (or the season start).')}
+    ${fld('Ends',`<input type="date" name="end" value="${esc(r?r.end:'')}">`,'','Blank = end of the season (30 Sep).')}
+    ${fld('Paid through',`<input type="date" name="paidThrough" value="${esc(r&&r.paidThrough||'')}">`,'full','For quarterly payers: booking stops after this date until it’s extended. Leave blank if the whole season is paid.')}
+    <div class="full chips">${['12-31','03-31','06-30','09-30'].map(q=>`<button type="button" class="chip" data-pq="${q}">to ${q==='12-31'?'31 Dec':q==='03-31'?'31 Mar':q==='06-30'?'30 Jun':'30 Sep'}</button>`).join('')}</div>
+  </div>${formFoot(r?'Save':'Register')}</form>`,()=>{
+    document.querySelectorAll('[data-pq]').forEach(b=>b.onclick=()=>{const f=$('#mform'),sea=r?r.season:f.season.value,y0=+sea.slice(0,4),q=b.dataset.pq;f.paidThrough.value=`${q==='12-31'?y0:y0+1}-${q}`});
+    wireForm({validate:fd=>fd.end&&fd.start&&fd.end<fd.start?'The end is before the start.':null,msg:r?'Registration saved':'Registered',
+      save:async fd=>{if(r)return S.db.doc('registrations/'+key).update({start:fd.start||r.start,end:fd.end||r.end,paidThrough:fd.paidThrough||null,updatedAt:nowIso(),by:S.me});
+        if(S.regs[regId(mid,fd.season,fd.program)]&&!confirm('They already have this registration – update it?'))return;
+        await registerMember(mid,fd.program,fd.season,{start:fd.start,end:fd.end,paidThrough:fd.paidThrough})}});
+  });
+}
+function regEndForm(key){const r=S.regs[key],fut=Object.values(S.bookings||{}).filter(b=>b.date>today()&&bMembers(b).includes(r.memberId)).length;
+  openModal(`<h3>End ${esc(mName(r.memberId))}’s ${esc(r.season)} ${esc(r.program)} early</h3><form id="mform"><div class="fg">
+    ${fld('Last day they can book',`<input type="date" name="endedOn" required value="${today()}">`)}
+    ${fld('Reason',`<input name="endReason" placeholder="e.g. Stopped quarterly payments">`,'full')}
+    <div class="full callout">Their bookings after that date (${fut} upcoming now) are cancelled with <b>no fee</b>, their spots open up (the erg waitlist moves), and they get an email. Their results and history stay.</div>
+  </div>${formFoot('End registration')}</form>`,()=>wireForm({msg:'Registration ended – bookings after that date are being cancelled',
+    save:fd=>S.db.doc('registrations/'+key).update({endedOn:fd.endedOn,endReason:fd.endReason.trim(),endedBy:S.me,updatedAt:nowIso()})}));
+}
+function bindMembership(root,id){
+  root.querySelectorAll('[data-mregnew]').forEach(el=>el.onclick=()=>regForm(el.dataset.mregnew,null));
+  root.querySelectorAll('[data-mregedit]').forEach(el=>el.onclick=()=>regForm(id,el.dataset.mregedit));
+  root.querySelectorAll('[data-mregend]').forEach(el=>el.onclick=()=>regEndForm(el.dataset.mregend));
+  root.querySelectorAll('[data-mregq]').forEach(el=>el.onclick=()=>{const r=S.regs[el.dataset.mregq],nx=nextQuarter(r.paidThrough>today()?r.paidThrough:today()),to=nx>r.end?r.end:nx;
+    guarded(()=>S.db.doc('registrations/'+el.dataset.mregq).update({paidThrough:to,updatedAt:nowIso(),by:S.me}),'Paid through '+fmtDate(to))});
+}
+function regAdminHtml(){
+  const cur=seasonOf(today()),sea=S.regAdminSeason||cur,R=Object.entries(S.regs||{}),inS=R.filter(([,r])=>r.season===sea),t=today();
+  const progs=progNames(),cnt=p=>inS.filter(([,r])=>r.program===p&&effEnd(r)>=t).length;
+  const due=R.filter(([,r])=>!r.endedOn&&r.paidThrough&&r.paidThrough<r.end&&r.paidThrough>=addDays(t,-60)&&pd(r.paidThrough)-pd(t)<=14*864e5).sort((a,b)=>a[1].paidThrough.localeCompare(b[1].paidThrough));
+  const prevS=seasonOf(addDays(seasonRange(sea).from,-1)),regd=new Set(inS.map(([,r])=>r.memberId));
+  const notBack=[...new Set(R.filter(([,r])=>r.season===prevS).map(([,r])=>r.memberId))].filter(x=>!regd.has(x)&&S.members[x]);
+  const q=S.regQ.trim().toLowerCase(),pick=Object.entries(S.members).filter(([,m])=>m.status!=='inactive'&&(!q||m.displayName.toLowerCase().includes(q))).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
+  return `<div class="sec reg-adm"><div class="ch-ct"><h4 style="margin:0">Program registrations</h4><span class="chips"><button class="chip" data-regsea="-1">‹</button><button class="chip on">${sea}</button><button class="chip" data-regsea="1">›</button></span></div>
+    ${!R.length?`<div class="callout" style="margin:8px 0"><b>Set up ${cur} registrations.</b> Members can only book programs they’re registered in. Start by registering everyone in the programs they’re in today (${Object.values(S.members).filter(m=>(m.programs||[]).length&&m.status!=='inactive').length} members) – from ${fmtDate(seasonRange(cur).from)} to ${fmtDate(seasonRange(cur).to)}. Then end the ones who’ve left.<div class="actions"><button class="btn pri" id="regMigrate">Register current members for ${cur}</button></div></div>`:''}
+    <p class="tag" style="margin:4px 0 8px">${progs.map(p=>`${esc(p)}: <b>${cnt(p)}</b>`).join(' · ')} · seasons start 1 October</p>
+    ${due.length?`<h5>Payments due or lapsed (next 14 days)</h5>${due.map(([k,r])=>`<div class="ch-lp"><span><span class="lnk" data-member="${esc(r.memberId)}">${esc(mName(r.memberId))}</span> · ${esc(r.program)} <span class="tag">paid through ${fmtDate(r.paidThrough)}${r.paidThrough<t?' – lapsed, can’t book':''}</span></span><span><button class="btn sm" data-mregq="${esc(k)}">+1 quarter</button> <button class="btn sm dan" data-mregend="${esc(k)}">End</button></span></div>`).join('')}`:''}
+    ${notBack.length?`<details style="margin-top:8px"><summary><b>${notBack.length}</b> registered in ${prevS} but not ${sea}</summary><p class="tag">${notBack.map(x=>`<span class="lnk" data-member="${esc(x)}">${esc(mName(x))}</span>`).join(', ')}</p></details>`:''}
+    <details style="margin-top:8px"><summary><b>Register several members</b> for ${sea}</summary>
+      <div class="fee-h" style="margin-top:8px"><select id="regBulkProg">${progs.map(p=>`<option>${esc(p)}</option>`).join('')}</select><input id="regBulkPaid" type="date" title="Paid through (optional)"><input id="regQ" placeholder="Filter names" value="${esc(S.regQ)}" style="max-width:180px"><button class="btn sm pri" id="regBulk" ${S.regPick.size?'':'disabled'}>Register ${S.regPick.size||''}</button></div>
+      <div class="rb-list">${pick.map(([k,m])=>`<label class="rb"><input type="checkbox" data-regpick="${esc(k)}" ${S.regPick.has(k)?'checked':''}> ${esc(m.displayName)}${(m.programs||[]).length?` <span class="tag">${esc(m.programs.join(', '))}</span>`:''}</label>`).join('')}</div>
+      <p class="tag">“Paid through” is for quarterly payers – leave blank for the full season.</p></details>
+    <div class="actions"><button class="btn sm" id="regRecalc" title="Normally runs every night">↻ Recalculate who can book now</button>${S.regJob&&S.regJob.regJob&&S.regJob.regJob.at?`<span class="tag">last run ${new Date(S.regJob.regJob.at).toLocaleString()}</span>`:''}</div></div>`;
+}
+function bindRegAdmin(){
+  const m=$('#main');if(!m||!$('.reg-adm'))return;const on=(sel,f)=>{const e=$(sel);if(e)e.onclick=f};
+  m.querySelectorAll('[data-regsea]').forEach(el=>el.onclick=()=>{const cur=S.regAdminSeason||seasonOf(today()),y=+cur.slice(0,4)+ +el.dataset.regsea;S.regAdminSeason=`${y}/${String((y+1)%100).padStart(2,'0')}`;render()});
+  bindMembership(m,null);
+  m.querySelectorAll('.reg-adm [data-member]').forEach(el=>el.onclick=()=>openMember(el.dataset.member));
+  m.querySelectorAll('[data-regpick]').forEach(el=>el.onchange=()=>{el.checked?S.regPick.add(el.dataset.regpick):S.regPick.delete(el.dataset.regpick);const b=$('#regBulk');if(b){b.disabled=!S.regPick.size;b.textContent='Register '+(S.regPick.size||'')}});
+  {const q=$('#regQ');if(q)q.oninput=()=>{S.regQ=q.value;clearTimeout(S._rq);S._rq=setTimeout(()=>{render();const n=$('#regQ');if(n){n.closest('details').open=true;n.focus();n.setSelectionRange(n.value.length,n.value.length)}},250)}}
+  on('#regBulk',()=>{const pg=$('#regBulkProg').value,paid=$('#regBulkPaid').value||null,sea=S.regAdminSeason||seasonOf(today()),L=[...S.regPick];
+    guarded(async()=>{for(const x of L)await registerMember(x,pg,sea,{paidThrough:paid});S.regPick.clear()},`${L.length} registered for ${sea} ${pg}`)});
+  on('#regMigrate',()=>{const cur=seasonOf(today()),rg=seasonRange(cur),L=Object.entries(S.members).filter(([,x])=>(x.programs||[]).length&&x.status!=='inactive');
+    if(!confirm(`Register ${L.length} members in their current programs for ${cur} (${fmtDate(rg.from)} – ${fmtDate(rg.to)})?`))return;
+    guarded(async()=>{for(const [k,x] of L){for(const pg of x.programs)await registerMember(k,pg,cur,{start:rg.from});if(!x.level)await S.db.doc('members/'+k).update({level:x.programs.find(p=>/master|intermediate|novice|para|junior/i.test(p))||x.programs[0]})}
+      await S.db.doc('regJobs/request').set({at:nowIso(),by:S.me})},`${L.length} members registered for ${cur}`)});
+  on('#regRecalc',()=>guarded(()=>S.db.doc('regJobs/request').set({at:nowIso(),by:S.me}),'Recalculating – takes a few seconds'));
+}
 function viewCoxswains(){
   const me=myMemberId(),t=today(),cx=coxList(),iAmCox=!!me&&isCoxMember(me);
   if(!S.coxWho||!isCoxMember(S.coxWho))S.coxWho=iAmCox?me:(canAdmin()&&cx[0]?cx[0][0]:null);
@@ -3645,6 +3752,7 @@ function viewAdmin(){
     ${pend.length?pend.map(([u,c])=>claimItem(u,c)).join(''):'<div class="empty">No requests right now. When someone signs in and picks “Find your member profile”, their request appears here.</div>'}
     <p class="tag" style="margin:10px 0 0">Approving links their sign-in to the member profile, so they can book and see their own details, and emails them a welcome message. Check the name, email and note match someone you know.</p></div>
   ${issueEmailToggle()}${claimEmailToggle()}
+  ${regAdminHtml()}
   ${fbAdminHtml()}
   ${feesAdminHtml()}
   ${mailLogHtml()}
