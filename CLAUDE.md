@@ -201,6 +201,10 @@ language, and keep the "propose → preview link → merge" workflow.
   + Register / Edit / +1 quarter / End early), Admin page "Program registrations" (season switch, counts, payments due,
   not-renewed list, bulk register, one-time "Register current members for <season>", ↻ recalculate); + Add member and
   join-request approval register new members.
+  **One program at a time**: `LEVELS` Junior < Novice < Intermediate < Masters (`lvlRank`, `highestProg`); registering in
+  another program ends overlapping ones the day before (`moved:true` → no email) or removes ones not yet started;
+  migration / approvals use the highest program; Admin page offers "Keep the highest" for duplicates. `levelOf(m)` =
+  `m.level` or the highest program on file (current or past regs), editable under Edit member.
 - **Join-request email**: trigger `emailAdminsOnClaim` (claims → pending) BCCs admins; opt-out
   `memberPrefs/{uid}.claimEmails = false` (Admin-page toggle).
 
@@ -248,6 +252,8 @@ Private/prefs docs are keyed by **member id** until the member links an account,
 
 ## Working on it
 - Branch → commit → push → open a PR. The PR gets a preview link; the user merges to go live.
+- **Always tell the user the version number** (e.g. v1.95) once a merged change is live – check the latest GitHub
+  release after the deploy finishes, and mention it in the reply.
 - **Keep the Help guides current:** any PR that changes what members see (screens, button names, rules, emails) must
   update `public/help/articles.md` in the same PR (add a guide for new features). The PR check "Help guides up to
   date?" warns when `public/index.html` changes without it.

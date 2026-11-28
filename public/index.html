@@ -975,7 +975,7 @@ function memberDetail(id,inPage){
    ${self&&!inPage?'':''}
    <div class="tiles">${tile(st.past.length,'Sessions')}${tile(st.d30,'Last 30 days')}${tile(st.up.length,'Booked')}${tile(st.last?fmtDate(st.last.date):'—','Last on water',true)}</div>
    <div class="sec"><h4>Rowing profile</h4><dl class="kv">
-     <dt>Level</dt><dd>${esc(m.level||'—')}</dd>
+     <dt>Level</dt><dd>${esc(levelOf(m)||'—')}${!m.level&&levelOf(m)?' <span class="tag">(from their programs)</span>':''}</dd>
      <dt>Registered</dt><dd>${(m.programs||[]).length?m.programs.map(x=>`<span class="pill s-available">${esc(seasonOf(today()))} ${esc(x)}</span>`).join(' '):'<span class="muted">Not in a program right now</span>'}</dd>
      <dt>Roles</dt><dd>${esc((m.roles||['rower']).map(r=>ROLES[r]||r).join(', '))}</dd>
      <dt>Sides / seats</dt><dd>${esc((pr.sides||[]).join(', ')||'—')}</dd>
@@ -1097,8 +1097,8 @@ function memberForm(id){
     ${fld('First name',`<input name="firstName" required value="${esc(m.firstName||'')}">`)}
     ${fld('Last name',`<input name="lastName" value="${esc(m.lastName||'')}">`)}
     ${fld('Display name',`<input name="displayName" value="${esc(m.displayName||'')}" placeholder="e.g. Alice C">`,'full','Shown in the directory and on sign-ups. Leave blank to use first name + last initial.')}
-    ${fld('Level',`<select name="level"><option value="">—</option>${progNames().map(x=>`<option ${(m.level||'')===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`,'','Their rowing level / status. Separate from the programs they’re registered in.')}
-    ${id?fld('Registered programs',`<div style="padding-top:6px">${(m.programs||[]).length?m.programs.map(x=>`<span class="pill s-available">${esc(seasonOf(today()))} ${esc(x)}</span>`).join(' '):'<span class="muted">None this season</span>'} <span class="tag">– manage under Membership on their profile</span></div>`,'full'):fld('Register for '+seasonOf(today()),checks('regs',progNames(),[]),'full','They can book these programs from today until '+fmtDate(seasonRange(seasonOf(today())).to)+'.')}
+    ${fld('Level',`<select name="level"><option value="">—</option>${progNames().map(x=>`<option ${levelOf(m)===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`,'','Their rowing level (Junior → Novice → Intermediate → Masters). Defaults to the highest program on file.')}
+    ${id?fld('Registered programs',`<div style="padding-top:6px">${(m.programs||[]).length?m.programs.map(x=>`<span class="pill s-available">${esc(seasonOf(today()))} ${esc(x)}</span>`).join(' '):'<span class="muted">None this season</span>'} <span class="tag">– manage under Membership on their profile</span></div>`,'full'):fld('Register for '+seasonOf(today()),`<select name="regProg"><option value="">— not yet —</option>${progNames().map(x=>`<option>${esc(x)}</option>`).join('')}</select>`,'full','One program per member. They can book it from today until '+fmtDate(seasonRange(seasonOf(today())).to)+'.')}
     ${fld('Roles',checks('roles',Object.entries(ROLES),m.roles||['rower']),'')}
     ${fld('Status',`<select name="status">${Object.entries(M_STATUS).map(([k,l])=>`<option value="${k}" ${m.status===k?'selected':''}>${l}</option>`).join('')}</select>`)}
     ${fld('Sides / seats',checks('sides',SIDES,pr.sides),'')}
@@ -1125,7 +1125,7 @@ function memberForm(id){
       const ph=id?await savePhoto(av,pr.photo):undefined;
       await S.db.doc('memberPrefs/'+key).set({...(id?prefsOf(id):{}),sides:fd._c.sides||[],experience:fd.experience,gender:fd.gender||null,birthYear:fd.birthYear?+fd.birthYear:null,photo:ph===undefined?(pr.photo||null):ph,updatedAt:nowIso()});
       const p=privFrom(fd);if(Object.values(p).some(v=>v&&v!==p.updatedAt)||privOf(mid))await S.db.doc('memberPrivate/'+key).set({...(privOf(mid)||{}),...p});
-      for(const pg of (fd._c.regs||[]))await registerMember(mid,pg,seasonOf(today()),{});
+      if(fd.regProg)await registerMember(mid,fd.regProg,seasonOf(today()),{});
       if((fd._c.invite||[]).length){await createInvite(mid,fd.email);toast(`Invitation emailed to ${fd.email.trim()}`)}
     }})});
 }
@@ -1206,7 +1206,7 @@ async function approveClaim(uid,btn){
       await S.db.doc('members/'+mid).update(upd);
     } else {
       const dn=dispName(c.firstName,c.lastName);mid='m_'+slugify(dn);if(S.members[mid])mid+='-'+Date.now().toString(36);
-      await S.db.doc('members/'+mid).set({displayName:dn,firstName:c.firstName||'',lastName:c.lastName||'',level:(c.programs||[])[0]||'',programs:c.programs||[],roles:['rower'],status:'active',pcoc:false,linkedUser:uid,linkedAt:nowIso(),createdAt:nowIso(),source:'Created from a member request'});
+      await S.db.doc('members/'+mid).set({displayName:dn,firstName:c.firstName||'',lastName:c.lastName||'',level:highestProg(c.programs||[]),programs:c.programs||[],roles:['rower'],status:'active',pcoc:false,linkedUser:uid,linkedAt:nowIso(),createdAt:nowIso(),source:'Created from a member request'});
     }
     const oldP=S.mpriv[mid],oldPr=S.mprefs[mid];
     const priv={...(oldP||{})};if(c.email)priv.email=c.email;if(c.phone)priv.phone=c.phone;if(c.memberNo&&!priv.memberNo)priv.memberNo=c.memberNo;
@@ -1214,7 +1214,7 @@ async function approveClaim(uid,btn){
     if(oldP)await S.db.doc('memberPrivate/'+mid).delete();
     if(oldPr){await S.db.doc('memberPrefs/'+uid).set(oldPr);await S.db.doc('memberPrefs/'+mid).delete()}
     await S.db.doc('accounts/'+uid).set({memberId:mid,linkedAt:nowIso()});
-    if(c.type!=='existing')for(const pg of (c.programs||[]))await registerMember(mid,pg,seasonOf(today()),{});   // new people: register in what they asked for
+    if(c.type!=='existing'&&(c.programs||[]).length)await registerMember(mid,highestProg(c.programs),seasonOf(today()),{});   // new people: register in what they asked for
     if(S.members[mid]&&S.members[mid].siteAdmin)await S.db.doc('admins/'+uid).set({memberId:mid,since:nowIso()});
     await S.db.doc('claims/'+uid).delete();
   },'Approved – account linked');
@@ -1299,6 +1299,12 @@ const seasonOf=d=>{const y=+d.slice(0,4),y0=d.slice(5)>=SEASON_START?y:y-1;retur
 const seasonRange=l=>{const y0=+l.slice(0,4);return {from:`${y0}-${SEASON_START}`,to:addDays(`${y0+1}-${SEASON_START}`,-1)}};
 const regId=(mid,season,prog)=>`${mid}_${season.replace('/','-')}_${slugify(prog)}`;
 // may this member book on date d? (members not yet processed by the server keep their old access)
+// One program at a time. Level order, bottom to top; other programs (Para, Rec…) sit outside it.
+const LEVELS=['Junior','Novice','Intermediate','Masters'];
+const lvlRank=p=>{const i=LEVELS.findIndex(l=>String(p||'').toLowerCase().includes(l.toLowerCase()));return i};
+const highestProg=L=>{const xs=[...new Set((L||[]).filter(Boolean))];if(!xs.length)return '';const r=xs.filter(p=>lvlRank(p)>=0).sort((a,b)=>lvlRank(b)-lvlRank(a));return r[0]||xs[0]};
+// a member's level: what an admin set, otherwise the highest program on file (current or past)
+const levelOf=m=>m&&(m.level||highestProg([...(m.programs||[]),...(m.regs||[]).map(r=>r.program)]))||'';
 const regOk=(mid,d)=>{const m=S.members[mid];if(!m)return false;if(!('bookableUntil' in m))return true;return (m.regs||[]).some(r=>r.from<=d&&d<=r.to)};
 const regNote=(mid,d)=>{const m=S.members[mid]||{},L=(m.regs||[]);const lapsed=L.find(r=>r.to<d&&!r.ended&&r.paidThrough&&r.paidThrough===r.to);
   return lapsed?`Your ${esc(lapsed.season)} ${esc(lapsed.program)} registration is paid through ${fmtDate(lapsed.paidThrough)}.`:`You’re not registered in a program for ${fmtDate(d)}.`};
@@ -3435,8 +3441,15 @@ const effEnd=r=>[r.end,r.paidThrough,r.endedOn].filter(Boolean).sort()[0]||r.end
 function regState(r){const t=today(),e=effEnd(r);if(r.endedOn&&r.endedOn<t)return ['Ended early','s-retired'];if(r.endedOn)return ['Ending '+fmtDate(r.endedOn),'s-repair'];
   if(r.start>t)return ['Starts '+fmtDate(r.start),'s-repair'];if(e<t)return r.paidThrough&&r.paidThrough<r.end?['Payment lapsed','s-dnr']:['Finished','s-retired'];
   if(r.paidThrough&&r.paidThrough<r.end&&pd(r.paidThrough)-pd(t)<=14*864e5)return ['Due '+fmtDate(r.paidThrough),'s-repair'];return ['Active','s-available']}
+// other live registrations of this member that overlap [from,to] (excluding this program)
+function regOverlaps(mid,prog,from,to){return Object.entries(S.regs||{}).filter(([,r])=>r.memberId===mid&&r.program!==prog&&r.status!=='cancelled'&&r.start<=to&&effEnd(r)>=from)}
 async function registerMember(mid,prog,season,o){const rg=seasonRange(season),t=today();
   const start=o.start||(t>rg.from&&t<=rg.to?t:rg.from);
+  // one program at a time: an overlapping registration ends the day before (or is removed if it hadn't started)
+  for(const [k,r] of regOverlaps(mid,prog,start,o.end||rg.to)){
+    if(r.start>=start)await S.db.doc('registrations/'+k).delete();
+    else await S.db.doc('registrations/'+k).update({endedOn:addDays(start,-1),endReason:'Moved to '+prog,moved:true,updatedAt:nowIso(),by:S.me});
+  }
   await S.db.doc('registrations/'+regId(mid,season,prog)).set({memberId:mid,program:prog,season,start,end:o.end||rg.to,paidThrough:o.paidThrough||null,endedOn:null,endReason:'',by:S.me,at:nowIso()},{merge:true});
 }
 function membershipHtml(id,self){
@@ -3464,6 +3477,8 @@ function regForm(mid,key){
     wireForm({validate:fd=>fd.end&&fd.start&&fd.end<fd.start?'The end is before the start.':null,msg:r?'Registration saved':'Registered',
       save:async fd=>{if(r)return S.db.doc('registrations/'+key).update({start:fd.start||r.start,end:fd.end||r.end,paidThrough:fd.paidThrough||null,updatedAt:nowIso(),by:S.me});
         if(S.regs[regId(mid,fd.season,fd.program)]&&!confirm('They already have this registration – update it?'))return;
+        const rg=seasonRange(fd.season),st=fd.start||(today()>rg.from&&today()<=rg.to?today():rg.from),ov=regOverlaps(mid,fd.program,st,fd.end||rg.to);
+        if(ov.length&&!confirm(`${mName(mid)} is registered in ${ov.map(([,r])=>r.program).join(', ')}. One program at a time – move them to ${fd.program} from ${fmtDate(st)}? (${ov.map(([,r])=>r.program).join(', ')} ends the day before; their bookings stay unless they’re for sessions they can no longer book.)`))return;
         await registerMember(mid,fd.program,fd.season,{start:fd.start,end:fd.end,paidThrough:fd.paidThrough})}});
   });
 }
@@ -3490,8 +3505,12 @@ function regAdminHtml(){
   const notBack=[...new Set(R.filter(([,r])=>r.season===prevS).map(([,r])=>r.memberId))].filter(x=>!regd.has(x)&&S.members[x]);
   const q=S.regQ.trim().toLowerCase(),pick=Object.entries(S.members).filter(([,m])=>m.status!=='inactive'&&(!q||m.displayName.toLowerCase().includes(q))).sort((a,b)=>a[1].displayName.localeCompare(b[1].displayName));
   return `<div class="sec reg-adm"><div class="ch-ct"><h4 style="margin:0">Program registrations</h4><span class="chips"><button class="chip" data-regsea="-1">‹</button><button class="chip on">${sea}</button><button class="chip" data-regsea="1">›</button></span></div>
-    ${!R.length?`<div class="callout" style="margin:8px 0"><b>Set up ${cur} registrations.</b> Members can only book programs they’re registered in. Start by registering everyone in the programs they’re in today (${Object.values(S.members).filter(m=>(m.programs||[]).length&&m.status!=='inactive').length} members) – from ${fmtDate(seasonRange(cur).from)} to ${fmtDate(seasonRange(cur).to)}. Then end the ones who’ve left.<div class="actions"><button class="btn pri" id="regMigrate">Register current members for ${cur}</button></div></div>`:''}
+    ${!R.length?`<div class="callout" style="margin:8px 0"><b>Set up ${cur} registrations.</b> Members can only book programs they’re registered in. Start by registering everyone in their highest current program (Junior → Novice → Intermediate → Masters; one program each) (${Object.values(S.members).filter(m=>(m.programs||[]).length&&m.status!=='inactive').length} members) – from ${fmtDate(seasonRange(cur).from)} to ${fmtDate(seasonRange(cur).to)}. Then end the ones who’ve left.<div class="actions"><button class="btn pri" id="regMigrate">Register current members for ${cur}</button></div></div>`:''}
     <p class="tag" style="margin:4px 0 8px">${progs.map(p=>`${esc(p)}: <b>${cnt(p)}</b>`).join(' · ')} · seasons start 1 October</p>
+    ${(()=>{const multi=[...new Set(inS.map(([,r])=>r.memberId))].map(mid=>[mid,inS.filter(([,r])=>r.memberId===mid&&!r.endedOn&&effEnd(r)>=t)]).filter(([,L])=>L.length>1);
+      return multi.length?`<div class="callout bad" style="margin:8px 0"><b>${multi.length} member${multi.length===1?' is':'s are'} in more than one program</b> for ${sea}. Members can only be in one program – keep the highest (Junior → Novice → Intermediate → Masters)?
+        <div style="margin-top:6px">${multi.slice(0,12).map(([mid,L])=>`<div class="ch-lp"><span><span class="lnk" data-member="${esc(mid)}">${esc(mName(mid))}</span> <span class="tag">${L.map(([,r])=>esc(r.program)).join(' + ')}</span></span><button class="btn sm" data-regkeep="${esc(mid)}">Keep ${esc(highestProg(L.map(([,r])=>r.program)))}</button></div>`).join('')}${multi.length>12?`<p class="tag">…and ${multi.length-12} more</p>`:''}</div>
+        <div class="actions"><button class="btn pri" id="regKeepAll">Keep the highest for all ${multi.length}</button></div></div>`:''})()}
     ${due.length?`<h5>Payments due or lapsed (next 14 days)</h5>${due.map(([k,r])=>`<div class="ch-lp"><span><span class="lnk" data-member="${esc(r.memberId)}">${esc(mName(r.memberId))}</span> · ${esc(r.program)} <span class="tag">paid through ${fmtDate(r.paidThrough)}${r.paidThrough<t?' – lapsed, can’t book':''}</span></span><span><button class="btn sm" data-mregq="${esc(k)}">+1 quarter</button> <button class="btn sm dan" data-mregend="${esc(k)}">End</button></span></div>`).join('')}`:''}
     ${notBack.length?`<details style="margin-top:8px"><summary><b>${notBack.length}</b> registered in ${prevS} but not ${sea}</summary><p class="tag">${notBack.map(x=>`<span class="lnk" data-member="${esc(x)}">${esc(mName(x))}</span>`).join(', ')}</p></details>`:''}
     <details style="margin-top:8px"><summary><b>Register several members</b> for ${sea}</summary>
@@ -3508,11 +3527,18 @@ function bindRegAdmin(){
   m.querySelectorAll('[data-regpick]').forEach(el=>el.onchange=()=>{el.checked?S.regPick.add(el.dataset.regpick):S.regPick.delete(el.dataset.regpick);const b=$('#regBulk');if(b){b.disabled=!S.regPick.size;b.textContent='Register '+(S.regPick.size||'')}});
   {const q=$('#regQ');if(q)q.oninput=()=>{S.regQ=q.value;clearTimeout(S._rq);S._rq=setTimeout(()=>{render();const n=$('#regQ');if(n){n.closest('details').open=true;n.focus();n.setSelectionRange(n.value.length,n.value.length)}},250)}}
   on('#regBulk',()=>{const pg=$('#regBulkProg').value,paid=$('#regBulkPaid').value||null,sea=S.regAdminSeason||seasonOf(today()),L=[...S.regPick];
+    const rg=seasonRange(sea),sw=L.filter(x=>regOverlaps(x,pg,today()>rg.from?today():rg.from,rg.to).length);if(sw.length&&!confirm(`${sw.length} of them (${sw.slice(0,5).map(mName).join(', ')}${sw.length>5?'…':''}) are in another program – move them to ${pg}?`))return;
     guarded(async()=>{for(const x of L)await registerMember(x,pg,sea,{paidThrough:paid});S.regPick.clear()},`${L.length} registered for ${sea} ${pg}`)});
   on('#regMigrate',()=>{const cur=seasonOf(today()),rg=seasonRange(cur),L=Object.entries(S.members).filter(([,x])=>(x.programs||[]).length&&x.status!=='inactive');
     if(!confirm(`Register ${L.length} members in their current programs for ${cur} (${fmtDate(rg.from)} – ${fmtDate(rg.to)})?`))return;
-    guarded(async()=>{for(const [k,x] of L){for(const pg of x.programs)await registerMember(k,pg,cur,{start:rg.from});if(!x.level)await S.db.doc('members/'+k).update({level:x.programs.find(p=>/master|intermediate|novice|para|junior/i.test(p))||x.programs[0]})}
+    guarded(async()=>{for(const [k,x] of L){const top=highestProg(x.programs);await registerMember(k,top,cur,{start:rg.from});if(!x.level)await S.db.doc('members/'+k).update({level:top})}
       await S.db.doc('regJobs/request').set({at:nowIso(),by:S.me})},`${L.length} members registered for ${cur}`)});
+  const keep=async mid=>{const sea=S.regAdminSeason||seasonOf(today()),L=Object.entries(S.regs).filter(([,r])=>r.memberId===mid&&r.season===sea&&!r.endedOn),top=highestProg(L.map(([,r])=>r.program));
+    for(const [k,r] of L)if(r.program!==top)await S.db.doc('registrations/'+k).delete();
+    const mm=S.members[mid];if(mm&&!mm.level)await S.db.doc('members/'+mid).update({level:top})};
+  m.querySelectorAll('[data-regkeep]').forEach(el=>el.onclick=()=>guarded(()=>keep(el.dataset.regkeep),'Kept the highest program'));
+  on('#regKeepAll',()=>{const sea=S.regAdminSeason||seasonOf(today()),ids=[...new Set(Object.values(S.regs).filter(r=>r.season===sea&&!r.endedOn).map(r=>r.memberId))].filter(mid=>Object.values(S.regs).filter(r=>r.memberId===mid&&r.season===sea&&!r.endedOn).length>1);
+    if(confirm(`Keep only the highest program for ${ids.length} members? The lower registrations are removed (no emails, bookings stay).`))guarded(async()=>{for(const x of ids)await keep(x)},'Done – one program each')});
   on('#regRecalc',()=>guarded(()=>S.db.doc('regJobs/request').set({at:nowIso(),by:S.me}),'Recalculating – takes a few seconds'));
 }
 function viewCoxswains(){

@@ -202,8 +202,9 @@ Members can only book programs they're registered in. **Admin page → Program r
 - **Payments due or lapsed** lists quarterly payers whose paid-through date is within 14 days or past – **+1 quarter** extends to the next quarter end (31 Dec, 31 Mar, 30 Jun, 30 Sep).
 - **Registered last season but not this one** helps with renewals at the start of October.
 - On a member's profile, **Membership → + Register**, **Edit**, **+1 quarter** or **End early** (last day + reason – their later bookings are cancelled with no fee and they're emailed).
-- New members: **+ Add member** has *Register for 2026/27*; approving a join request registers them in the programs they asked for.
-- A member's **Level** is set under Edit member and is separate from their registrations. Who can book is recalculated every night (or **↻ Recalculate who can book now**).
+- **One program per member at a time.** Registering someone in a new program ends the old one the day before (no email). If anyone ends up in two, the Admin page offers **Keep the highest** (Junior → Novice → Intermediate → Masters).
+- New members: **+ Add member** has *Register for 2026/27*; approving a join request registers them in the highest program they asked for.
+- A member's **Level** defaults to the highest program on file and can be changed under Edit member; it's separate from their registrations. Who can book is recalculated every night (or **↻ Recalculate who can book now**).
 
 ## admin-programs | Programs, sessions and erg blocks | admin | manage
 **Programs ▾ Weekly schedule → Manage programs** to add or edit programs (colour, how many days ahead sign-ups open, boat required, PCOC) and their weekly sessions (day, time, type, capacity, who's eligible, coach). Use **Edit this date** to change one date's coach or capacity. Erg sessions have **erg blocks** (e.g. `Masters 1-12; Intermediate 13-17; Para 18 only`) and the time they open to everyone.
